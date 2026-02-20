@@ -107,6 +107,16 @@ dist
 # Mac OS files
 .DS_Store
 
+# Redundant Scripts
+generate_structure.js
+generate_structure.py
+fix_structure.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # IDEs and Editors
 .idea/
 .vscode/

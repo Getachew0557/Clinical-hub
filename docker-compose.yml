@@ -12,21 +12,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    environment:
-      - PORT=5000
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
-    depends_on:
-      - db
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-
   frontend:
     build:
       context: ./frontend
@@ -39,6 +24,171 @@ services:
       - ./frontend:/app
       - /app/node_modules
     command: npm run dev -- --host 0.0.0.0
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/api-gateway:/app
+      - /app/node_modules
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/auth-service:/app
+      - /app/node_modules
+
+  patient-service:
+    build:
+      context: ./backend/patient-service
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/patient-service:/app
+      - /app/node_modules
+
+  appointment-service:
+    build:
+      context: ./backend/appointment-service
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    environment:
+      - PORT=5003
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/appointment-service:/app
+      - /app/node_modules
+
+  emr-service:
+    build:
+      context: ./backend/emr-service
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004"
+    environment:
+      - PORT=5004
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/emr-service:/app
+      - /app/node_modules
+
+  billing-service:
+    build:
+      context: ./backend/billing-service
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    environment:
+      - PORT=5005
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/billing-service:/app
+      - /app/node_modules
+
+  inventory-service:
+    build:
+      context: ./backend/inventory-service
+      dockerfile: Dockerfile
+    ports:
+      - "5006:5006"
+    environment:
+      - PORT=5006
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/inventory-service:/app
+      - /app/node_modules
+
+  report-service:
+    build:
+      context: ./backend/report-service
+      dockerfile: Dockerfile
+    ports:
+      - "5007:5007"
+    environment:
+      - PORT=5007
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/report-service:/app
+      - /app/node_modules
+
+  notification-service:
+    build:
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    ports:
+      - "5008:5008"
+    environment:
+      - PORT=5008
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/notification-service:/app
+      - /app/node_modules
+
+  ai-service:
+    build:
+      context: ./backend/ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "5009:5009"
+    environment:
+      - PORT=5009
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/ai-service:/app
+      - /app/node_modules
+
+  doctor-service:
+    build:
+      context: ./backend/doctor-service
+      dockerfile: Dockerfile
+    ports:
+      - "5010:5010"
+    environment:
+      - PORT=5010
+      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+    depends_on:
+      - db
+    volumes:
+      - ./backend/doctor-service:/app
+      - /app/node_modules
 
 volumes:
   pgdata:
