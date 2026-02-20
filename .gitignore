@@ -122,3 +122,7 @@ __pycache__/
 .vscode/
 *.swp
 *.swo
+planning.md
+.env 
+*.txt
+node_modules/*
