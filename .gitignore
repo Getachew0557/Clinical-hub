@@ -126,3 +126,5 @@ planning.md
 .env 
 *.txt
 node_modules/*
+.FullName
+frontend-react-typescript/*
