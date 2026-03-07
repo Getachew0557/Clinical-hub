@@ -14,6 +14,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 
 // Dashboard
 import DashboardPage from './pages/DashboardPage';
+import DoctorListPage from './pages/Doctor/DoctorListPage';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -90,6 +91,7 @@ const App = () => (
           }
         >
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/doctors" element={<DoctorListPage />} />
           {/* Placeholder routes – pages will be added incrementally */}
           <Route path="/patients" element={<PlaceholderPage title="Patients" />} />
           <Route path="/appointments" element={<PlaceholderPage title="Appointments" />} />

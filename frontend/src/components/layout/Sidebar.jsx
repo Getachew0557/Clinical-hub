@@ -13,6 +13,7 @@ const NAV_BY_ROLE = {
     Admin: [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/patients', icon: Users, label: 'Patients' },
+        { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
         { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
         { to: '/emr', icon: FileText, label: 'Medical Records' },
         { to: '/billing', icon: Receipt, label: 'Billing' },
@@ -29,6 +30,7 @@ const NAV_BY_ROLE = {
     Receptionist: [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/patients', icon: Users, label: 'Patients' },
+        { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
         { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
         { to: '/billing', icon: Receipt, label: 'Billing' },
     ],
