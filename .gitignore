@@ -127,4 +127,5 @@ planning.md
 *.txt
 node_modules/*
 .FullName
-frontend-react-typescript/*
+frontend-react-typscript/
+planning.md
