@@ -1,0 +1,20 @@
+{
+    "name": "dental-clinic-system",
+    "private": true,
+    "description": "Dental Clinic Microservices System",
+    "workspaces": [
+        "backend/auth-service",
+        "backend/appointment-service",
+        "backend/doctor-service",
+        "frontend"
+    ],
+    "scripts": {
+        "install:all": "npm install",
+        "test": "npm test --workspaces --if-present",
+        "build": "npm run build --workspaces --if-present",
+        "dev:auth": "npm run dev --workspace=backend/auth-service",
+        "dev:appointment": "npm run dev --workspace=backend/appointment-service",
+        "dev:doctor": "npm run dev --workspace=backend/doctor-service",
+        "dev:frontend": "npm run dev --workspace=frontend"
+    }
+}

@@ -237,9 +237,11 @@ Body   : raw → JSON
 
 ---
 
+---
+
 ### ✅ STEP 3 — Create Appointment as **Admin/Receptionist/Doctor**
 
-Staff can create an appointment for any patient by specifying `patientId`.
+**Responsibility**: Staff create an appointment for any patient by specifying `patientId`.
 
 ```
 Method : POST
@@ -260,87 +262,48 @@ Body   : raw → JSON
 }
 ```
 
-**Optional fields:**
-```json
-{
-  "notes": "Patient requested morning slot"
-}
-```
-
 **Expected Response `201 Created`:**
 ```json
 {
   "message": "Appointment created successfully",
-  "appointment": {
-    "id": "appt-uuid-here",
-    "patientId": "patient-uuid",
-    "doctorId": "doctor-uuid",
-    "appointmentDate": "2026-03-15",
-    "appointmentTime": "10:00:00",
-    "reason": "Routine dental checkup",
-    "status": "Pending",
-    "notes": null,
-    "createdBy": "admin-uuid",
-    "createdAt": "2026-03-08T...",
-    "updatedAt": "2026-03-08T..."
-  }
+  "appointment": { ... }
 }
 ```
 
-> 💡 Save the `appointment.id` into `{{appointment_id}}`.
-
-**Missing required field test** — omit `reason`:
-```json
-{
-  "patientId": "{{patient_id}}",
-  "doctorId": "{{doctor_id}}",
-  "appointmentDate": "2026-03-15",
-  "appointmentTime": "10:00:00"
-}
-```
+**❌ Negative Case — Missing Field:**
+Omit `reason`.
 **Expected: `400 Bad Request`** → `"doctorId, appointmentDate, appointmentTime, and reason are required"`
 
 ---
 
-### ✅ STEP 4 — Create Appointment as **Patient** (self-booking)
+### ✅ STEP 4 — Create Appointment as **Patient** (Self-booking)
 
-Patients cannot specify a `patientId` — it is automatically forced to their own ID.
+**Responsibility**: Patients book for themselves. `patientId` is forced to their ID.
 
 ```
 Method : POST
 URL    : http://localhost:5003/api/appointments
 Auth   : Bearer Token → {{patient_token}}
-Headers: Content-Type: application/json
 Body   : raw → JSON
 ```
 
-**Required fields (Patient does NOT send patientId):**
+**Required fields:**
 ```json
 {
   "doctorId": "{{doctor_id}}",
   "appointmentDate": "2026-03-20",
   "appointmentTime": "14:00:00",
-  "reason": "Tooth pain and cold sensitivity"
+  "reason": "Tooth pain"
 }
 ```
 
-**Expected Response `201 Created`:**
-```json
-{
-  "message": "Appointment created successfully",
-  "appointment": {
-    "patientId": "<automatically-set-to-your-own-id>",
-    ...
-    "status": "Pending"
-  }
-}
-```
-
-> 🔒 Even if a Patient sends a different `patientId` in the body, it will be **ignored and replaced** with their own ID.
+**Expected Response `201 Created`:** `patientId` in response automatically matches the patient's record.
 
 ---
 
-### ✅ STEP 5 — View All Appointments (Admin / Receptionist only)
+### ✅ STEP 5 — View All Appointments (Admin / Receptionist)
+
+**Responsibility**: Management staff viewing the clinic schedule.
 
 ```
 Method : GET
@@ -348,24 +311,13 @@ URL    : http://localhost:5003/api/appointments
 Auth   : Bearer Token → {{admin_token}}
 ```
 
-**Optional query parameters:**
-```
-?status=Pending          → filter by status
-?date=2026-03-15         → filter by date
-?status=Confirmed&date=2026-03-15  → combined filter
-```
-
-**Expected Response `200 OK`:**
-```json
-{
-  "count": 3,
-  "appointments": [ ... ]
-}
-```
+**Expected Response `200 OK`**: JSON list of all appointments.
 
 ---
 
-### ❌ STEP 6 — Patient/Doctor Cannot View All (Expect 403)
+### ❌ STEP 6 — Unauthorized View (Negative Case)
+
+**Responsibility**: Patients should NOT be able to see the full clinic list.
 
 ```
 Method : GET
@@ -373,168 +325,61 @@ URL    : http://localhost:5003/api/appointments
 Auth   : Bearer Token → {{patient_token}}
 ```
 
-**Expected Response `403 Forbidden`:**
-```json
-{
-  "message": "Role 'Patient' is not authorized to access this route"
-}
-```
-
-Same test with `{{doctor_token}}` → same `403 Forbidden`.
+**Expected Response `403 Forbidden`**: `"Role 'Patient' is not authorized to access this route"`
 
 ---
 
 ### ✅ STEP 7 — View My Appointments (Any Role)
 
-Every role can see their own appointments (where they are patient or doctor).
+**Responsibility**: Users seeing their own scheduled records.
 
 ```
 Method : GET
 URL    : http://localhost:5003/api/appointments/my
-Auth   : Bearer Token → {{patient_token}}   ← try with each role
-```
-
-**Expected Response `200 OK`:**
-```json
-{
-  "count": 1,
-  "appointments": [
-    {
-      "id": "...",
-      "patientId": "your-id",
-      ...
-    }
-  ]
-}
-```
-
----
-
-### ✅ STEP 8 — View One Appointment by ID
-
-```
-Method : GET
-URL    : http://localhost:5003/api/appointments/{{appointment_id}}
-Auth   : Bearer Token → {{admin_token}}
-```
-
-**Expected Response `200 OK`:** Full appointment object.
-
-**Ownership test** — try with `{{patient_token}}` for an appointment you are the patient on:
-- **Expected:** `200 OK` ✅
-
-**Unauthorized test** — try with `{{patient_token}}` for someone else's appointment:
-- **Expected:** `403 Forbidden` ❌
-
-**Not found test:**
-```
-GET http://localhost:5003/api/appointments/00000000-0000-0000-0000-000000000000
-```
-**Expected `404 Not Found`:**
-```json
-{ "message": "Appointment not found" }
-```
-
----
-
-### ✅ STEP 9 — Update Status (Admin / Doctor / Receptionist)
-
-```
-Method : PATCH
-URL    : http://localhost:5003/api/appointments/{{appointment_id}}/status
-Auth   : Bearer Token → {{doctor_token}}
-Headers: Content-Type: application/json
-Body   : raw → JSON
-```
-
-**Required field:**
-```json
-{
-  "status": "Confirmed"
-}
-```
-
-Valid values: `Pending`, `Confirmed`, `Cancelled`, `Completed`
-
-**Expected Response `200 OK`:**
-```json
-{
-  "message": "Status updated from 'Pending' to 'Confirmed'",
-  "appointment": { "status": "Confirmed", ... }
-}
-```
-
-**Invalid status test:**
-```json
-{ "status": "Approved" }
-```
-**Expected `400 Bad Request`:**
-```json
-{
-  "message": "Invalid status. Must be one of: Pending, Confirmed, Cancelled, Completed"
-}
-```
-
----
-
-### ❌ STEP 10 — Patient Cannot Update Status (Expect 403)
-
-```
-Method : PATCH
-URL    : http://localhost:5003/api/appointments/{{appointment_id}}/status
 Auth   : Bearer Token → {{patient_token}}
-Body   : { "status": "Cancelled" }
 ```
 
-**Expected Response `403 Forbidden`:**
-```json
-{
-  "message": "Role 'Patient' is not authorized to access this route"
-}
-```
+**Expected Response `200 OK`**: List of appointments linked to the user.
 
 ---
 
-### ✅ STEP 11 — Patient Reschedules Own Appointment
+### ✅ STEP 8 — Update Status (Admin / Doctor / Receptionist)
 
-Patient can only update `appointmentDate`, `appointmentTime`, and `reason` — only if the appointment is still `Pending`.
+**Responsibility**: Staff managing appointment workflow (Confirm/Cancel/Complete).
+
+```
+Method : PATCH
+URL    : http://localhost:5003/api/appointments/{{id}}/status
+Auth   : Bearer Token → {{doctor_token}}
+Body   : { "status": "Confirmed" }
+```
+
+**Expected Response `200 OK`**: `"Status updated from 'Pending' to 'Confirmed'"`
+
+**❌ Negative Case — Invalid Status:**
+```json
+{ "status": "Finished" }
+```
+**Expected `400 Bad Request`**: `"Invalid status. Must be one of: Pending, Confirmed, Cancelled, Completed"`
+
+---
+
+### ✅ STEP 9 — Reschedule Own Appointment (Patient)
+
+**Responsibility**: Patients changing their mind before confirmation.
 
 ```
 Method : PUT
-URL    : http://localhost:5003/api/appointments/{{appointment_id}}
+URL    : http://localhost:5003/api/appointments/{{id}}
 Auth   : Bearer Token → {{patient_token}}
-Headers: Content-Type: application/json
-Body   : raw → JSON
+Body   : { "appointmentDate": "2026-03-22" }
 ```
 
-**Allowed fields for Patient:**
-```json
-{
-  "appointmentDate": "2026-03-25",
-  "appointmentTime": "09:00:00",
-  "reason": "Changed to morning slot, same issue"
-}
-```
+**Expected Response `200 OK`**: Updated appointment details.
 
-**Expected Response `200 OK`:**
-```json
-{
-  "message": "Appointment updated successfully",
-  "appointment": { "appointmentDate": "2026-03-25", ... }
-}
-```
+**❌ Negative Case — Rescheduling a Confirmed Appointment:**
+**Expected `400 Bad Request`**: `"You can only reschedule appointments that are still Pending"`
 
-**Already Confirmed — cannot reschedule test:**
-*(First confirm it with doctor token, then try to reschedule as Patient)*
-```json
-{ "appointmentDate": "2026-03-30" }
-```
-**Expected `400 Bad Request`:**
-```json
-{
-  "message": "You can only reschedule appointments that are still Pending"
-}
-```
 
 ---
 
