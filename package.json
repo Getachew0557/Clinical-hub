@@ -6,6 +6,7 @@
         "backend/auth-service",
         "backend/appointment-service",
         "backend/doctor-service",
+        "backend/patient-service",
         "frontend"
     ],
     "scripts": {
