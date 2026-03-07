@@ -9,6 +9,7 @@
         "backend/patient-service",
         "backend/emr-service",
         "backend/inventory-service",
+        "backend/notification-service",
         "frontend"
     ],
     "scripts": {
@@ -21,6 +22,7 @@
         "dev:patient": "npm run dev --workspace=backend/patient-service",
         "dev:emr": "npm run dev --workspace=backend/emr-service",
         "dev:inventory": "npm run dev --workspace=backend/inventory-service",
+        "dev:notification": "npm run dev --workspace=backend/notification-service",
         "dev:frontend": "npm run dev --workspace=frontend"
     }
 }
