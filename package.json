@@ -10,6 +10,7 @@
         "backend/emr-service",
         "backend/inventory-service",
         "backend/notification-service",
+        "backend/report-service",
         "frontend"
     ],
     "scripts": {
@@ -23,6 +24,7 @@
         "dev:emr": "npm run dev --workspace=backend/emr-service",
         "dev:inventory": "npm run dev --workspace=backend/inventory-service",
         "dev:notification": "npm run dev --workspace=backend/notification-service",
+        "dev:report": "npm run dev --workspace=backend/report-service",
         "dev:frontend": "npm run dev --workspace=frontend"
     }
 }
