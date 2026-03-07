@@ -4,6 +4,14 @@ A microservice for managing doctor profiles, schedules, and specializations. Bui
 
 This service allows administrators to manage doctor records and link them to user accounts in the `auth-service`. It also allows doctors to manage their own professional profiles.
 
+## Functionality
+- **Profile Management**: Detailed doctor profiles with specialization, bio, and license info.
+- **Schedules**: Manage working days and hours for clinical availability.
+- **Role Integration**: Links `auth-service` user IDs to professional medical profiles.
+- **Photo Uploads**: Support for professional profile pictures via `multer`.
+
+---
+
 ---
 
 ## 📁 Project Structure

@@ -1,6 +1,12 @@
-# Patient Service
-
 Backend microservice for managing patient profiles, medical history, and demographics in the Dental Clinic System.
+
+## Functionality
+- **Patient Registration**: Detailed demographic and medical profiles.
+- **Search & Filtering**: Find patients by name, email, or ID (Staff only).
+- **Self-Service**: Patients can view and update their own contact information.
+- **Photo Uploads**: Support for patient profile pictures for better identification.
+
+---
 
 ## Project Structure
 ```text

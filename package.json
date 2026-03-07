@@ -7,6 +7,8 @@
         "backend/appointment-service",
         "backend/doctor-service",
         "backend/patient-service",
+        "backend/emr-service",
+        "backend/inventory-service",
         "frontend"
     ],
     "scripts": {
@@ -16,6 +18,9 @@
         "dev:auth": "npm run dev --workspace=backend/auth-service",
         "dev:appointment": "npm run dev --workspace=backend/appointment-service",
         "dev:doctor": "npm run dev --workspace=backend/doctor-service",
+        "dev:patient": "npm run dev --workspace=backend/patient-service",
+        "dev:emr": "npm run dev --workspace=backend/emr-service",
+        "dev:inventory": "npm run dev --workspace=backend/inventory-service",
         "dev:frontend": "npm run dev --workspace=frontend"
     }
 }

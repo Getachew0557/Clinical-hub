@@ -1,6 +1,12 @@
-# EMR Service
-
 Backend microservice for managing Electronic Medical Records (EMR) and prescriptions in the Dental Clinic System.
+
+## Functionality
+- **Clinical Records**: Create and manage detailed medical records for patient visits.
+- **Prescription System**: Issue medication prescriptions linked to specific medical records.
+- **Role Isolation**: Ensures sensitive clinical data is only accessible to authorized medical staff and the patient owner.
+- **History Tracking**: Maintain a persistent history of clinical diagnoses and treatments.
+
+---
 
 ## Project Structure
 ```text

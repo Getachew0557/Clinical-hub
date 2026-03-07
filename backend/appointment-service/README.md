@@ -4,6 +4,14 @@ A RESTful microservice for managing dental clinic appointments. Built with **Nod
 
 Integrates with the `auth-service` (port 5001) — tokens issued by auth-service are accepted here via a shared `JWT_SECRET`.
 
+## Functionality
+- **Schedule Management**: Create, view, update, and delete appointments.
+- **Role-Based Filtering**: Users see only their relevant appointments.
+- **Status Workflow**: Tracks lifecycle of an appointment (Pending, Confirmed, Cancelled, Completed).
+- **Audit Logs**: Automatically tracks who created the appointment.
+
+---
+
 ---
 
 ## 📁 Project Structure
