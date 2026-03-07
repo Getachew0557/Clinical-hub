@@ -30,9 +30,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
       - name: Run Tests
-        run: npm test -- --passWithNoTests
+        run: npm test --workspaces -- --passWithNoTests
         env:
           DB_HOST: 127.0.0.1
           DB_USER: root
           DB_PASS: root
+          DB_NAME: dental_auth_db
           JWT_SECRET: 9bf0d8211778c3fd59351f8482db2a68c32cbebd1d1f91817cf4867255c93309
