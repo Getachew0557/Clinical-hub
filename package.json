@@ -11,6 +11,7 @@
         "backend/inventory-service",
         "backend/notification-service",
         "backend/report-service",
+        "backend/ai-service",
         "frontend"
     ],
     "scripts": {
@@ -25,6 +26,7 @@
         "dev:inventory": "npm run dev --workspace=backend/inventory-service",
         "dev:notification": "npm run dev --workspace=backend/notification-service",
         "dev:report": "npm run dev --workspace=backend/report-service",
+        "dev:ai": "npm run dev --workspace=backend/ai-service",
         "dev:frontend": "npm run dev --workspace=frontend"
     }
 }
