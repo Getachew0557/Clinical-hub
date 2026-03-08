@@ -49,6 +49,7 @@ export default function PatientListPage() {
         try {
             setLoading(true);
             const data = await patientService.getAllPatients();
+            console.log('Fetched Patients:', data);
             setPatients(data.patients || []);
             setError(null);
         } catch (err) {
@@ -62,14 +63,27 @@ export default function PatientListPage() {
     const fetchMyProfile = async () => {
         try {
             setLoading(true);
-            if (data.patient) {
+            const data = await patientService.getMyProfile();
+            console.log('Fetched My Profile:', data);
+
+            // Backend returns profile directly or wrapped? 
+            // Based on backend/patient-service/src/controllers/patientController.js:75: res.status(200).json(profile);
+            if (data && data.id) {
+                setPatients([data]);
+            } else if (data && data.patient) {
                 setPatients([data.patient]);
             } else {
                 setPatients([]);
             }
             setError(null);
         } catch (err) {
-            setError('Failed to load your profile.');
+            console.error('Fetch Profile Error:', err);
+            if (err.response && err.response.status === 404) {
+                setPatients([]); // No profile found, show empty state
+                setError(null);
+            } else {
+                setError('Failed to load your profile. Please ensure the patient-service is running.');
+            }
         } finally {
             setLoading(false);
         }
@@ -238,9 +252,24 @@ export default function PatientListPage() {
                         ))
                     ) : (
                         <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4 text-slate-400">
-                            <Users size={64} strokeWidth={1} />
-                            <Typography variant="h6" fontWeight={700}>No Patients Found</Typography>
-                            <Typography variant="body2">Try adjusting your search criteria.</Typography>
+                            {role === 'Patient' ? (
+                                <>
+                                    <AlertCircle size={64} strokeWidth={1} className="text-blue-200" />
+                                    <div className="text-center">
+                                        <Typography variant="h6" fontWeight={700} color="text.primary">Profile Not Found</Typography>
+                                        <Typography variant="body2" sx={{ maxWidth: 400, mt: 1 }}>
+                                            It looks like your medical profile hasn't been set up yet.
+                                            Please contact the clinic reception to complete your registration.
+                                        </Typography>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Users size={64} strokeWidth={1} />
+                                    <Typography variant="h6" fontWeight={700}>No Patients Found</Typography>
+                                    <Typography variant="body2">Try adjusting your search criteria.</Typography>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

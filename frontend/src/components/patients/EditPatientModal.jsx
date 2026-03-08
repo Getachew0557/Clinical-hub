@@ -8,7 +8,7 @@ import {
     Typography, Button, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, Grid,
     FormControl, InputLabel, Select, MenuItem,
-    IconButton, CircularProgress, Avatar, Box
+    IconButton, CircularProgress, Avatar, Box, Alert
 } from '@mui/material';
 import patientService from '../../api/patient.service';
 import { useSelector } from 'react-redux';
@@ -126,7 +126,7 @@ export default function EditPatientModal({ open, onClose, onSuccess, patient }) 
 
                         <Grid item xs={12}>
                             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 1, display: 'block' }}>
-                                PATIENT ID: {patient?.id?.slice(0, 8)}
+                                PATIENT ID: {patient?.id ? patient.id.slice(0, 8) : 'NEW'}
                             </Typography>
                         </Grid>
 
