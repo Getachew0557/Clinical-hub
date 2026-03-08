@@ -50,6 +50,26 @@ const patientService = {
     },
 
     /**
+     * Toggle active/inactive status (Admin only)
+     */
+    toggleStatus: async (id, isActive) => {
+        const response = await axios.patch(`${API_URL}/${id}/status`, { isActive }, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    /**
+     * Get my personal patient profile
+     */
+    getMyProfile: async () => {
+        const response = await axios.get(`${API_URL}/my-profile`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    /**
      * Delete patient
      */
     deletePatient: async (id) => {

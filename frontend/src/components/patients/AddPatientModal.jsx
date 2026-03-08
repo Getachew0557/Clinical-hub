@@ -1,0 +1,228 @@
+import React, { useState } from 'react';
+import {
+    X, Save, UserPlus, Phone,
+    Calendar, MapPin, Heart, PlusCircle,
+    UserCircle
+} from 'lucide-react';
+import {
+    Typography, Button, Dialog, DialogTitle,
+    DialogContent, DialogActions, TextField, Grid,
+    FormControl, InputLabel, Select, MenuItem,
+    IconButton, CircularProgress, Box
+} from '@mui/material';
+import patientService from '../../api/patient.service';
+
+export default function AddPatientModal({ open, onClose, onSuccess }) {
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        userId: '',
+        fullName: '',
+        email: '',
+        dateOfBirth: '',
+        gender: '',
+        phone: '',
+        address: '',
+        bloodGroup: '',
+        allergies: '',
+        emergencyContact: ''
+    });
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await patientService.createPatient(formData);
+            alert('Patient registered successfully!');
+            onSuccess();
+            onClose();
+            setFormData({
+                userId: '', fullName: '', email: '',
+                dateOfBirth: '', gender: '',
+                phone: '', address: '', bloodGroup: '',
+                allergies: '', emergencyContact: ''
+            });
+        } catch (err) {
+            alert(err.response?.data?.message || 'Registration failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog
+            open={open}
+            onClose={onClose}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{ sx: { borderRadius: 5 } }}
+        >
+            <form onSubmit={handleSubmit}>
+                <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                <UserPlus size={20} />
+                            </div>
+                            <Typography variant="h6" fontWeight={800}>Register New Patient</Typography>
+                        </div>
+                        <IconButton onClick={onClose} size="small">
+                            <X size={20} />
+                        </IconButton>
+                    </div>
+                </DialogTitle>
+
+                <DialogContent sx={{ p: 4 }}>
+                    <Grid container spacing={3}>
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Auth User ID (UUID)"
+                                name="userId"
+                                fullWidth
+                                required
+                                value={formData.userId}
+                                onChange={handleInputChange}
+                                placeholder="Link to Auth Service ID"
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label="Full Name"
+                                name="fullName"
+                                fullWidth
+                                required
+                                value={formData.fullName}
+                                onChange={handleInputChange}
+                                placeholder="Enter patient's full legal name"
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label="Email Address"
+                                name="email"
+                                type="email"
+                                fullWidth
+                                required
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                placeholder="patient@example.com"
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label="Date of Birth"
+                                name="dateOfBirth"
+                                type="date"
+                                fullWidth
+                                required
+                                InputLabelProps={{ shrink: true }}
+                                value={formData.dateOfBirth}
+                                onChange={handleInputChange}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth required>
+                                <InputLabel>Gender</InputLabel>
+                                <Select
+                                    name="gender"
+                                    value={formData.gender}
+                                    label="Gender"
+                                    onChange={handleInputChange}
+                                >
+                                    <MenuItem value="Male">Male</MenuItem>
+                                    <MenuItem value="Female">Female</MenuItem>
+                                    <MenuItem value="Other">Other</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                label="Phone Number"
+                                name="phone"
+                                fullWidth
+                                required
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                placeholder="+251..."
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <FormControl fullWidth>
+                                <InputLabel>Blood Group</InputLabel>
+                                <Select
+                                    name="bloodGroup"
+                                    value={formData.bloodGroup}
+                                    label="Blood Group"
+                                    onChange={handleInputChange}
+                                >
+                                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                                        <MenuItem key={bg} value={bg}>{bg}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Home Address"
+                                name="address"
+                                fullWidth
+                                multiline
+                                rows={2}
+                                value={formData.address}
+                                onChange={handleInputChange}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Allergies / Medical Conditions"
+                                name="allergies"
+                                fullWidth
+                                multiline
+                                rows={2}
+                                value={formData.allergies}
+                                onChange={handleInputChange}
+                                placeholder="e.g. Penicillin allergy, Diabetes..."
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                label="Emergency Contact (Name & Phone)"
+                                name="emergencyContact"
+                                fullWidth
+                                value={formData.emergencyContact}
+                                onChange={handleInputChange}
+                                placeholder="John Doe - 0911..."
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+
+                <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9', gap: 2 }}>
+                    <Button color="inherit" onClick={onClose} disabled={loading}>Cancel</Button>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        startIcon={<Save size={18} />}
+                        disabled={loading}
+                        sx={{ borderRadius: 3, px: 4 }}
+                    >
+                        {loading ? 'Registering...' : 'Register Patient'}
+                    </Button>
+                </DialogActions>
+            </form>
+        </Dialog>
+    );
+}

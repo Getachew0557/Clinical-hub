@@ -36,6 +36,7 @@ const NAV_BY_ROLE = {
     ],
     Patient: [
         { to: '/', icon: Home, label: 'My Portal', end: true },
+        { to: '/patients', icon: Users, label: 'My Medical Profile' },
         { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
         { to: '/emr', icon: FileText, label: 'My Records' },
         { to: '/billing', icon: Receipt, label: 'My Invoices' },
