@@ -83,7 +83,7 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
             onClose={onClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{ sx: { borderRadius: 5 } }}
+            PaperProps={{ sx: { borderRadius: 5, m: { xs: 2, sm: 4 } } }}
         >
             <form onSubmit={handleSubmit}>
                 <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
@@ -106,7 +106,7 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
                             <CircularProgress size={24} />
                         </div>
                     ) : (
-                        <Grid container spacing={3}>
+                        <Grid container spacing={3} sx={{ mt: 0.5 }}>
                             {isStaff ? (
                                 <Grid item xs={12}>
                                     <FormControl fullWidth required>

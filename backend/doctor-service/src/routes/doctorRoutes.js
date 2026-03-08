@@ -42,7 +42,7 @@ router.get('/my-profile', protect, authorize('Doctor'), getMyProfile);
 // ─── Admin & Receptionist ─────────────────────────────────────────────────
 
 // List all doctors (with optional search/filter)
-router.get('/', protect, authorize('Admin', 'Receptionist'), getAllDoctors);
+router.get('/', protect, authorize('Admin', 'Receptionist', 'Doctor', 'Patient'), getAllDoctors);
 
 // Create doctor profile — Admin only
 router.post('/', protect, authorize('Admin'), upload.single('profilePhoto'), createDoctorProfile);

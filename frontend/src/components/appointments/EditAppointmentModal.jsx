@@ -91,7 +91,7 @@ export default function EditAppointmentModal({ open, onClose, onSuccess, appoint
             onClose={onClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{ sx: { borderRadius: 5 } }}
+            PaperProps={{ sx: { borderRadius: 5, m: { xs: 2, sm: 4 } } }}
         >
             <form onSubmit={handleSubmit}>
                 <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
@@ -109,7 +109,7 @@ export default function EditAppointmentModal({ open, onClose, onSuccess, appoint
                 </DialogTitle>
 
                 <DialogContent sx={{ p: 4 }}>
-                    <Grid container spacing={3}>
+                    <Grid container spacing={3} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
                             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 1, display: 'block' }}>
                                 APPOINTMENT ID: {appointment?.id?.slice(0, 8)}
