@@ -9,6 +9,7 @@ import {
     Menu as MuiMenu, MenuItem, ListItemIcon, Divider, InputBase, Typography,
 } from '@mui/material';
 import { logout } from '../../store/slices/authSlice';
+import NotificationsMenu from './NotificationsMenu';
 
 export default function TopBar({ onMenuClick }) {
     const { user } = useSelector((s) => s.auth);
@@ -60,14 +61,8 @@ export default function TopBar({ onMenuClick }) {
 
             {/* Right: Notifications + User */}
             <div className="flex items-center gap-2">
-                {/* Notification bell with badge */}
-                <Tooltip title="Notifications">
-                    <IconButton size="small" sx={{ color: '#64748b' }} aria-label="Notifications">
-                        <Badge badgeContent={3} color="error">
-                            <Bell size={20} />
-                        </Badge>
-                    </IconButton>
-                </Tooltip>
+                {/* Notification Menu */}
+                <NotificationsMenu />
 
                 {/* User Avatar */}
                 <button
