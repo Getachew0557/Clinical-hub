@@ -17,6 +17,7 @@ import DashboardPage from './pages/DashboardPage';
 import DoctorListPage from './pages/Doctor/DoctorListPage';
 import AppointmentListPage from './pages/Appointment/AppointmentListPage';
 import PatientListPage from './pages/Patient/PatientListPage';
+import InventoryListPage from './pages/Inventory/InventoryListPage';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -98,7 +99,7 @@ const App = () => (
           <Route path="/patients" element={<PatientListPage />} />
           <Route path="/emr" element={<PlaceholderPage title="Medical Records" />} />
           <Route path="/billing" element={<PlaceholderPage title="Billing" />} />
-          <Route path="/inventory" element={<PlaceholderPage title="Inventory" />} />
+          <Route path="/inventory" element={<InventoryListPage />} />
           <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
           <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
