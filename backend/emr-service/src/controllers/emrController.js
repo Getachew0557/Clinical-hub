@@ -53,8 +53,15 @@ export const getPatientRecords = async (req, res) => {
             return res.status(403).json({ message: 'Patient ID required' });
         }
 
+        let whereClause = { patientId };
+
+        // If requester is a Doctor, they only see their own entries for this patient
+        if (req.user.role === 'Doctor') {
+            whereClause.doctorId = req.user.id;
+        }
+
         const records = await MedicalRecord.findAll({
-            where: { patientId },
+            where: whereClause,
             include: [{ model: Prescription, as: 'prescriptions' }],
             order: [['createdAt', 'DESC']]
         });

@@ -89,7 +89,13 @@ export const getMyProfile = async (req, res) => {
  */
 export const getPatientById = async (req, res) => {
     try {
-        const patient = await PatientProfile.findByPk(req.params.id);
+        let patient = await PatientProfile.findByPk(req.params.id);
+
+        // If not found by PK, try searching by userId (in case front-end sends userId)
+        if (!patient) {
+            patient = await PatientProfile.findOne({ where: { userId: req.params.id } });
+        }
+
         if (!patient) {
             return res.status(404).json({ message: 'Patient not found' });
         }

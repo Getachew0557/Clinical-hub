@@ -104,7 +104,7 @@ export default function TopBar({ onMenuClick }) {
                         <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
                     </div>
                     <Divider />
-                    <MenuItem onClick={() => { setAnchorEl(null); navigate('/settings'); }}>
+                    <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile'); }}>
                         <ListItemIcon><Settings size={16} /></ListItemIcon>
                         Settings
                     </MenuItem>

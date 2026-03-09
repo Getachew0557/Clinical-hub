@@ -11,13 +11,14 @@ import {
     IconButton, CircularProgress, Box
 } from '@mui/material';
 import patientService from '../../api/patient.service';
+import authService from '../../api/auth.service';
 
 export default function AddPatientModal({ open, onClose, onSuccess }) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        userId: '',
         fullName: '',
         email: '',
+        password: '',
         dateOfBirth: '',
         gender: '',
         phone: '',
@@ -36,12 +37,25 @@ export default function AddPatientModal({ open, onClose, onSuccess }) {
         e.preventDefault();
         setLoading(true);
         try {
-            await patientService.createPatient(formData);
-            alert('Patient registered successfully!');
+            // 1. Create Auth User
+            const authUser = await authService.register({
+                fullName: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                role: 'Patient'
+            });
+
+            // 2. Create Patient Profile
+            await patientService.createPatient({
+                ...formData,
+                userId: authUser.user.id
+            });
+
+            alert('Patient account and profile registered successfully!');
             onSuccess();
             onClose();
             setFormData({
-                userId: '', fullName: '', email: '',
+                fullName: '', email: '', password: '',
                 dateOfBirth: '', gender: '',
                 phone: '', address: '', bloodGroup: '',
                 allergies: '', emergencyContact: ''
@@ -59,7 +73,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }) {
             onClose={onClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{ sx: { borderRadius: 5 } }}
+            PaperProps={{ sx: { borderRadius: 5, mt: 10 } }}
         >
             <form onSubmit={handleSubmit}>
                 <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
@@ -77,137 +91,140 @@ export default function AddPatientModal({ open, onClose, onSuccess }) {
                 </DialogTitle>
 
                 <DialogContent sx={{ p: 4 }}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Auth User ID (UUID)"
-                                name="userId"
-                                fullWidth
-                                required
-                                value={formData.userId}
-                                onChange={handleInputChange}
-                                placeholder="Link to Auth Service ID"
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Full Name"
-                                name="fullName"
-                                fullWidth
-                                required
-                                value={formData.fullName}
-                                onChange={handleInputChange}
-                                placeholder="Enter patient's full legal name"
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Email Address"
-                                name="email"
-                                type="email"
-                                fullWidth
-                                required
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                placeholder="patient@example.com"
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Date of Birth"
-                                name="dateOfBirth"
-                                type="date"
-                                fullWidth
-                                required
-                                InputLabelProps={{ shrink: true }}
-                                value={formData.dateOfBirth}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Gender</InputLabel>
-                                <Select
-                                    name="gender"
-                                    value={formData.gender}
-                                    label="Gender"
+                    <div className="pt-2">
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={4}>
+                                <TextField
+                                    label="Full Name"
+                                    name="fullName"
+                                    fullWidth
+                                    required
+                                    value={formData.fullName}
                                     onChange={handleInputChange}
-                                >
-                                    <MenuItem value="Male">Male</MenuItem>
-                                    <MenuItem value="Female">Female</MenuItem>
-                                    <MenuItem value="Other">Other</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                                    placeholder="Full Name"
+                                />
+                            </Grid>
 
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Phone Number"
-                                name="phone"
-                                fullWidth
-                                required
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                placeholder="+251..."
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
-                                <InputLabel>Blood Group</InputLabel>
-                                <Select
-                                    name="bloodGroup"
-                                    value={formData.bloodGroup}
-                                    label="Blood Group"
+                            <Grid item xs={12} md={4}>
+                                <TextField
+                                    label="Email Address"
+                                    name="email"
+                                    type="email"
+                                    fullWidth
+                                    required
+                                    value={formData.email}
                                     onChange={handleInputChange}
-                                >
-                                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
-                                        <MenuItem key={bg} value={bg}>{bg}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                                    placeholder="patient@example.com"
+                                />
+                            </Grid>
 
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Home Address"
-                                name="address"
-                                fullWidth
-                                multiline
-                                rows={2}
-                                value={formData.address}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
+                            <Grid item xs={12} md={4}>
+                                <TextField
+                                    label="Password"
+                                    name="password"
+                                    type="password"
+                                    fullWidth
+                                    required
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    placeholder="Set password"
+                                />
+                            </Grid>
 
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Allergies / Medical Conditions"
-                                name="allergies"
-                                fullWidth
-                                multiline
-                                rows={2}
-                                value={formData.allergies}
-                                onChange={handleInputChange}
-                                placeholder="e.g. Penicillin allergy, Diabetes..."
-                            />
-                        </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label="Date of Birth"
+                                    name="dateOfBirth"
+                                    type="date"
+                                    fullWidth
+                                    required
+                                    InputLabelProps={{ shrink: true }}
+                                    value={formData.dateOfBirth}
+                                    onChange={handleInputChange}
+                                />
+                            </Grid>
 
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Emergency Contact (Name & Phone)"
-                                name="emergencyContact"
-                                fullWidth
-                                value={formData.emergencyContact}
-                                onChange={handleInputChange}
-                                placeholder="John Doe - 0911..."
-                            />
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth required>
+                                    <InputLabel>Gender</InputLabel>
+                                    <Select
+                                        name="gender"
+                                        value={formData.gender}
+                                        label="Gender"
+                                        onChange={handleInputChange}
+                                    >
+                                        <MenuItem value="Male">Male</MenuItem>
+                                        <MenuItem value="Female">Female</MenuItem>
+                                        <MenuItem value="Other">Other</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label="Phone Number"
+                                    name="phone"
+                                    fullWidth
+                                    required
+                                    value={formData.phone}
+                                    onChange={handleInputChange}
+                                    placeholder="+251..."
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Blood Group</InputLabel>
+                                    <Select
+                                        name="bloodGroup"
+                                        value={formData.bloodGroup}
+                                        label="Blood Group"
+                                        onChange={handleInputChange}
+                                    >
+                                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                                            <MenuItem key={bg} value={bg}>{bg}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <TextField
+                                    label="Home Address"
+                                    name="address"
+                                    fullWidth
+                                    multiline
+                                    rows={2}
+                                    value={formData.address}
+                                    onChange={handleInputChange}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <TextField
+                                    label="Allergies / Medical Conditions"
+                                    name="allergies"
+                                    fullWidth
+                                    multiline
+                                    rows={2}
+                                    value={formData.allergies}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g. Penicillin allergy, Diabetes..."
+                                />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <TextField
+                                    label="Emergency Contact (Name & Phone)"
+                                    name="emergencyContact"
+                                    fullWidth
+                                    value={formData.emergencyContact}
+                                    onChange={handleInputChange}
+                                    placeholder="John Doe - 0911..."
+                                />
+                            </Grid>
                         </Grid>
-                    </Grid>
+                    </div>
                 </DialogContent>
 
                 <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9', gap: 2 }}>

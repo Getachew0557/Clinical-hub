@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { login, reset } from "../../store/slices/authSlice";
 import {
@@ -28,12 +28,16 @@ export default function LoginPage() {
         (state) => state.auth
     );
 
+    const location = useLocation();
+
     useEffect(() => {
         if (isSuccess || user) {
-            navigate("/");
+            const params = new URLSearchParams(location.search);
+            const redirect = params.get("redirect");
+            navigate(redirect || "/dashboard");
         }
         dispatch(reset());
-    }, [user, isSuccess, navigate, dispatch]);
+    }, [user, isSuccess, navigate, dispatch, location]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
 import Appointment from '../models/Appointment.js';
+import moment from 'moment';
+import axios from 'axios';
 
 // ─── Helper ────────────────────────────────────────────────────────────────
 const PATIENT_EDITABLE_STATUSES = ['Pending'];
@@ -35,12 +37,106 @@ export const createAppointment = async (req, res) => {
             reason,
             notes: notes || null,
             createdBy: req.user.id,
+            isAdminApproved: ['Admin', 'Receptionist', 'Doctor'].includes(req.user.role)
         });
+
+        // ─── TRIGGER NOTIFICATIONS ──────────────────────────────────────────
+        try {
+            const authHeader = { headers: { Authorization: req.headers.authorization } };
+            const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
+            const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+            const patientUrl = process.env.PATIENT_SERVICE_URL;
+
+            // Fetch Doctor and Patient names for better messages
+            const [docRes, patRes] = await Promise.all([
+                axios.get(`${doctorUrl}/${doctorId}`, authHeader).catch(() => ({ data: { fullName: 'Doctor' } })),
+                axios.get(`${patientUrl}/${resolvedPatientId}`, authHeader).catch(() => ({ data: { fullName: 'Patient' } }))
+            ]);
+
+            const doctorName = docRes.data.fullName || 'Doctor';
+            const patientName = patRes.data.fullName || 'Patient';
+
+            // Notify Patient
+            await axios.post(notifyUrl, {
+                userId: resolvedPatientId,
+                title: 'Appointment Booked',
+                message: `Your appointment with ${doctorName} is confirmed for ${appointmentDate} at ${appointmentTime}.`,
+                type: 'info',
+                link: '/appointments'
+            }, authHeader).catch(err => console.error('Patient Notification Error:', err.message));
+
+            // Notify Doctor
+            await axios.post(notifyUrl, {
+                userId: doctorId,
+                title: 'New Appointment',
+                message: `New booking received from ${patientName} for ${appointmentDate} at ${appointmentTime}.`,
+                type: 'info',
+                link: '/appointments'
+            }, authHeader).catch(err => console.error('Doctor Notification Error:', err.message));
+
+        } catch (notifyError) {
+            console.error('Core Notification Logic Error:', notifyError.message);
+        }
 
         res.status(201).json({
             message: 'Appointment created successfully',
             appointment
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * GET /api/appointments/availability/:doctorId
+ * ?date=YYYY-MM-DD
+ * Calculates 30-min slots from 08:00 to 18:00.
+ * Slot is unavailable if count >= 2.
+ */
+export const getAvailability = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const { date } = req.query;
+
+        if (!doctorId || !date) {
+            return res.status(400).json({ message: 'doctorId and date are required' });
+        }
+
+        // Get all appointments for this doctor on this date
+        const appointments = await Appointment.findAll({
+            where: {
+                doctorId,
+                appointmentDate: date,
+                status: { [Op.ne]: 'Cancelled' }
+            }
+        });
+
+        // Configurable limits
+        const startHour = 8;
+        const endHour = 18;
+        const slotDuration = 30; // minutes
+        const maxPatientsPerSlot = 2;
+
+        const slots = [];
+        let current = moment(date).hour(startHour).minute(0).second(0);
+        const end = moment(date).hour(endHour).minute(0).second(0);
+
+        while (current.isBefore(end)) {
+            const timeStr = current.format('HH:mm:ss');
+            const slotAppointments = appointments.filter(a => a.appointmentTime === timeStr);
+
+            slots.push({
+                time: current.format('HH:mm'),
+                timeValue: timeStr,
+                available: slotAppointments.length < maxPatientsPerSlot,
+                bookedCount: slotAppointments.length,
+                remainingSpots: maxPatientsPerSlot - slotAppointments.length
+            });
+
+            current.add(slotDuration, 'minutes');
+        }
+
+        res.status(200).json({ slots });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -80,15 +176,48 @@ export const getAllAppointments = async (req, res) => {
  */
 export const getMyAppointments = async (req, res) => {
     try {
+        const where = {
+            [Op.or]: [
+                { patientId: req.user.id },
+                { doctorId: req.user.id }
+            ]
+        };
+
+        // If Doctor, only show Pending if approved. (But show all non-pending regardless of approval)
+        if (req.user.role === 'Doctor') {
+            where[Op.and] = [
+                {
+                    [Op.or]: [
+                        { status: { [Op.ne]: 'Pending' } },
+                        { isAdminApproved: true }
+                    ]
+                }
+            ];
+        }
+
         const appointments = await Appointment.findAll({
-            where: {
-                [Op.or]: [
-                    { patientId: req.user.id },
-                    { doctorId: req.user.id }
-                ]
-            },
+            where,
             order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
         });
+
+        // ─── If Doctor, append Patient Details ───
+        if (req.user.role === 'Doctor' || req.user.role === 'Admin') {
+            const authHeader = { headers: { Authorization: req.headers.authorization } };
+            const patientUrl = process.env.PATIENT_SERVICE_URL;
+
+            const patientsRes = await axios.get(patientUrl, authHeader).catch(() => ({ data: { patients: [] } }));
+            const patientsList = patientsRes.data.patients || [];
+
+            const enriched = appointments.map(apt => {
+                const patient = patientsList.find(p => p.id === apt.patientId || p.userId === apt.patientId);
+                return {
+                    ...apt.toJSON(),
+                    patientName: patient ? patient.fullName : 'Guest Patient',
+                    patientDetails: patient || null
+                };
+            });
+            return res.status(200).json({ count: appointments.length, appointments: enriched });
+        }
 
         res.status(200).json({ count: appointments.length, appointments });
     } catch (error) {
@@ -134,7 +263,7 @@ export const getAppointmentById = async (req, res) => {
 export const updateAppointmentStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const validStatuses = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
+        const validStatuses = ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];
 
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
@@ -153,6 +282,29 @@ export const updateAppointmentStatus = async (req, res) => {
 
         res.status(200).json({
             message: `Status updated from '${previousStatus}' to '${status}'`,
+            appointment
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * PATCH /api/appointments/:id/approve
+ * Admin & Receptionist only.
+ */
+export const approveAppointment = async (req, res) => {
+    try {
+        const appointment = await Appointment.findByPk(req.params.id);
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        appointment.isAdminApproved = true;
+        await appointment.save();
+
+        res.status(200).json({
+            message: 'Appointment approved by admin/receptionist',
             appointment
         });
     } catch (error) {

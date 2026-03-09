@@ -72,6 +72,16 @@ const DoctorProfile = sequelize.define('DoctorProfile', {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true
     },
+    rating: {
+        type: DataTypes.FLOAT,
+        defaultValue: 5.0,
+        comment: 'Doctor rating out of 5'
+    },
+    reviewsCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: 'Total number of reviews'
+    },
     profilePhoto: {
         type: DataTypes.STRING,
         allowNull: true,

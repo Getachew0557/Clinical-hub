@@ -41,6 +41,9 @@ router.get('/my-profile', protect, authorize('Doctor'), getMyProfile);
 
 // ─── Admin & Receptionist ─────────────────────────────────────────────────
 
+// Publicly list all doctors (for landing page)
+router.get('/public', getAllDoctors);
+
 // List all doctors (with optional search/filter)
 router.get('/', protect, authorize('Admin', 'Receptionist', 'Doctor', 'Patient'), getAllDoctors);
 
@@ -55,8 +58,8 @@ router.delete('/:id', protect, authorize('Admin'), deleteDoctorProfile);
 
 // ─── Per-profile (ownership checked inside controller) ───────────────────
 
-// Get one by ID (Doctor: own only; Admin/Receptionist: any)
-router.get('/:id', protect, authorize('Admin', 'Receptionist', 'Doctor'), getDoctorById);
+// Get one by ID (Doctor: own only; Admin/Receptionist/Patient: any)
+router.get('/:id', protect, authorize('Admin', 'Receptionist', 'Doctor', 'Patient'), getDoctorById);
 
 // Update (Admin: all fields; Doctor: limited fields)
 router.put('/:id', protect, authorize('Admin', 'Doctor'), upload.single('profilePhoto'), updateDoctorProfile);

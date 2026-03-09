@@ -89,6 +89,20 @@ export default function AppointmentListPage() {
         }
     };
 
+    const handleApprove = async () => {
+        if (!selectedApt) return;
+        try {
+            await appointmentService.approveAppointment(selectedApt.id);
+            setAppointments(prev => prev.map(a =>
+                a.id === selectedApt.id ? { ...a, isAdminApproved: true } : a
+            ));
+            handleMenuClose();
+            alert('Appointment approved successfully!');
+        } catch (err) {
+            alert('Failed to approve appointment');
+        }
+    };
+
     const handleDelete = async () => {
         if (!selectedApt || !window.confirm('Are you sure you want to delete this appointment?')) return;
         try {
@@ -110,25 +124,34 @@ export default function AppointmentListPage() {
 
         if (tabValue === 0) return a.status === 'Pending' && matchesSearch;
         if (tabValue === 1) return a.status === 'Confirmed' && matchesSearch;
-        if (tabValue === 2) return a.status === 'Completed' && matchesSearch;
-        if (tabValue === 3) return a.status === 'Cancelled' && matchesSearch;
+        if (tabValue === 2) return a.status === 'In Progress' && matchesSearch;
+        if (tabValue === 3) return a.status === 'Completed' && matchesSearch;
+        if (tabValue === 4) return a.status === 'Cancelled' && matchesSearch;
         return matchesSearch;
     });
 
-    const getStatusChip = (status) => {
+    const getStatusChip = (apt) => {
+        const { status, isAdminApproved } = apt;
         const configs = {
             'Pending': { color: 'warning', icon: AlertCircle },
             'Confirmed': { color: 'info', icon: CheckCircle },
+            'In Progress': { color: 'primary', icon: DoctorIcon },
             'Completed': { color: 'success', icon: CheckCircle },
             'Cancelled': { color: 'error', icon: XCircle },
         };
         const config = configs[status] || configs.Pending;
+
+        let label = status;
+        if (status === 'Pending' && isStaff) {
+            label = isAdminApproved ? 'Pending (Approved)' : 'Pending (Review Required)';
+        }
+
         return (
             <Chip
-                label={status}
+                label={label}
                 color={config.color}
                 size="small"
-                variant="outlined"
+                variant={status === 'Pending' && !isAdminApproved ? 'filled' : 'outlined'}
                 icon={<config.icon size={14} />}
                 sx={{ fontWeight: 700, borderRadius: 2 }}
             />
@@ -173,6 +196,7 @@ export default function AppointmentListPage() {
                         >
                             <Tab label="Pending" />
                             <Tab label="Confirmed" />
+                            <Tab label="In Progress" />
                             <Tab label="Completed" />
                             <Tab label="Cancelled" />
                         </Tabs>
@@ -238,7 +262,7 @@ export default function AppointmentListPage() {
                                                     <div className="flex flex-wrap items-center gap-4 mt-2">
                                                         <div className="flex items-center gap-1.5 text-slate-500">
                                                             <User size={14} />
-                                                            <Typography variant="caption">Patient ID: {apt.patientId.slice(0, 8)}</Typography>
+                                                            <Typography variant="caption">Patient Name: {apt.patientName || 'Guest'}</Typography>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 text-slate-500">
                                                             <DoctorIcon size={14} />
@@ -247,7 +271,7 @@ export default function AppointmentListPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-3">
-                                                    {getStatusChip(apt.status)}
+                                                    {getStatusChip(apt)}
                                                     <IconButton size="small" onClick={(e) => handleMenuOpen(e, apt)}>
                                                         <MoreHorizontal size={18} />
                                                     </IconButton>
@@ -287,19 +311,37 @@ export default function AppointmentListPage() {
                     sx: { borderRadius: 3, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', mt: 1 }
                 }}
             >
+                {selectedApt?.status === 'Pending' && isStaff && !selectedApt?.isAdminApproved && (
+                    <MenuItem onClick={handleApprove} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                        <CheckCircle size={16} className="text-blue-600" />
+                        <span className="text-sm font-medium text-blue-600">Approve Booking</span>
+                    </MenuItem>
+                )}
                 {selectedApt?.status === 'Pending' && isStaff && (
                     <MenuItem onClick={() => handleUpdateStatus('Confirmed')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <CheckCircle size={16} className="text-green-500" />
                         <span className="text-sm font-medium">Confirm Booking</span>
                     </MenuItem>
                 )}
-                {selectedApt?.status === 'Confirmed' && (role === 'Doctor' || isStaff) && (
-                    <MenuItem onClick={() => handleUpdateStatus('Completed')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
-                        <CheckCircle size={16} className="text-blue-500" />
-                        <span className="text-sm font-medium">Mark Completed</span>
+                {selectedApt?.status === 'Confirmed' && role === 'Doctor' && (
+                    <MenuItem
+                        onClick={() => {
+                            handleUpdateStatus('In Progress');
+                            navigate(`/emr?patientId=${selectedApt.patientId}`);
+                        }}
+                        sx={{ gap: 1.5, py: 1.2, px: 2 }}
+                    >
+                        <DoctorIcon size={16} className="text-primary-main" />
+                        <span className="text-sm font-medium">Start Consultation</span>
                     </MenuItem>
                 )}
-                {['Pending', 'Confirmed'].includes(selectedApt?.status) && (
+                {selectedApt?.status === 'In Progress' && role === 'Doctor' && (
+                    <MenuItem onClick={() => handleUpdateStatus('Completed')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                        <CheckCircle size={16} className="text-blue-500" />
+                        <span className="text-sm font-medium">Complete & Mark Done</span>
+                    </MenuItem>
+                )}
+                {['Pending', 'Confirmed', 'In Progress'].includes(selectedApt?.status) && (
                     <MenuItem onClick={() => handleUpdateStatus('Cancelled')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <XCircle size={16} className="text-red-500" />
                         <span className="text-sm font-medium">Cancel Appointment</span>
@@ -310,6 +352,13 @@ export default function AppointmentListPage() {
                     <Edit size={16} className="text-blue-500" />
                     <span className="text-sm font-medium">Edit / Reschedule</span>
                 </MenuItem>
+
+                {role === 'Admin' && (
+                    <MenuItem onClick={() => navigate(`/emr?patientId=${selectedApt.patientId}`)} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                        <FileIcon size={16} className="text-blue-500" />
+                        <span className="text-sm font-medium">View Medical Records</span>
+                    </MenuItem>
+                )}
 
                 {role === 'Admin' && (
                     <MenuItem onClick={handleDelete} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
@@ -336,7 +385,7 @@ export default function AppointmentListPage() {
                 appointment={selectedApt}
                 onSuccess={fetchAppointments}
             />
-        </div>
+        </div >
     );
 }
 

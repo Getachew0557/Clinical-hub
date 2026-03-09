@@ -9,11 +9,21 @@ const getAuthHeader = () => {
 
 const doctorService = {
     /**
-     * Get all doctors (Admin/Receptionist)
+     * Get all doctors (Admin/Receptionist/Doctor/Patient)
      */
     getAllDoctors: async (params = {}) => {
         const response = await axios.get(API_URL, {
             headers: getAuthHeader(),
+            params
+        });
+        return response.data;
+    },
+
+    /**
+     * Get public doctor list (No auth required on backend for /public)
+     */
+    getPublicDoctors: async (params = {}) => {
+        const response = await axios.get(`${API_URL}/public`, {
             params
         });
         return response.data;

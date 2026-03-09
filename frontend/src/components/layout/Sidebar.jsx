@@ -4,44 +4,44 @@ import { useSelector } from 'react-redux';
 import {
     LayoutDashboard, Users, CalendarDays, FileText, Receipt,
     Package, BarChart3, Settings, ChevronLeft, ChevronRight,
-    X, Stethoscope, UserCog, ClipboardList, Home,
+    X, Stethoscope, UserCog, ClipboardList, Home, ShieldCheck
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 // ── Role-based nav items ─────────────────────────────────
 const NAV_BY_ROLE = {
     Admin: [
-        { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/patients', icon: Users, label: 'Patients' },
         { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
+        { to: '/receptionists', icon: ShieldCheck, label: 'Receptionists' },
         { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
         { to: '/emr', icon: FileText, label: 'Medical Records' },
-        { to: '/billing', icon: Receipt, label: 'Billing' },
         { to: '/inventory', icon: Package, label: 'Inventory' },
         { to: '/reports', icon: BarChart3, label: 'Reports' },
-        { to: '/settings', icon: Settings, label: 'Settings' },
+        { to: '/profile', icon: UserCog, label: 'My Settings' },
     ],
     Doctor: [
-        { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/appointments', icon: CalendarDays, label: 'My Appointments' },
         { to: '/emr', icon: FileText, label: 'Medical Records' },
         { to: '/patients', icon: Users, label: 'My Patients' },
-        { to: '/inventory', icon: Package, label: 'Inventory' },
+        { to: '/profile', icon: UserCog, label: 'My Settings' },
     ],
     Receptionist: [
-        { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/patients', icon: Users, label: 'Patients' },
         { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
         { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
-        { to: '/billing', icon: Receipt, label: 'Billing' },
         { to: '/inventory', icon: Package, label: 'Inventory' },
+        { to: '/profile', icon: UserCog, label: 'My Settings' },
     ],
     Patient: [
-        { to: '/', icon: Home, label: 'My Portal', end: true },
-        { to: '/patients', icon: Users, label: 'My Medical Profile' },
-        { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
+        { to: '/dashboard', icon: Home, label: 'My Portal', end: true },
+        { to: '/appointments', icon: CalendarDays, label: 'Bookings' },
         { to: '/emr', icon: FileText, label: 'My Records' },
-        { to: '/billing', icon: Receipt, label: 'My Invoices' },
+        { to: '/patients', icon: Users, label: 'My Identity' },
+        { to: '/profile', icon: UserCog, label: 'Account' },
     ],
 };
 

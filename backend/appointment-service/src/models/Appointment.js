@@ -30,7 +30,7 @@ const Appointment = sequelize.define('Appointment', {
         allowNull: false
     },
     status: {
-        type: DataTypes.ENUM('Pending', 'Confirmed', 'Cancelled', 'Completed'),
+        type: DataTypes.ENUM('Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'),
         defaultValue: 'Pending'
     },
     notes: {
@@ -42,6 +42,11 @@ const Appointment = sequelize.define('Appointment', {
         type: DataTypes.UUID,
         allowNull: false,
         comment: 'UUID of the user who created this appointment'
+    },
+    isAdminApproved: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        comment: 'Must be true for Doctors to see/confirm the appointment'
     }
 });
 

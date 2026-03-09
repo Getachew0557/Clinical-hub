@@ -161,35 +161,36 @@ export default function ReportsPage() {
         }
     };
 
-    // Filter Logic
+    const safeSearch = searchTerm.toLowerCase();
+
     const filteredPatients = detailedData.patients.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.phone.includes(searchTerm)
+        (p.name || p.fullName || '').toLowerCase().includes(safeSearch) ||
+        String(p.id || '').toLowerCase().includes(safeSearch) ||
+        (p.phone || '').includes(searchTerm)
     );
 
     const filteredMedications = detailedData.medications.filter(m =>
-        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.category.toLowerCase().includes(searchTerm.toLowerCase())
+        (m.name || '').toLowerCase().includes(safeSearch) ||
+        (m.category || '').toLowerCase().includes(safeSearch)
     );
 
     const filteredBillings = detailedData.billings.filter(b =>
-        b.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.status.toLowerCase().includes(searchTerm.toLowerCase())
+        (b.patient || '').toLowerCase().includes(safeSearch) ||
+        (b.status || '').toLowerCase().includes(safeSearch)
     );
 
     const filteredAppointments = detailedData.appointments.filter(a =>
-        a.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.id.toLowerCase().includes(searchTerm.toLowerCase())
+        (a.patientName || '').toLowerCase().includes(safeSearch) ||
+        (a.doctorName || '').toLowerCase().includes(safeSearch) ||
+        (a.status || '').toLowerCase().includes(safeSearch) ||
+        String(a.id || '').toLowerCase().includes(safeSearch)
     );
 
     const filteredDoctors = detailedData.doctors.filter(d =>
-        d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.id.toLowerCase().includes(searchTerm.toLowerCase())
+        (d.name || d.fullName || '').toLowerCase().includes(safeSearch) ||
+        (d.specialty || '').toLowerCase().includes(safeSearch) ||
+        (d.department || '').toLowerCase().includes(safeSearch) ||
+        String(d.id || '').toLowerCase().includes(safeSearch)
     );
 
     const handleExportClick = (event) => setExportAnchorEl(event.currentTarget);

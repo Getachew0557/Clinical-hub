@@ -12,6 +12,7 @@ import {
     FormControl, InputLabel, Select
 } from '@mui/material';
 import doctorService from '../../api/doctor.service';
+import authService from '../../api/auth.service';
 import { useSelector } from 'react-redux';
 
 export default function DoctorListPage() {
@@ -27,7 +28,7 @@ export default function DoctorListPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [formMode, setFormMode] = useState('add'); // 'add' or 'edit'
     const [formData, setFormData] = useState({
-        userId: '', fullName: '', email: '', phone: '',
+        fullName: '', email: '', password: '', phone: '',
         specialization: '', licenseNumber: '', experience: '',
         qualification: '', bio: '', consultationFee: ''
     });
@@ -65,7 +66,7 @@ export default function DoctorListPage() {
             setSelectedDoctor(doctor);
         } else {
             setFormData({
-                userId: '', fullName: '', email: '', phone: '',
+                fullName: '', email: '', password: '', phone: '',
                 specialization: '', licenseNumber: '', experience: '',
                 qualification: '', bio: '', consultationFee: ''
             });
@@ -93,8 +94,20 @@ export default function DoctorListPage() {
         setSubmitting(true);
         try {
             if (formMode === 'add') {
-                await doctorService.createDoctor(formData);
-                alert('Doctor profile created successfully!');
+                // 1. Create Auth User
+                const authUser = await authService.register({
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    password: formData.password,
+                    role: 'Doctor'
+                });
+
+                // 2. Create Doctor Profile with returned userId
+                await doctorService.createDoctor({
+                    ...formData,
+                    userId: authUser.user.id
+                });
+                alert('Doctor account and profile created successfully!');
             } else {
                 await doctorService.updateDoctor(selectedDoctor.id, formData);
                 alert('Doctor profile updated successfully!');
@@ -278,7 +291,7 @@ export default function DoctorListPage() {
                 onClose={handleCloseModal}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{ sx: { borderRadius: 5 } }}
+                PaperProps={{ sx: { borderRadius: 5, mt: 10 } }}
             >
                 <form onSubmit={handleSubmit}>
                     <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
@@ -298,112 +311,115 @@ export default function DoctorListPage() {
                     </DialogTitle>
 
                     <DialogContent sx={{ p: 4 }}>
-                        <Grid container spacing={3}>
-                            {formMode === 'add' && (
-                                <Grid item xs={12} md={6}>
+                        <div className="pt-2">
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={4}>
                                     <TextField
-                                        label="System User ID"
-                                        name="userId"
+                                        label="Full Name"
+                                        name="fullName"
                                         fullWidth
                                         required
-                                        placeholder="Link to Auth User ID"
-                                        value={formData.userId}
+                                        value={formData.fullName}
                                         onChange={handleInputChange}
                                     />
                                 </Grid>
-                            )}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Full Name"
-                                    name="fullName"
-                                    fullWidth
-                                    required
-                                    value={formData.fullName}
-                                    onChange={handleInputChange}
-                                />
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Email Address"
+                                        name="email"
+                                        type="email"
+                                        fullWidth
+                                        required
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                {formMode === 'add' && (
+                                    <Grid item xs={12} md={4}>
+                                        <TextField
+                                            label="Password"
+                                            name="password"
+                                            type="password"
+                                            fullWidth
+                                            required
+                                            placeholder="Set password"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Grid>
+                                )}
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Phone Number"
+                                        name="phone"
+                                        fullWidth
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Specialization"
+                                        name="specialization"
+                                        fullWidth
+                                        required
+                                        placeholder="e.g. Orthodontist"
+                                        value={formData.specialization}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="License Number"
+                                        name="licenseNumber"
+                                        fullWidth
+                                        required
+                                        value={formData.licenseNumber}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Experience (Years)"
+                                        name="experience"
+                                        type="number"
+                                        fullWidth
+                                        value={formData.experience}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Qualification"
+                                        name="qualification"
+                                        fullWidth
+                                        value={formData.qualification}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Consultation Fee"
+                                        name="consultationFee"
+                                        type="number"
+                                        fullWidth
+                                        value={formData.consultationFee}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        label="Brief Bio"
+                                        name="bio"
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        value={formData.bio}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Email Address"
-                                    name="email"
-                                    type="email"
-                                    fullWidth
-                                    required
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Phone Number"
-                                    name="phone"
-                                    fullWidth
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Specialization"
-                                    name="specialization"
-                                    fullWidth
-                                    required
-                                    placeholder="e.g. Orthodontist"
-                                    value={formData.specialization}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="License Number"
-                                    name="licenseNumber"
-                                    fullWidth
-                                    required
-                                    value={formData.licenseNumber}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Experience (Years)"
-                                    name="experience"
-                                    type="number"
-                                    fullWidth
-                                    value={formData.experience}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Qualification"
-                                    name="qualification"
-                                    fullWidth
-                                    value={formData.qualification}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <TextField
-                                    label="Consultation Fee"
-                                    name="consultationFee"
-                                    type="number"
-                                    fullWidth
-                                    value={formData.consultationFee}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Brief Bio"
-                                    name="bio"
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    value={formData.bio}
-                                    onChange={handleInputChange}
-                                />
-                            </Grid>
-                        </Grid>
+                        </div>
                     </DialogContent>
 
                     <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9', gap: 2 }}>

@@ -69,13 +69,16 @@ export default function PatientEMRPage() {
     const fetchData = async (id) => {
         try {
             setLoading(true);
-            const [pData, rData] = await Promise.all([
-                patientService.getPatientById(id),
-                emrService.getPatientRecords(id)
-            ]);
+            // 1. Get Patient Details First (Resolves the Profile ID regardless of if userId or profileId was passed)
+            const pData = await patientService.getPatientById(id);
             setPatient(pData);
-            console.log('EMR Records Response:', rData);
-            setRecords(rData.records || []);
+
+            if (pData?.id) {
+                // 2. Fetch EMR Records using the resolved Profile ID
+                const rData = await emrService.getPatientRecords(pData.id);
+                console.log('EMR Records Response:', rData);
+                setRecords(rData.records || []);
+            }
             setError(null);
         } catch (err) {
             console.error('Fetch EMR Error:', err);

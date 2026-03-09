@@ -71,11 +71,32 @@ const appointmentService = {
     },
 
     /**
+     * Approve appointment (Admin/Receptionist)
+     */
+    approveAppointment: async (id) => {
+        const response = await axios.patch(`${API_URL}/${id}/approve`, {}, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    /**
      * Delete appointment (Admin only)
      */
     deleteAppointment: async (id) => {
         const response = await axios.delete(`${API_URL}/${id}`, {
             headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    /**
+     * Get availability slots for a doctor on a specific date
+     */
+    getAvailability: async (doctorId, date) => {
+        const response = await axios.get(`${API_URL}/availability/${doctorId}`, {
+            headers: getAuthHeader(),
+            params: { date }
         });
         return response.data;
     }

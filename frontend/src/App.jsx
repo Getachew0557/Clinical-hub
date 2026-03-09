@@ -22,6 +22,10 @@ import InventoryListPage from './pages/Inventory/InventoryListPage';
 // New Pages
 import PatientEMRPage from './pages/Patient/PatientEMRPage';
 import ReportsPage from './pages/Admin/ReportsPage';
+import LandingPage from './pages/LandingPage';
+import BookingPage from './pages/Appointment/BookingPage';
+import ProfilePage from './pages/Common/ProfilePage';
+import ReceptionistListPage from './pages/Admin/ReceptionistListPage';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -82,6 +86,9 @@ const App = () => (
     <CssBaseline />
     <Router>
       <Routes>
+        {/* Landing Page */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* ── Public auth routes ── */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
@@ -97,7 +104,7 @@ const App = () => (
             </ProtectedRoute>
           }
         >
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/doctors" element={<DoctorListPage />} />
           <Route path="/appointments" element={<AppointmentListPage />} />
           <Route path="/patients" element={<PatientListPage />} />
@@ -105,6 +112,9 @@ const App = () => (
           <Route path="/billing" element={<PlaceholderPage title="Billing" />} />
           <Route path="/inventory" element={<InventoryListPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/receptionists" element={<ReceptionistListPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/book/:doctorId" element={<BookingPage />} />
           <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
 

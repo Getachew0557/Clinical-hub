@@ -22,7 +22,6 @@ export default function RegisterPage() {
         lastName: "",
         email: "",
         phone: "",
-        role: "patient",
         password: "",
         confirmPassword: ""
     });
@@ -38,7 +37,7 @@ export default function RegisterPage() {
 
     useEffect(() => {
         if (isSuccess || user) {
-            navigate("/");
+            navigate("/dashboard");
         }
         // Reset auth state on unmount or if error/success changes
         if (isError || isSuccess) {
@@ -67,7 +66,7 @@ export default function RegisterPage() {
             fullName: `${formData.firstName} ${formData.lastName}`,
             email: formData.email,
             password: formData.password,
-            role: formData.role.charAt(0).toUpperCase() + formData.role.slice(1) // Capitalize role
+            role: 'Patient'
         };
 
         dispatch(register(registrationData));
@@ -160,19 +159,6 @@ export default function RegisterPage() {
                                 variant="outlined"
                             />
 
-                            <TextField
-                                fullWidth
-                                select
-                                label="Role"
-                                name="role"
-                                value={formData.role}
-                                onChange={onChange}
-                                variant="outlined"
-                            >
-                                <MenuItem value="patient">Patient</MenuItem>
-                                <MenuItem value="doctor">Doctor</MenuItem>
-                                <MenuItem value="receptionist">Receptionist</MenuItem>
-                            </TextField>
 
                             <TextField
                                 fullWidth
