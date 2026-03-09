@@ -1,0 +1,13 @@
+{
+    "watch": [
+        "server.js",
+        "src"
+    ],
+    "ext": "js,json",
+    "ignore": [
+        "node_modules",
+        ".env",
+        "temp/*"
+    ],
+    "delay": "2500"
+}
