@@ -151,18 +151,35 @@ export const getAvailability = async (req, res) => {
  */
 export const getAllAppointments = async (req, res) => {
     try {
-        const { status, date } = req.query;
+        const { status, date, doctorId } = req.query;
         const where = {};
 
         if (status) where.status = status;
         if (date) where.appointmentDate = date;
+        if (doctorId) where.doctorId = doctorId;
 
         const appointments = await Appointment.findAll({
             where,
             order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
         });
 
-        res.status(200).json({ count: appointments.length, appointments });
+        // ─── Enrich with Patient Names ───
+        const authHeader = { headers: { Authorization: req.headers.authorization } };
+        const patientUrl = process.env.PATIENT_SERVICE_URL;
+
+        const patientsRes = await axios.get(patientUrl, authHeader).catch(() => ({ data: { patients: [] } }));
+        const patientsList = patientsRes.data.patients || [];
+
+        const enriched = appointments.map(apt => {
+            const patient = patientsList.find(p => p.userId === apt.patientId || p.id === apt.patientId);
+            return {
+                ...apt.toJSON(),
+                patientName: patient ? patient.fullName : 'Guest Patient',
+                patientDetails: patient || null
+            };
+        });
+
+        res.status(200).json({ count: appointments.length, appointments: enriched });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -200,8 +217,8 @@ export const getMyAppointments = async (req, res) => {
             order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
         });
 
-        // ─── If Doctor, append Patient Details ───
-        if (req.user.role === 'Doctor' || req.user.role === 'Admin') {
+        // ─── If Staff/Admin, append Patient Details ───
+        if (['Doctor', 'Admin', 'Receptionist'].includes(req.user.role)) {
             const authHeader = { headers: { Authorization: req.headers.authorization } };
             const patientUrl = process.env.PATIENT_SERVICE_URL;
 
@@ -280,6 +297,55 @@ export const updateAppointmentStatus = async (req, res) => {
         appointment.status = status;
         await appointment.save();
 
+        // ─── TRIGGER NOTIFICATIONS ON STATUS CHANGE ───
+        try {
+            const authHeader = { headers: { Authorization: req.headers.authorization } };
+            const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
+            if (notifyUrl) {
+                // Notify Patient about status change
+                await axios.post(notifyUrl, {
+                    userId: appointment.patientId,
+                    title: 'Appointment Status Updated',
+                    message: `Your appointment status has changed to: ${status}.`,
+                    type: status === 'Cancelled' ? 'error' : 'info',
+                    link: '/appointments'
+                }, authHeader).catch(err => console.error('Patient Status Notify Error:', err.message));
+
+                // If Cancelled, notify Doctor too
+                if (status === 'Cancelled') {
+                    await axios.post(notifyUrl, {
+                        userId: appointment.doctorId,
+                        title: 'Appointment Cancelled',
+                        message: `The appointment for patient ID ${appointment.patientId.slice(-6)} has been cancelled.`,
+                        type: 'warning',
+                        link: '/appointments'
+                    }, authHeader).catch(err => console.error('Doctor Cancel Notify Error:', err.message));
+                }
+            }
+        } catch (err) {
+            console.error('Notification Trigger Failed:', err.message);
+        }
+
+        // ─── AUTOMATION: Auto-Invoice on Completion ───
+        if (status === 'Completed' && previousStatus !== 'Completed') {
+            try {
+                const billingUrl = `${process.env.BILLING_SERVICE_URL}/invoices`;
+                const authHeader = { headers: { Authorization: req.headers.authorization } };
+
+                await axios.post(billingUrl, {
+                    appointmentId: appointment.id,
+                    patientId: appointment.patientId,
+                    doctorId: appointment.doctorId,
+                    amount: 150.00, // Default consultation fee
+                    description: `Dental Consultation - Ref: ${appointment.reason || 'Routine Checkup'}`,
+                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+                }, authHeader);
+                console.log(`Auto-invoice generated for completed appointment ${appointment.id}`);
+            } catch (err) {
+                console.error('Failed to generate auto-invoice:', err.message);
+            }
+        }
+
         res.status(200).json({
             message: `Status updated from '${previousStatus}' to '${status}'`,
             appointment
@@ -302,6 +368,23 @@ export const approveAppointment = async (req, res) => {
 
         appointment.isAdminApproved = true;
         await appointment.save();
+
+        // ─── TRIGGER NOTIFICATION ON APPROVAL ───
+        try {
+            const authHeader = { headers: { Authorization: req.headers.authorization } };
+            const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
+            if (notifyUrl) {
+                await axios.post(notifyUrl, {
+                    userId: appointment.patientId,
+                    title: 'Appointment Approved',
+                    message: 'Your appointment has been approved by the clinic administration.',
+                    type: 'success',
+                    link: '/appointments'
+                }, authHeader).catch(err => console.error('Approval Notify Error:', err.message));
+            }
+        } catch (err) {
+            console.error('Approval Notification Trigger Failed:', err.message);
+        }
 
         res.status(200).json({
             message: 'Appointment approved by admin/receptionist',

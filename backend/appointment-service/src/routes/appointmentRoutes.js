@@ -27,8 +27,8 @@ router.get('/availability/:doctorId', protect, getAvailability);
 
 // ─── Staff + Admin ────────────────────────────────────────────────────────
 
-// All appointments: Admin & Receptionist only
-router.get('/', protect, authorize('Admin', 'Receptionist'), getAllAppointments);
+// All appointments: Admin, Receptionist, Doctor
+router.get('/', protect, authorize('Admin', 'Receptionist', 'Doctor'), getAllAppointments);
 
 // Update status: Admin, Doctor, Receptionist
 router.patch('/:id/status', protect, authorize('Admin', 'Doctor', 'Receptionist'), updateAppointmentStatus);

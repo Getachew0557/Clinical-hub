@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import emrService from '../../api/emr.service';
 import patientService from '../../api/patient.service';
+import reportService from '../../api/report.service';
 import { useSelector } from 'react-redux';
 import { format } from 'date-fns';
 
@@ -54,9 +55,12 @@ export default function PatientEMRPage() {
     const fetchAllPatients = async () => {
         try {
             setLoading(true);
-            const data = await patientService.getAllPatients();
-            // Standardizing based on observed behavior in PatientListPage
-            setAllPatients(data.patients || data.records || []);
+            const data = (role === 'Doctor')
+                ? await reportService.getDetailedPatients()
+                : await patientService.getAllPatients();
+
+            // Standardizing based on observed behavior (report service returns array, patient service returns {patients: []})
+            setAllPatients(Array.isArray(data) ? data : (data.patients || data.records || []));
             setError(null);
         } catch (err) {
             console.error('Fetch All Patients Error:', err);

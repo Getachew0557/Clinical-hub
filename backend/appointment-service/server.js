@@ -1,11 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import appointmentRoutes from './src/routes/appointmentRoutes.js';
 import Appointment from './src/models/Appointment.js';
-
-dotenv.config();
 
 const app = express();
 

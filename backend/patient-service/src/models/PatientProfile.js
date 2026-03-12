@@ -18,11 +18,11 @@ const PatientProfile = sequelize.define('PatientProfile', {
     },
     dateOfBirth: {
         type: DataTypes.DATEONLY,
-        allowNull: false
+        allowNull: true
     },
     gender: {
         type: DataTypes.ENUM('Male', 'Female', 'Other'),
-        allowNull: false
+        allowNull: true
     },
     email: {
         type: DataTypes.STRING,
@@ -32,7 +32,7 @@ const PatientProfile = sequelize.define('PatientProfile', {
     },
     phone: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     address: {
         type: DataTypes.TEXT,

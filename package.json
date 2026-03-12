@@ -3,11 +3,13 @@
     "private": true,
     "description": "Dental Clinic Microservices System",
     "workspaces": [
+        "backend/api-gateway",
         "backend/auth-service",
         "backend/appointment-service",
         "backend/doctor-service",
         "backend/patient-service",
         "backend/emr-service",
+        "backend/billing-service",
         "backend/inventory-service",
         "backend/notification-service",
         "backend/report-service",
@@ -15,6 +17,8 @@
         "frontend"
     ],
     "scripts": {
+        "dev": "concurrently -n \"GATEWAY,AUTH,PATIENT,APPT,EMR,BILLING,DOCTOR,NOTIF,INV,REPORT,AI,FRONT\" -c \"cyan,magenta,blue,green,yellow,red,white,gray,black,blue,green,cyan\" \"npm run dev:gateway\" \"npm run dev:auth\" \"npm run dev:patient\" \"npm run dev:appointment\" \"npm run dev:emr\" \"npm run dev:billing\" \"npm run dev:doctor\" \"npm run dev:notification\" \"npm run dev:inventory\" \"npm run dev:report\" \"npm run dev:ai\" \"npm run dev:frontend\"",
+        "dev:gateway": "npm run dev --workspace=backend/api-gateway",
         "install:all": "npm install",
         "test": "npm test --workspaces --if-present",
         "build": "npm run build --workspaces --if-present",
@@ -23,10 +27,17 @@
         "dev:doctor": "npm run dev --workspace=backend/doctor-service",
         "dev:patient": "npm run dev --workspace=backend/patient-service",
         "dev:emr": "npm run dev --workspace=backend/emr-service",
+        "dev:billing": "npm run dev --workspace=backend/billing-service",
         "dev:inventory": "npm run dev --workspace=backend/inventory-service",
         "dev:notification": "npm run dev --workspace=backend/notification-service",
         "dev:report": "npm run dev --workspace=backend/report-service",
         "dev:ai": "npm run dev --workspace=backend/ai-service",
         "dev:frontend": "npm run dev --workspace=frontend"
+    },
+    "devDependencies": {
+        "concurrently": "^9.2.1"
+    },
+    "dependencies": {
+        "axios": "^1.13.6"
     }
 }

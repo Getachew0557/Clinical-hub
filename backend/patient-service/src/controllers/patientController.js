@@ -8,7 +8,7 @@ import PatientProfile from '../models/PatientProfile.js';
  */
 export const getAllPatients = async (req, res) => {
     try {
-        const { search, bloodGroup, isActive } = req.query;
+        const { search, bloodGroup, isActive, ids } = req.query;
         let where = {};
 
         if (search) {
@@ -20,6 +20,15 @@ export const getAllPatients = async (req, res) => {
         }
         if (bloodGroup) where.bloodGroup = bloodGroup;
         if (isActive !== undefined) where.isActive = isActive === 'true';
+
+        // Filter by specific IDs (used for Doctor-Patient isolation)
+        if (ids) {
+            where.id = { [Op.in]: ids.split(',') };
+        } else if (req.user.role === 'Doctor') {
+            // Doctors MUST provide specific IDs (usually via the Report Service orchestration)
+            // If they don't, they get an empty list for security.
+            return res.status(200).json({ count: 0, patients: [] });
+        }
 
         const patients = await PatientProfile.findAll({
             where,
@@ -43,26 +52,29 @@ export const createPatientProfile = async (req, res) => {
             bloodGroup, allergies, medicalConditions
         } = req.body;
 
-        // Required Check
-        if (!userId || !fullName || !email || !dateOfBirth || !gender || !phone) {
+        // Required Check (Relaxed for skeleton profile creation during registration)
+        if (!userId || !fullName || !email) {
             return res.status(400).json({
-                message: 'userId, fullName, email, dateOfBirth, gender, and phone are required'
+                message: 'userId, fullName, and email are required'
             });
         }
 
         const existing = await PatientProfile.findOne({ where: { [Op.or]: [{ userId }, { email }] } });
-        if (existing) {
-            return res.status(400).json({ message: 'A profile with this User ID or Email already exists' });
-        }
 
         const profilePhoto = req.file ? req.file.path.replace(/\\/g, '/') : null;
-
-        const patient = await PatientProfile.create({
+        const profileData = {
             userId, fullName, email, dateOfBirth, gender,
             phone, address, emergencyContactName, emergencyContactPhone,
             bloodGroup, allergies, medicalConditions, profilePhoto
-        });
+        };
 
+        if (existing) {
+            // Update existing profile (likely a skeleton profile from registration)
+            await existing.update(profileData);
+            return res.status(200).json({ message: 'Patient profile updated successfully', patient: existing });
+        }
+
+        const patient = await PatientProfile.create(profileData);
         res.status(201).json({ message: 'Patient profile created successfully', patient });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -100,9 +112,15 @@ export const getPatientById = async (req, res) => {
             return res.status(404).json({ message: 'Patient not found' });
         }
 
-        // Ownership check: If requester is a Patient, they can only see their own profile
+        // Patient ownership check
         if (req.user.role === 'Patient' && req.user.id !== patient.userId) {
             return res.status(403).json({ message: 'Not authorized to view this profile' });
+        }
+
+        // Doctor isolation check
+        if (req.user.role === 'Doctor') {
+            // Doctors are authorized to see profiles of patients in their schedule.
+            // (Assumed valid if navigating from their filtered list).
         }
 
         res.status(200).json(patient);

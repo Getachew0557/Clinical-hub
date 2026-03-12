@@ -50,20 +50,22 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const [aptStats, invSummary, patDemo, myApts] = await Promise.all([
-                reportService.getAppointmentStats().catch(() => ({ total: 0 })),
+            const today = new Date().toISOString().split('T')[0];
+            const [aptStats, invSummary, patDemo, finance, myApts] = await Promise.all([
+                reportService.getAppointmentStats({ date: today }).catch(() => ({ total: 0 })),
                 reportService.getInventorySummary().catch(() => ({ lowStockItems: 0 })),
                 reportService.getPatientDemographics().catch(() => ({ totalPatients: 0 })),
+                reportService.getFinanceSummary().catch(() => ({ totalRevenue: 0, pendingCount: 0 })),
                 appointmentService.getMyAppointments().catch(() => ({ appointments: [] }))
             ]);
 
             const allStats = {
                 totalPatients: { title: 'Total Patients', value: patDemo.totalPatients || 0, change: '+5%', icon: Users, color: '#2563eb', bg: '#eff6ff' },
                 todayApts: { title: "Today's Appointments", value: aptStats.total || 0, change: 'Updated', icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
-                revenue: { title: 'Revenue (Monthly)', value: `$${(aptStats.total * 450).toLocaleString()}`, change: '+12%', icon: Receipt, color: '#7c3aed', bg: '#f5f3ff' },
+                revenue: { title: 'Total Revenue', value: `$${(finance.totalRevenue || 0).toLocaleString()}`, change: 'Actual', icon: Receipt, color: '#7c3aed', bg: '#f5f3ff' },
                 lowStock: { title: 'Low Stock Items', value: invSummary.lowStockItems || 0, change: 'Check Inventory', icon: AlertTriangle, color: '#d97706', bg: '#fffbeb' },
                 myApts: { title: 'My Appointments Today', value: (myApts.appointments || []).length, change: 'Next: Soon', icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
-                pendingInvoices: { title: 'Pending Tasks', value: 4, change: 'Action needed', icon: Activity, color: '#dc2626', bg: '#fef2f2' },
+                pendingInvoices: { title: 'Pending Invoices', value: finance.pendingCount || 0, change: 'Action needed', icon: Activity, color: '#dc2626', bg: '#fef2f2' },
             };
 
             const byRole = {

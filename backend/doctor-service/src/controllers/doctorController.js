@@ -34,7 +34,7 @@ export const createDoctorProfile = async (req, res) => {
         if (existingEmail) return res.status(409).json({ message: 'A doctor with this email already exists' });
         if (existingLicense) return res.status(409).json({ message: 'A doctor with this license number already exists' });
 
-        const profilePhoto = req.file ? req.file.path : null;
+        const profilePhoto = req.file ? req.file.path.replace(/\\/g, '/') : null;
 
         const doctor = await DoctorProfile.create({
             userId, fullName, email, phone,
@@ -154,7 +154,7 @@ export const updateDoctorProfile = async (req, res) => {
             if (workingHoursStart !== undefined) doctor.workingHoursStart = workingHoursStart;
             if (workingHoursEnd !== undefined) doctor.workingHoursEnd = workingHoursEnd;
             if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
-            if (req.file) doctor.profilePhoto = req.file.path;
+            if (req.file) doctor.profilePhoto = req.file.path.replace(/\\/g, '/');
 
         } else {
             // Admin — full update
@@ -177,7 +177,7 @@ export const updateDoctorProfile = async (req, res) => {
             if (workingHoursEnd !== undefined) doctor.workingHoursEnd = workingHoursEnd;
             if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
             if (isActive !== undefined) doctor.isActive = isActive;
-            if (req.file) doctor.profilePhoto = req.file.path;
+            if (req.file) doctor.profilePhoto = req.file.path.replace(/\\/g, '/');
         }
 
         await doctor.save();

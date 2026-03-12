@@ -1,4 +1,5 @@
 import { Sequelize } from 'sequelize';
+import axios from 'axios';
 import MedicalRecord from '../models/MedicalRecord.js';
 import Prescription from '../models/Prescription.js';
 
@@ -55,8 +56,28 @@ export const getPatientRecords = async (req, res) => {
 
         let whereClause = { patientId };
 
-        // If requester is a Doctor, they only see their own entries for this patient
+        // ─── DOCTOR ISOLATION CHECK ───
         if (req.user.role === 'Doctor') {
+            try {
+                const aptUrl = process.env.APPOINTMENT_SERVICE_URL;
+                const authHeader = { headers: { Authorization: req.headers.authorization } };
+
+                // Check if this doctor has any appointment with this patient
+                const aptRes = await axios.get(aptUrl, {
+                    ...authHeader,
+                    params: { doctorId: req.user.id, patientId }
+                });
+
+                const appointments = aptRes.data.appointments || [];
+                if (appointments.length === 0) {
+                    return res.status(403).json({
+                        message: 'Access Denied: You are not assigned to this patient.'
+                    });
+                }
+            } catch (err) {
+                console.error('EMR Isolation Check Error:', err.message);
+            }
+            // Only see their OWN records for this patient
             whereClause.doctorId = req.user.id;
         }
 

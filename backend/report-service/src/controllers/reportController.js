@@ -9,16 +9,53 @@ const urls = {
     appointment: process.env.APPOINTMENT_SERVICE_URL,
     inventory: process.env.INVENTORY_SERVICE_URL,
     patient: process.env.PATIENT_SERVICE_URL,
-    billing: process.env.BILLING_SERVICE_URL,
+    billing: `${process.env.BILLING_SERVICE_URL}/invoices`,
     doctor: process.env.DOCTOR_SERVICE_URL
 };
 
 // ─── AGGREGATED STATS ────────────────────────────────────────────────────────
 
+export const getFinancialSummary = async (req, res) => {
+    try {
+        const { role, id: userId } = req.user;
+        const queryParams = role === 'Doctor' ? { params: { doctorId: userId } } : {};
+
+        const response = await axios.get(urls.billing, {
+            ...getAuthHeader(req),
+            ...queryParams
+        });
+        const invoices = Array.isArray(response.data) ? response.data : (response.data.invoices || []);
+
+        const summary = {
+            totalRevenue: invoices.filter(i => i.status === 'Paid').reduce((sum, i) => sum + parseFloat(i.amount), 0),
+            pendingAmount: invoices.filter(i => i.status === 'Pending').reduce((sum, i) => sum + parseFloat(i.amount), 0),
+            invoiceCount: invoices.length,
+            pendingCount: invoices.filter(i => i.status === 'Pending').length
+        };
+        res.status(200).json(summary);
+    } catch (error) {
+        console.error('getFinancialSummary failed:', error.message);
+        res.status(200).json({ totalRevenue: 0, pendingAmount: 0, invoiceCount: 0, pendingCount: 0 });
+    }
+};
+
 export const getAppointmentStats = async (req, res) => {
     try {
-        const response = await axios.get(urls.appointment, getAuthHeader(req));
+        const { role, id: userId } = req.user;
+        let queryParams = { ...req.query };
+
+        // Isolation: If Doctor, only fetch their own appointments
+        if (role === 'Doctor') {
+            queryParams.doctorId = userId;
+        }
+
+        console.log(`[ReportService] Fetching appointment stats from: ${urls.appointment}`);
+        const response = await axios.get(urls.appointment, {
+            ...getAuthHeader(req),
+            params: queryParams
+        });
         const appointments = response.data.appointments || [];
+        console.log(`[ReportService] Received ${appointments.length} appointments`);
 
         const stats = {
             total: appointments.length,
@@ -26,7 +63,7 @@ export const getAppointmentStats = async (req, res) => {
                 acc[curr.status] = (acc[curr.status] || 0) + 1;
                 return acc;
             }, {}),
-            monthlyTrend: [] // Simplified for now
+            monthlyTrend: []
         };
         res.status(200).json(stats);
     } catch (error) {
@@ -46,8 +83,8 @@ export const getInventorySummary = async (req, res) => {
                 acc[curr.category] = (acc[curr.category] || 0) + 1;
                 return acc;
             }, {}),
-            lowStockItems: items.filter(i => i.quantity < 10).length,
-            valuation: items.reduce((sum, i) => sum + (i.price * i.quantity), 0)
+            lowStockItems: items.filter(i => i.quantity <= i.reorderLevel).length,
+            valuation: items.reduce((sum, i) => sum + (parseFloat(i.pricePerUnit || 0) * i.quantity), 0)
         };
         res.status(200).json(stats);
     } catch (error) {
@@ -58,16 +95,35 @@ export const getInventorySummary = async (req, res) => {
 
 export const getPatientDemographics = async (req, res) => {
     try {
-        const response = await axios.get(urls.patient, getAuthHeader(req));
-        const patients = response.data.patients || [];
+        const { role } = req.user;
+        let patients = [];
+
+        if (role === 'Doctor') {
+            // Doctors only see their assigned patients in stats too
+            const aptRes = await axios.get(`${urls.appointment}/my`, getAuthHeader(req));
+            const appointments = aptRes.data.appointments || [];
+            const patientIds = [...new Set(appointments.map(a => a.patientId))];
+
+            if (patientIds.length > 0) {
+                const patRes = await axios.get(urls.patient, {
+                    ...getAuthHeader(req),
+                    params: { ids: patientIds.join(',') }
+                });
+                patients = patRes.data.patients || [];
+            }
+        } else {
+            // Admin/Receptionist see all
+            const response = await axios.get(urls.patient, getAuthHeader(req));
+            patients = response.data.patients || [];
+        }
 
         const stats = {
             totalPatients: patients.length,
             genderDist: patients.reduce((acc, curr) => {
-                acc[curr.gender] = (acc[curr.gender] || 0) + 1;
+                acc[curr.gender || 'Other'] = (acc[curr.gender || 'Other'] || 0) + 1;
                 return acc;
             }, {}),
-            ageGroups: {} // Simplified
+            ageGroups: {}
         };
         res.status(200).json(stats);
     } catch (error) {
@@ -80,7 +136,26 @@ export const getPatientDemographics = async (req, res) => {
 
 export const getDetailedPatients = async (req, res) => {
     try {
-        const response = await axios.get(urls.patient, getAuthHeader(req));
+        const { role, id: userId } = req.user;
+        let queryParams = {};
+
+        if (role === 'Doctor') {
+            // 1. Get Doctor's patient IDs from appointments
+            const aptRes = await axios.get(urls.appointment, {
+                ...getAuthHeader(req),
+                params: { doctorId: userId }
+            });
+            const appointments = aptRes.data.appointments || [];
+            const patientIds = [...new Set(appointments.map(a => a.patientId))];
+
+            if (patientIds.length === 0) return res.status(200).json([]);
+            queryParams.ids = patientIds.join(',');
+        }
+
+        const response = await axios.get(urls.patient, {
+            ...getAuthHeader(req),
+            params: queryParams
+        });
         res.status(200).json(response.data.patients || []);
     } catch (error) {
         console.error('getDetailedPatients failed:', error.message);
@@ -100,8 +175,15 @@ export const getDetailedInventory = async (req, res) => {
 
 export const getDetailedBillings = async (req, res) => {
     try {
-        const response = await axios.get(urls.billing, getAuthHeader(req));
-        res.status(200).json(response.data.invoices || []);
+        const { role, id: userId } = req.user;
+        const queryParams = role === 'Doctor' ? { params: { doctorId: userId } } : {};
+
+        const response = await axios.get(urls.billing, {
+            ...getAuthHeader(req),
+            ...queryParams
+        });
+        const invoices = Array.isArray(response.data) ? response.data : (response.data.invoices || []);
+        res.status(200).json(invoices);
     } catch (error) {
         console.error('getDetailedBillings failed:', error.message);
         res.status(200).json([]);
@@ -110,8 +192,11 @@ export const getDetailedBillings = async (req, res) => {
 
 export const getDetailedAppointments = async (req, res) => {
     try {
+        const { role, id: userId } = req.user;
+        const appointmentParams = role === 'Doctor' ? { params: { doctorId: userId } } : {};
+
         const [aptRes, docRes, patRes] = await Promise.all([
-            axios.get(urls.appointment, getAuthHeader(req)),
+            axios.get(urls.appointment, { ...getAuthHeader(req), ...appointmentParams }),
             axios.get(urls.doctor, getAuthHeader(req)),
             axios.get(urls.patient, getAuthHeader(req))
         ]);
@@ -121,13 +206,13 @@ export const getDetailedAppointments = async (req, res) => {
         const patients = patRes.data.patients || [];
 
         const detailed = appointments.map(apt => {
-            const doc = doctors.find(d => d.id === apt.doctorId || d.userId === apt.doctorId);
-            const pat = patients.find(p => p.id === apt.patientId || p.userId === apt.patientId);
+            const doc = doctors.find(d => d.userId === apt.doctorId || d.id === apt.doctorId);
+            const pat = patients.find(p => p.userId === apt.patientId || p.id === apt.patientId);
             return {
                 ...apt.toJSON ? apt.toJSON() : apt,
-                doctorName: doc ? doc.fullName : 'Unknown Doctor',
-                patientName: pat ? pat.fullName : 'Unknown Patient',
-                emrStatus: 'N/A' // Placeholder for now
+                doctorName: doc ? doc.fullName : `Doctor (${apt.doctorId.slice(-6)})`,
+                patientName: pat ? pat.fullName : `Patient (${apt.patientId.slice(-6)})`,
+                emrStatus: 'N/A'
             };
         });
 
@@ -195,7 +280,7 @@ export const getDoctorPerformance = async (req, res) => {
         const perf = doctors.map(d => ({
             name: d.fullName,
             specialty: d.specialization,
-            rating: 4.8, // Mocked as doctor profile doesn't have rating field yet
+            rating: 4.8,
             experience: d.experience
         }));
         res.status(200).json(perf);

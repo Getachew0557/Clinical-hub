@@ -18,6 +18,7 @@ import DoctorListPage from './pages/Doctor/DoctorListPage';
 import AppointmentListPage from './pages/Appointment/AppointmentListPage';
 import PatientListPage from './pages/Patient/PatientListPage';
 import InventoryListPage from './pages/Inventory/InventoryListPage';
+import BillingPage from './pages/BillingPage';
 
 // New Pages
 import PatientEMRPage from './pages/Patient/PatientEMRPage';
@@ -109,7 +110,7 @@ const App = () => (
           <Route path="/appointments" element={<AppointmentListPage />} />
           <Route path="/patients" element={<PatientListPage />} />
           <Route path="/emr" element={<PatientEMRPage />} />
-          <Route path="/billing" element={<PlaceholderPage title="Billing" />} />
+          <Route path="/billing" element={<BillingPage />} />
           <Route path="/inventory" element={<InventoryListPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/receptionists" element={<ReceptionistListPage />} />

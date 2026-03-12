@@ -1,10 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import authRoutes from './src/routes/authRoutes.js';
-
-dotenv.config();
 
 const app = express();
 

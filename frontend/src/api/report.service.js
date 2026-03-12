@@ -11,9 +11,10 @@ const reportService = {
     /**
      * Get appointment statistics
      */
-    getAppointmentStats: async () => {
+    getAppointmentStats: async (params) => {
         const response = await axios.get(`${API_URL}/appointments/stats`, {
-            headers: getAuthHeader()
+            headers: getAuthHeader(),
+            params
         });
         return response.data;
     },
@@ -43,6 +44,16 @@ const reportService = {
      */
     getSavedReports: async () => {
         const response = await axios.get(`${API_URL}/saved`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    /**
+     * Get financial summary (revenue, pending)
+     */
+    getFinanceSummary: async () => {
+        const response = await axios.get(`${API_URL}/finance/summary`, {
             headers: getAuthHeader()
         });
         return response.data;

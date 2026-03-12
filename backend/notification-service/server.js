@@ -1,13 +1,13 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
 
 // Setup models
 import './src/models/Notification.js';
-
-dotenv.config();
 
 const app = express();
 

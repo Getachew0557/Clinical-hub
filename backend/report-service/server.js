@@ -1,13 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import reportRoutes from './src/routes/reportRoutes.js';
-
-// Setup models
-import './src/models/Report.js';
-
-dotenv.config();
 
 const app = express();
 

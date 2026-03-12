@@ -11,6 +11,7 @@ import {
     CircularProgress, Alert, Box
 } from '@mui/material';
 import patientService from '../../api/patient.service';
+import reportService from '../../api/report.service';
 import AddPatientModal from '../../components/patients/AddPatientModal';
 import EditPatientModal from '../../components/patients/EditPatientModal';
 import { useSelector } from 'react-redux';
@@ -48,9 +49,13 @@ export default function PatientListPage() {
     const fetchPatients = async () => {
         try {
             setLoading(true);
-            const data = await patientService.getAllPatients();
+            const data = (role === 'Doctor')
+                ? await reportService.getDetailedPatients()
+                : await patientService.getAllPatients();
+
             console.log('Fetched Patients:', data);
-            setPatients(data.patients || []);
+            // Report service returns array directly, patient service returns {patients: []}
+            setPatients(Array.isArray(data) ? data : (data.patients || []));
             setError(null);
         } catch (err) {
             console.error('Fetch Patients Error:', err);
@@ -232,7 +237,7 @@ export default function PatientListPage() {
                                             variant="outlined"
                                             startIcon={<FileText size={14} />}
                                             sx={{ borderRadius: 2, textTransform: 'none', backgroundColor: 'white' }}
-                                            onClick={() => navigate(`/emr?patientId=${pt.id}`)}
+                                            onClick={() => navigate(`/emr?patientId=${pt.userId || pt.id}`)}
                                         >
                                             Medical Records
                                         </Button>
@@ -242,7 +247,7 @@ export default function PatientListPage() {
                                             variant="outlined"
                                             startIcon={<Calendar size={14} />}
                                             sx={{ borderRadius: 2, textTransform: 'none', backgroundColor: 'white' }}
-                                            onClick={() => navigate(`/appointments?patientId=${pt.id}`)}
+                                            onClick={() => navigate(`/appointments?patientId=${pt.userId || pt.id}`)}
                                         >
                                             Book Visit
                                         </Button>

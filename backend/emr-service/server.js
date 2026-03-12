@@ -1,14 +1,14 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import emrRoutes from './src/routes/emrRoutes.js';
 
 // Setup models and associations
 import './src/models/MedicalRecord.js';
 import './src/models/Prescription.js';
-
-dotenv.config();
 
 const app = express();
 

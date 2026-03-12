@@ -13,6 +13,7 @@ import {
 import appointmentService from '../../api/appointment.service';
 import BookAppointmentModal from '../../components/appointments/BookAppointmentModal';
 import EditAppointmentModal from '../../components/appointments/EditAppointmentModal';
+import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 function TabPanel(props) {
@@ -25,6 +26,10 @@ function TabPanel(props) {
 }
 
 export default function AppointmentListPage() {
+    const [searchParams] = useSearchParams();
+    const urlPatientId = searchParams.get('patientId');
+    const urlStatus = searchParams.get('status');
+
     const { user } = useSelector((s) => s.auth);
     const role = user?.role || 'Patient';
     const isStaff = ['Admin', 'Receptionist'].includes(role);
@@ -32,7 +37,7 @@ export default function AppointmentListPage() {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(urlPatientId || '');
     const [tabValue, setTabValue] = useState(0);
 
     // Modal state
@@ -44,8 +49,12 @@ export default function AppointmentListPage() {
     const [selectedApt, setSelectedApt] = useState(null);
 
     useEffect(() => {
+        if (urlStatus) {
+            const statusMap = { 'Pending': 0, 'Confirmed': 1, 'In Progress': 2, 'Completed': 3, 'Cancelled': 4 };
+            if (statusMap[urlStatus] !== undefined) setTabValue(statusMap[urlStatus]);
+        }
         fetchAppointments();
-    }, []);
+    }, [urlStatus]);
 
     const fetchAppointments = async () => {
         try {

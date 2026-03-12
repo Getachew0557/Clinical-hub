@@ -1,14 +1,14 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import inventoryRoutes from './src/routes/inventoryRoutes.js';
 
 // Setup models and associations
 import './src/models/InventoryItem.js';
 import './src/models/StockTransaction.js';
-
-dotenv.config();
 
 const app = express();
 
