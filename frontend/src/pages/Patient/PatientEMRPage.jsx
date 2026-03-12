@@ -13,8 +13,10 @@ import {
 import emrService from '../../api/emr.service';
 import patientService from '../../api/patient.service';
 import reportService from '../../api/report.service';
+import aiService from '../../api/ai.service';
 import { useSelector } from 'react-redux';
 import { format } from 'date-fns';
+import { Sparkles, Brain, Lightbulb } from 'lucide-react';
 
 export default function PatientEMRPage() {
     const [searchParams] = useSearchParams();
@@ -41,6 +43,10 @@ export default function PatientEMRPage() {
         notes: '',
         prescriptions: []
     });
+
+    // AI State
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiResult, setAiResult] = useState(null);
 
     useEffect(() => {
         if (patientId) {
@@ -129,6 +135,7 @@ export default function PatientEMRPage() {
                 prescriptions: []
             });
         }
+        setAiResult(null);
         setModalOpen(true);
     };
 
@@ -145,6 +152,45 @@ export default function PatientEMRPage() {
             }
         } catch (err) {
             alert('Failed to save record');
+        }
+    };
+
+    const handleAiAnalysis = async () => {
+        if (!formData.diagnosis && !formData.notes) {
+            alert('Please enter a diagnosis or notes first');
+            return;
+        }
+        try {
+            setAiLoading(true);
+            const data = await aiService.analyzeDiagnosis({
+                symptoms: formData.diagnosis,
+                history: `Patient Age: ${patient?.age}, Blood: ${patient?.bloodGroup}`,
+                clinicalNotes: formData.notes
+            });
+            setAiResult({ type: 'analysis', text: data.analysis });
+        } catch (err) {
+            alert('AI analysis failed');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const handleAiTreatment = async () => {
+        if (!formData.diagnosis) {
+            alert('Please enter a diagnosis first');
+            return;
+        }
+        try {
+            setAiLoading(true);
+            const data = await aiService.suggestTreatment(
+                formData.diagnosis,
+                `Age: ${patient?.age}, Gender: ${patient?.gender}, Blood: ${patient?.bloodGroup}`
+            );
+            setAiResult({ type: 'treatment', text: data.suggestions });
+        } catch (err) {
+            alert('AI suggestion failed');
+        } finally {
+            setAiLoading(false);
         }
     };
 
@@ -436,6 +482,61 @@ export default function PatientEMRPage() {
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 />
+
+                                {/* Gemini AI Tools */}
+                                <Box sx={{ mt: 1, p: 2, borderRadius: 4, bgcolor: '#f0f9ff', border: '1px dashed #3b82f6' }}>
+                                    <Box className="flex items-center gap-2 mb-3">
+                                        <Sparkles size={18} className="text-blue-600" />
+                                        <Typography variant="subtitle2" fontWeight={800} color="primary.main">Gemini Clinical Assistant</Typography>
+                                    </Box>
+                                    <Box className="flex gap-2">
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            startIcon={aiLoading ? <CircularProgress size={14} /> : <Brain size={14} />}
+                                            onClick={handleAiAnalysis}
+                                            disabled={aiLoading}
+                                            sx={{ borderRadius: 2, textTransform: 'none' }}
+                                        >
+                                            Assess Case
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            startIcon={aiLoading ? <CircularProgress size={14} /> : <Lightbulb size={14} />}
+                                            onClick={handleAiTreatment}
+                                            disabled={aiLoading}
+                                            sx={{ borderRadius: 2, textTransform: 'none' }}
+                                        >
+                                            Suggest Plan
+                                        </Button>
+                                    </Box>
+
+                                    {aiResult && (
+                                        <Box sx={{ mt: 2, p: 2, bgcolor: 'white', borderRadius: 3, border: '1px solid #e0f2fe' }}>
+                                            <Typography variant="caption" fontWeight={800} color="primary" sx={{ display: 'block', mb: 1, textTransform: 'uppercase' }}>
+                                                {aiResult.type === 'analysis' ? 'AI Assessment' : 'AI Treatment Suggestion'}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', color: '#334155' }}>
+                                                {aiResult.text}
+                                            </Typography>
+                                            <Box className="flex justify-end mt-2">
+                                                <Button
+                                                    size="small"
+                                                    variant="soft"
+                                                    onClick={() => {
+                                                        const key = aiResult.type === 'analysis' ? 'notes' : 'treatment';
+                                                        setFormData(prev => ({ ...prev, [key]: prev[key] + '\n\n' + aiResult.text }));
+                                                        setAiResult(null);
+                                                    }}
+                                                    sx={{ borderRadius: 2, fontSize: '0.7rem' }}
+                                                >
+                                                    Apply to {aiResult.type === 'analysis' ? 'Notes' : 'Treatment'}
+                                                </Button>
+                                            </Box>
+                                        </Box>
+                                    )}
+                                </Box>
                             </Box>
                         </DialogContent>
                         <DialogActions sx={{ p: 3 }}>

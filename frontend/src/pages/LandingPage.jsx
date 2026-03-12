@@ -9,6 +9,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import doctorService from '../api/doctor.service';
 import heroImg from '../assets/clinic-hero.png';
+import GeminiChatbot from '../components/common/GeminiChatbot';
+
 export default function LandingPage() {
     const navigate = useNavigate();
     const { user } = useSelector(state => state.auth);
@@ -442,6 +444,9 @@ export default function LandingPage() {
                     </div>
                 </div>
             </footer>
+
+            {/* ── AI Assistant ── */}
+            <GeminiChatbot />
         </div>
     );
 }

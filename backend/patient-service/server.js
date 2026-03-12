@@ -7,6 +7,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import patientRoutes from './src/routes/patientRoutes.js';
+import { connectEventBus, subscribeToEvent } from './src/utils/eventBus.js';
+import { handleUserRegistered } from './src/utils/eventHandlers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +45,10 @@ const startServer = async () => {
 
     await sequelize.sync({ alter: true });
     console.log('Database models synced.');
+
+    // Connect to Event Bus & Subscribe
+    await connectEventBus();
+    subscribeToEvent('patient_service_registration', 'user.registered', handleUserRegistered);
 
     app.listen(PORT, () => {
       console.log(`patient-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);

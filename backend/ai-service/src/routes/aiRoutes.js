@@ -3,13 +3,16 @@ import { protect, authorize } from '../middlewares/authMiddleware.js';
 import {
     analyzeDiagnosis,
     suggestTreatment,
+    publicChat,
     aiChat
 } from '../controllers/aiController.js';
 
 const router = express.Router();
 
-// ─── Routes (Doctor / Admin Only) ─────────────────────────────────────────
+// ─── Public Routes ───
+router.post('/public-chat', publicChat);
 
+// ─── Private Routes (Doctor / Admin Only) ───
 router.use(protect);
 router.use(authorize('Doctor', 'Admin'));
 

@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import { publishEvent } from '../utils/eventBus.js';
 
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, {
@@ -30,25 +31,14 @@ export const register = async (req, res) => {
 
         const user = await User.create({ fullName, email, password, role: finalRole });
 
-        // AUTOMATION: If self-registration, create a skeleton profile.
+        // EVENT: If self-registration, publish 'user.registered' event.
+        // This decouples Auth from Patient and Notification services.
         if (finalRole === 'Patient' && !['Admin', 'Receptionist'].includes(req.user?.role)) {
-            try {
-                const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://localhost:5002/api/patients';
-
-                // INTERNAL AUTH: Generate a short-lived internal token to authorized this cross-service call
-                const internalToken = generateToken('AUTH_SERVICE_INTERNAL', 'Admin');
-
-                await axios.post(patientServiceUrl, {
-                    userId: user.id,
-                    fullName: user.fullName,
-                    email: user.email
-                }, {
-                    headers: { Authorization: `Bearer ${internalToken}` }
-                });
-                console.log(`Skeleton PatientProfile created for ${user.email} (Internal Auth used)`);
-            } catch (err) {
-                console.error('Failed to create skeleton patient profile:', err.response?.data || err.message);
-            }
+            await publishEvent('user.registered', {
+                userId: user.id,
+                fullName: user.fullName,
+                email: user.email
+            });
         }
 
         res.status(201).json({

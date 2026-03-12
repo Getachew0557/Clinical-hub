@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import authRoutes from './src/routes/authRoutes.js';
+import { connectEventBus } from './src/utils/eventBus.js';
 
 const app = express();
 
@@ -32,6 +33,9 @@ const startServer = async () => {
     // Sync models
     await sequelize.sync({ alter: true });
     console.log('Database models synced.');
+
+    // Connect to Event Bus
+    await connectEventBus();
 
     app.listen(PORT, () => {
       console.log(`auth-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);

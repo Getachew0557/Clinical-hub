@@ -43,7 +43,7 @@ A cutting-edge `ai-service` running on **port 5009** for clinical assistance.
 PORT=5009
 NODE_ENV=development
 GEMINI_API_KEY=your_gemini_api_key
-MODEL_NAME=gemini-3-flash-preview
+MODEL_NAME=gemini-1.5-flash
 JWT_SECRET=your_jwt_secret
 ```
 
