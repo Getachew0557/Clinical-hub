@@ -13,6 +13,7 @@ import doctorService from '../api/doctor.service';
 import heroImg from '../assets/clinic-hero.png';
 import GeminiChatbot from '../components/common/GeminiChatbot';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
+import { getDoctorPhotoUrl } from '../utils/cn';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -624,9 +625,9 @@ export default function LandingPage() {
                   onClick={() => navigate(`/doctor/${doc.id}`)}
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                    {doc.profilePhoto ? (
+                    {getDoctorPhotoUrl(doc.profilePhoto) ? (
                       <img
-                        src={doc.profilePhoto}
+                        src={getDoctorPhotoUrl(doc.profilePhoto)}
                         alt={doc.fullName}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

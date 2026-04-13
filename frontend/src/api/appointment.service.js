@@ -92,11 +92,12 @@ const appointmentService = {
 
     /**
      * Get availability slots for a doctor on a specific date
+     * @param {string} type - 'clinic' | 'video' | 'all'
      */
-    getAvailability: async (doctorId, date) => {
+    getAvailability: async (doctorId, date, type = 'clinic') => {
         const response = await axios.get(`${API_URL}/availability/${doctorId}`, {
             headers: getAuthHeader(),
-            params: { date }
+            params: { date, type }
         });
         return response.data;
     }

@@ -5,8 +5,16 @@ import {
     AlertCircle, User, Stethoscope as DoctorIcon,
     Trash2, Edit, Video
 } from 'lucide-react';
+import {
+    Typography, Button, Card, CardContent, InputBase,
+    Avatar, Chip, IconButton, Menu, MenuItem,
+    CircularProgress, Alert, Tabs, Tab, Box
+} from '@mui/material';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import appointmentService from '../../api/appointment.service';
+import BookAppointmentModal from '../../components/appointments/BookAppointmentModal';
+import EditAppointmentModal from '../../components/appointments/EditAppointmentModal';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -165,10 +173,10 @@ export default function AppointmentListPage() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={800} color="text.primary">
+                    <Typography variant="h5" color="text.primary">
                         {role === 'Patient' ? 'My Appointments' : 'Clinic Schedule'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                         {isStaff ? 'Manage and monitor all clinic visits' : 'View and track your dental visits'}
                     </Typography>
                 </div>
@@ -258,16 +266,16 @@ export default function AppointmentListPage() {
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between">
                                                 <div>
-                                                    <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+                                                    <Typography variant="subtitle2" color="text.primary">
                                                         {apt.reason}
                                                     </Typography>
                                                     <div className="flex flex-wrap items-center gap-4 mt-2">
                                                         <div className="flex items-center gap-1.5 text-slate-500">
-                                                            <User size={14} />
-                                                            <Typography variant="caption">Patient Name: {apt.patientName || 'Guest'}</Typography>
+                                                            <User size={13} />
+                                                            <Typography variant="caption">Patient: {apt.patientName || 'Guest'}</Typography>
                                                         </div>
                                                         <div className="flex items-center gap-1.5 text-slate-500">
-                                                            <DoctorIcon size={14} />
+                                                            <DoctorIcon size={13} />
                                                             <Typography variant="caption">Doctor ID: {apt.doctorId.slice(0, 8)}</Typography>
                                                         </div>
                                                     </div>

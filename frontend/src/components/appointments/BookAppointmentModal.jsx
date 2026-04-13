@@ -118,8 +118,8 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
                                             onChange={handleInputChange}
                                         >
                                             {patients.map(p => (
-                                                <MenuItem key={p.id} value={p.id}>
-                                                    {p.name} ({p.email})
+                                                <MenuItem key={p.id} value={p.userId || p.id}>
+                                                    {p.fullName || p.name} {p.email ? `(${p.email})` : ''}
                                                 </MenuItem>
                                             ))}
                                         </Select>

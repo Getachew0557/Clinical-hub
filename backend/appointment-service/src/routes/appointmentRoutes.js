@@ -22,8 +22,8 @@ router.post('/', protect, createAppointment);
 // My appointments: any authenticated user sees their own
 router.get('/my', protect, getMyAppointments);
 
-// Availability: public-ish (any authenticated user)
-router.get('/availability/:doctorId', protect, getAvailability);
+// Availability: public — no auth required so unauthenticated patients can browse slots
+router.get('/availability/:doctorId', getAvailability);
 
 // ─── Staff + Admin ────────────────────────────────────────────────────────
 

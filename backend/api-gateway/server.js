@@ -39,6 +39,18 @@ Object.entries(services).forEach(([path, target]) => {
   }));
 });
 
+// Dedicated Signaling Proxy (Socket.IO)
+// Forwards both polling and websocket upgrades to the notification service
+app.use('/socket.io', createProxyMiddleware({
+  target: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5008',
+  ws: true,
+  changeOrigin: true,
+  onProxyReq: (proxyReq, req) => {
+    // Some Socket.IO clients might need this header
+    proxyReq.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({ service: 'api-gateway', status: 'healthy' });
 });

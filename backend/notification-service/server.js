@@ -53,6 +53,10 @@ videoNamespace.on('connection', (socket) => {
     socket.to(roomId).emit('ice-candidate', candidate);
   });
 
+  socket.on('media-state-changed', (data) => {
+    socket.to(data.roomId).emit('media-state-changed', data);
+  });
+
   socket.on('end-call', ({ roomId }) => {
     socket.to(roomId).emit('call-ended');
     console.log(`[Video] Call ended in room ${roomId}`);

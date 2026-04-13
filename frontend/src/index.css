@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* ── Brand Colors ── */
   --color-primary: #0d9488;
   --color-primary-dark: #0f766e;
   --color-primary-light: #ccfbf1;
@@ -15,6 +16,19 @@
   --color-sidebar-to: #0d4f4a;
   --color-emergency: #dc2626;
   --bg-light: #f8fafc;
+
+  /* ── Uniform Typography Scale ── */
+  /* Use these variables everywhere for consistency */
+  --text-page-title:     1.5rem;   /* 24px  — Page titles (h1 of each page) */
+  --text-section-title:  1rem;     /* 16px  — Card/section headers */
+  --text-body:           0.875rem; /* 14px  — Body text, table rows */
+  --text-caption:        0.75rem;  /* 12px  — Labels, metadata, hints */
+  --text-badge:          0.625rem; /* 10px  — Status badges, tags */
+  --font-weight-title:   800;
+  --font-weight-heading: 700;
+  --font-weight-body:    400;
+  --font-weight-medium:  500;
+  --font-weight-semi:    600;
 }
 
 body {

@@ -70,7 +70,60 @@ const DoctorProfile = sequelize.define('DoctorProfile', {
     },
     consultationFee: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: true
+        allowNull: true,
+        comment: 'Clinic visit consultation fee'
+    },
+    videoFee: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        comment: 'Video consultation fee (overrides consultationFee for video bookings)'
+    },
+    serviceTypes: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: ['clinic', 'video'],
+        comment: 'Services offered: ["clinic"], ["video"], or ["clinic","video"]'
+    },
+    slotDuration: {
+        type: DataTypes.INTEGER,
+        defaultValue: 30,
+        comment: 'Appointment slot duration in minutes (default 30)'
+    },
+    breakStart: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        comment: 'Break/lunch start time, e.g. 13:00:00'
+    },
+    breakEnd: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        comment: 'Break/lunch end time, e.g. 14:00:00'
+    },
+    languages: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: ['Amharic', 'English'],
+        comment: 'Languages spoken by the doctor'
+    },
+    education: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Array of { institution, degree, year } objects'
+    },
+    workExperience: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Array of { place, role, period } objects'
+    },
+    awards: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Array of { title, year } objects'
+    },
+    maxPatientsPerHour: {
+        type: DataTypes.INTEGER,
+        defaultValue: 10,
+        comment: 'Maximum patients per hour (default 10 → 5 per 30-min slot)'
     },
     rating: {
         type: DataTypes.FLOAT,

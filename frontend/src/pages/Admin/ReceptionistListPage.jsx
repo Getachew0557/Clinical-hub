@@ -100,8 +100,10 @@ export default function ReceptionistListPage() {
         <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={800} color="text.primary">Receptionists</Typography>
-                    <Typography variant="body2" color="text.secondary">Manage clinic front-desk and administrative staff</Typography>
+                    <Typography variant="h5" color="text.primary">Receptionists</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                        Manage clinic front-desk and administrative staff
+                    </Typography>
                 </div>
                 <Button
                     variant="contained"
@@ -155,7 +157,7 @@ export default function ReceptionistListPage() {
                                         <MoreHorizontal size={18} />
                                     </IconButton>
                                 </div>
-                                <Typography variant="h6" fontWeight={700} className="truncate">{rec.fullName}</Typography>
+                                <Typography variant="subtitle1" color="text.primary" className="truncate">{rec.fullName}</Typography>
                                 <div className="flex items-center gap-2 text-slate-500 mt-2">
                                     <Mail size={14} />
                                     <Typography variant="caption" className="truncate">{rec.email}</Typography>

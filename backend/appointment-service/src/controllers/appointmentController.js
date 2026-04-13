@@ -16,7 +16,7 @@ const PATIENT_EDITABLE_STATUSES = ['Pending'];
  */
 export const createAppointment = async (req, res) => {
     try {
-        const { doctorId, patientId, appointmentDate, appointmentTime, reason, notes } = req.body;
+        const { doctorId, patientId, appointmentDate, appointmentTime, reason, notes, type } = req.body;
 
         // Patients can only create appointments for themselves
         const resolvedPatientId =
@@ -36,6 +36,7 @@ export const createAppointment = async (req, res) => {
             appointmentTime,
             reason,
             notes: notes || null,
+            type: type || 'clinic',
             createdBy: req.user.id,
             isAdminApproved: ['Admin', 'Receptionist', 'Doctor'].includes(req.user.role)
         });
@@ -89,33 +90,101 @@ export const createAppointment = async (req, res) => {
 
 /**
  * GET /api/appointments/availability/:doctorId
- * ?date=YYYY-MM-DD
- * Calculates 30-min slots from 08:00 to 18:00.
- * Slot is unavailable if count >= 2.
+ * ?date=YYYY-MM-DD  &type=clinic|video
+ * Generates 30-min slots based on doctor's working hours.
+ * Slot capacity = maxPatientsPerHour / 2 (default 10/hr → 5 per slot).
+ * Fetches doctor working hours from doctor-service.
  */
 export const getAvailability = async (req, res) => {
     try {
         const { doctorId } = req.params;
-        const { date } = req.query;
+        const { date, type } = req.query;
 
         if (!doctorId || !date) {
             return res.status(400).json({ message: 'doctorId and date are required' });
         }
 
-        // Get all appointments for this doctor on this date
-        const appointments = await Appointment.findAll({
-            where: {
-                doctorId,
-                appointmentDate: date,
-                status: { [Op.ne]: 'Cancelled' }
-            }
-        });
+        // ── Fetch doctor working hours from doctor-service ──────────────────
+        let startHour = 8;
+        let endHour = 18;
+        let maxPatientsPerHour = 10; // default: 10 patients per hour
+        let workingDays = null;
+        let docSlotDuration = 30;
+        let docBreakStart = null;
+        let docBreakEnd = null;
+        let docServiceTypes = ['clinic', 'video'];
 
-        // Configurable limits
-        const startHour = 8;
-        const endHour = 18;
-        const slotDuration = 30; // minutes
-        const maxPatientsPerSlot = 2;
+        try {
+            const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+            // Use auth header if available, otherwise try public endpoint
+            const authHeader = req.headers.authorization
+                ? { headers: { Authorization: req.headers.authorization } }
+                : {};
+            let docRes;
+            try {
+                docRes = await axios.get(`${doctorUrl}/public`, { params: { search: '' } });
+                const docs = docRes.data.doctors || docRes.data.records || [];
+                const doc = docs.find(d => d.id === doctorId);
+                if (doc) {
+                    if (doc.workingHoursStart) startHour = parseInt(doc.workingHoursStart.split(':')[0], 10);
+                    if (doc.workingHoursEnd) endHour = parseInt(doc.workingHoursEnd.split(':')[0], 10);
+                    if (doc.maxPatientsPerHour) maxPatientsPerHour = parseInt(doc.maxPatientsPerHour, 10);
+                    if (doc.workingDays) workingDays = Array.isArray(doc.workingDays) ? doc.workingDays : JSON.parse(doc.workingDays);
+                    if (doc.slotDuration) docSlotDuration = parseInt(doc.slotDuration, 10);
+                    if (doc.breakStart) docBreakStart = doc.breakStart;
+                    if (doc.breakEnd) docBreakEnd = doc.breakEnd;
+                    if (doc.serviceTypes) docServiceTypes = Array.isArray(doc.serviceTypes) ? doc.serviceTypes : JSON.parse(doc.serviceTypes);
+                }
+            } catch {
+                // Fall back to authenticated endpoint
+                docRes = await axios.get(`${doctorUrl}/${doctorId}`, authHeader);
+                const doc = docRes.data;
+                if (doc.workingHoursStart) startHour = parseInt(doc.workingHoursStart.split(':')[0], 10);
+                if (doc.workingHoursEnd) endHour = parseInt(doc.workingHoursEnd.split(':')[0], 10);
+                if (doc.maxPatientsPerHour) maxPatientsPerHour = parseInt(doc.maxPatientsPerHour, 10);
+                if (doc.workingDays) workingDays = Array.isArray(doc.workingDays) ? doc.workingDays : JSON.parse(doc.workingDays);
+                if (doc.slotDuration) docSlotDuration = parseInt(doc.slotDuration, 10);
+                if (doc.breakStart) docBreakStart = doc.breakStart;
+                if (doc.breakEnd) docBreakEnd = doc.breakEnd;
+                if (doc.serviceTypes) docServiceTypes = Array.isArray(doc.serviceTypes) ? doc.serviceTypes : JSON.parse(doc.serviceTypes);
+            }
+        } catch (err) {
+            console.warn('Could not fetch doctor working hours, using defaults:', err.message);
+        }
+
+        // ── Check if requested service type is offered by this doctor ───────
+        if (type && type !== 'all' && docServiceTypes.length > 0 && !docServiceTypes.includes(type)) {
+            return res.status(200).json({
+                slots: [],
+                message: `This doctor does not offer ${type} consultations`,
+                serviceTypes: docServiceTypes
+            });
+        }
+
+        // ── Check if the requested date is a working day ────────────────────
+        if (workingDays && workingDays.length > 0) {
+            const dayName = moment(date).format('dddd'); // e.g. "Monday"
+            if (!workingDays.includes(dayName)) {
+                return res.status(200).json({ slots: [], message: `Doctor does not work on ${dayName}` });
+            }
+        }
+
+        // ── Get existing appointments for this doctor/date/type ─────────────
+        const whereClause = {
+            doctorId,
+            appointmentDate: date,
+            status: { [Op.ne]: 'Cancelled' }
+        };
+        // If type is specified, filter by type (clinic vs video)
+        if (type && type !== 'all') {
+            whereClause.type = type;
+        }
+
+        const appointments = await Appointment.findAll({ where: whereClause });
+
+        // ── Generate slots ──────────────────────────────────────────────────
+        const slotDurationMins = docSlotDuration || 30;
+        const maxPatientsPerSlot = Math.ceil(maxPatientsPerHour / (60 / slotDurationMins));
 
         const slots = [];
         let current = moment(date).hour(startHour).minute(0).second(0);
@@ -123,20 +192,35 @@ export const getAvailability = async (req, res) => {
 
         while (current.isBefore(end)) {
             const timeStr = current.format('HH:mm:ss');
+
+            // Skip break time slots
+            if (docBreakStart && docBreakEnd) {
+                const slotMins = current.hour() * 60 + current.minute();
+                const breakStartMins = parseInt(docBreakStart.split(':')[0]) * 60 + parseInt(docBreakStart.split(':')[1]);
+                const breakEndMins = parseInt(docBreakEnd.split(':')[0]) * 60 + parseInt(docBreakEnd.split(':')[1]);
+                if (slotMins >= breakStartMins && slotMins < breakEndMins) {
+                    current.add(slotDurationMins, 'minutes');
+                    continue;
+                }
+            }
+
             const slotAppointments = appointments.filter(a => a.appointmentTime === timeStr);
+            const bookedCount = slotAppointments.length;
+            const remaining = maxPatientsPerSlot - bookedCount;
 
             slots.push({
                 time: current.format('HH:mm'),
                 timeValue: timeStr,
-                available: slotAppointments.length < maxPatientsPerSlot,
-                bookedCount: slotAppointments.length,
-                remainingSpots: maxPatientsPerSlot - slotAppointments.length
+                available: remaining > 0,
+                bookedCount,
+                remainingSpots: Math.max(0, remaining),
+                maxSpots: maxPatientsPerSlot,
             });
 
-            current.add(slotDuration, 'minutes');
+            current.add(slotDurationMins, 'minutes');
         }
 
-        res.status(200).json({ slots });
+        res.status(200).json({ slots, maxPatientsPerHour, slotDuration: slotDurationMins, serviceTypes: docServiceTypes });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -15,7 +15,10 @@ export const createDoctorProfile = async (req, res) => {
             specialization, licenseNumber,
             experience, qualification, bio,
             workingDays, workingHoursStart, workingHoursEnd,
-            consultationFee
+            consultationFee, clinicFee, videoFee,
+            serviceTypes, slotDuration, maxPatientsPerHour,
+            breakStart, breakEnd,
+            languages, education, workExperience, awards
         } = req.body;
 
         // Required fields validation
@@ -36,12 +39,29 @@ export const createDoctorProfile = async (req, res) => {
 
         const profilePhoto = req.file ? req.file.path.replace(/\\/g, '/') : null;
 
+        // Parse JSON fields if sent as strings
+        const parseJSON = (val) => {
+            if (!val) return undefined;
+            if (typeof val === 'string') { try { return JSON.parse(val); } catch { return val; } }
+            return val;
+        };
+
         const doctor = await DoctorProfile.create({
             userId, fullName, email, phone,
             specialization, licenseNumber,
             experience, qualification, bio,
-            workingDays, workingHoursStart, workingHoursEnd,
-            consultationFee, profilePhoto
+            workingDays: parseJSON(workingDays),
+            workingHoursStart, workingHoursEnd,
+            consultationFee, clinicFee, videoFee,
+            serviceTypes: parseJSON(serviceTypes) || ['clinic', 'video'],
+            slotDuration: slotDuration || 30,
+            maxPatientsPerHour: maxPatientsPerHour || 10,
+            breakStart, breakEnd,
+            languages: parseJSON(languages),
+            education: parseJSON(education),
+            workExperience: parseJSON(workExperience),
+            awards: parseJSON(awards),
+            profilePhoto
         });
 
         res.status(201).json({ message: 'Doctor profile created successfully', doctor });
@@ -64,8 +84,8 @@ export const getPublicDoctors = async (req, res) => {
 
         if (search) {
             where[Op.or] = [
-                { fullName: { [Op.iLike]: `%${search}%` } },
-                { specialization: { [Op.iLike]: `%${search}%` } }
+                { fullName: { [Op.like]: `%${search}%` } },
+                { specialization: { [Op.like]: `%${search}%` } }
             ];
         }
 
@@ -197,8 +217,19 @@ export const updateDoctorProfile = async (req, res) => {
                 fullName, email, phone, specialization, licenseNumber,
                 experience, qualification, bio,
                 workingDays, workingHoursStart, workingHoursEnd,
-                consultationFee, isActive
+                consultationFee, clinicFee, videoFee,
+                serviceTypes, slotDuration, maxPatientsPerHour,
+                breakStart, breakEnd,
+                languages, education, workExperience, awards,
+                isActive
             } = req.body;
+
+            const parseJSON = (val) => {
+                if (!val) return undefined;
+                if (typeof val === 'string') { try { return JSON.parse(val); } catch { return val; } }
+                return val;
+            };
+
             if (fullName !== undefined) doctor.fullName = fullName;
             if (email !== undefined) doctor.email = email;
             if (phone !== undefined) doctor.phone = phone;
@@ -207,10 +238,21 @@ export const updateDoctorProfile = async (req, res) => {
             if (experience !== undefined) doctor.experience = experience;
             if (qualification !== undefined) doctor.qualification = qualification;
             if (bio !== undefined) doctor.bio = bio;
-            if (workingDays !== undefined) doctor.workingDays = workingDays;
+            if (workingDays !== undefined) doctor.workingDays = parseJSON(workingDays);
             if (workingHoursStart !== undefined) doctor.workingHoursStart = workingHoursStart;
             if (workingHoursEnd !== undefined) doctor.workingHoursEnd = workingHoursEnd;
             if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
+            if (clinicFee !== undefined) doctor.clinicFee = clinicFee;
+            if (videoFee !== undefined) doctor.videoFee = videoFee;
+            if (serviceTypes !== undefined) doctor.serviceTypes = parseJSON(serviceTypes);
+            if (slotDuration !== undefined) doctor.slotDuration = slotDuration;
+            if (maxPatientsPerHour !== undefined) doctor.maxPatientsPerHour = maxPatientsPerHour;
+            if (breakStart !== undefined) doctor.breakStart = breakStart;
+            if (breakEnd !== undefined) doctor.breakEnd = breakEnd;
+            if (languages !== undefined) doctor.languages = parseJSON(languages);
+            if (education !== undefined) doctor.education = parseJSON(education);
+            if (workExperience !== undefined) doctor.workExperience = parseJSON(workExperience);
+            if (awards !== undefined) doctor.awards = parseJSON(awards);
             if (isActive !== undefined) doctor.isActive = isActive;
             if (req.file) doctor.profilePhoto = req.file.path.replace(/\\/g, '/');
         }

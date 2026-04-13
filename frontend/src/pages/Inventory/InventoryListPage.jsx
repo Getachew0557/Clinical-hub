@@ -100,10 +100,10 @@ export default function InventoryListPage() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={800} color="text.primary">
+                    <Typography variant="h5" color="text.primary">
                         Inventory Management
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                         Track and manage clinic supplies and equipment
                     </Typography>
                 </div>
@@ -178,10 +178,10 @@ export default function InventoryListPage() {
                                                     <Package size={24} />
                                                 </div>
                                                 <div>
-                                                    <Typography variant="subtitle1" fontWeight={800} color="text.primary" className="leading-tight">
+                                                    <Typography variant="subtitle1" color="text.primary" className="leading-tight">
                                                         {item.name}
                                                     </Typography>
-                                                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                                                    <Typography variant="caption" color="text.secondary">
                                                         {item.category}
                                                     </Typography>
                                                 </div>

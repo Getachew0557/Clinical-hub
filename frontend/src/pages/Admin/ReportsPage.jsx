@@ -209,8 +209,10 @@ export default function ReportsPage() {
             {/* Header */}
             <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <Box>
-                    <Typography variant="h5" fontWeight={800}>Administrative Insights</Typography>
-                    <Typography variant="body2" color="text.secondary">Comprehensive operational analysis & financial overview</Typography>
+                    <Typography variant="h5" color="text.primary">Administrative Insights</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                        Comprehensive operational analysis & financial overview
+                    </Typography>
                 </Box>
                 <Box className="flex gap-2">
                     <Button
@@ -293,7 +295,7 @@ export default function ReportsPage() {
             <Box id="full-clinical-report" sx={{ bgcolor: 'white', borderRadius: 6, p: 4, border: '1px solid #f1f5f9' }}>
                 <Box className="mb-10 flex justify-between items-end border-b pb-8 border-slate-100">
                     <Box>
-                        <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.03em', color: '#0f172a' }}>
+                        <Typography variant="h4" sx={{ letterSpacing: '-0.03em', color: '#0f172a' }}>
                             Health System Performance Dashboard
                         </Typography>
                         <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -317,9 +319,9 @@ export default function ReportsPage() {
                             <Box sx={{ p: 4, borderRadius: 5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', height: '100%' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, color: kpi.color }}>
                                     {kpi.icon}
-                                    <Typography variant="caption" fontWeight={800} className="uppercase" sx={{ opacity: 0.7 }}>{kpi.label}</Typography>
+                                    <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>{kpi.label}</Typography>
                                 </Box>
-                                <Typography variant="h3" fontWeight={900} sx={{ color: '#1e293b' }}>{kpi.value.toLocaleString()}</Typography>
+                                <Typography variant="h3" sx={{ fontWeight: 900, color: '#1e293b' }}>{kpi.value.toLocaleString()}</Typography>
                             </Box>
                         </Grid>
                     ))}
@@ -330,7 +332,7 @@ export default function ReportsPage() {
                     <Grid container spacing={5}>
                         <Grid item xs={12} lg={8}>
                             <Box sx={{ mb: 6 }}>
-                                <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Typography variant="subtitle1" sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                     <TrendingUp size={20} className="text-blue-600" />
                                     Operational Trajectory & Revenue Volume
                                 </Typography>

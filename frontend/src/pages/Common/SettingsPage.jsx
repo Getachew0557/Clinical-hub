@@ -54,8 +54,10 @@ export default function SettingsPage() {
     return (
         <div className="max-w-5xl mx-auto pb-12">
             <div className="mb-8">
-                <Typography variant="h4" fontWeight={800} color="text.primary">Settings</Typography>
-                <Typography variant="body1" color="text.secondary">Manage your account preferences and clinic configurations</Typography>
+                <Typography variant="h5" color="text.primary">Settings</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                    Manage your account preferences and clinic configurations
+                </Typography>
             </div>
 
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -85,7 +87,7 @@ export default function SettingsPage() {
                     <Grid item xs={12} md={6}>
                         <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
                             <CardContent className="p-6">
-                                <Typography variant="h6" fontWeight={800} gutterBottom>Notification Preferences</Typography>
+                                <Typography variant="subtitle1" gutterBottom>Notification Preferences</Typography>
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                                     Choose how you want to receive alerts and updates
                                 </Typography>
@@ -94,7 +96,7 @@ export default function SettingsPage() {
                                         control={<Switch checked={settings.emailNotifications} onChange={() => handleToggle('emailNotifications')} />}
                                         label={
                                             <div>
-                                                <Typography variant="body1" fontWeight={600}>Email Notifications</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 600 }}>Email Notifications</Typography>
                                                 <Typography variant="caption" color="text.secondary">Receive appointment reminders and system alerts via email</Typography>
                                             </div>
                                         }

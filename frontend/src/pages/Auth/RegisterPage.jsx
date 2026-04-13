@@ -81,10 +81,10 @@ export default function RegisterPage() {
                         <Stethoscope size={32} />
                     </div>
                     <div className="text-center">
-                        <Typography variant="h4" className="font-bold text-slate-900">
+                        <Typography variant="h5" color="text.primary">
                             Create Account
                         </Typography>
-                        <Typography variant="body2" className="text-slate-500 font-medium">
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                             Register for Clinical Hub Clinic System
                         </Typography>
                     </div>
@@ -93,10 +93,10 @@ export default function RegisterPage() {
                 <Card className="shadow-xl rounded-2xl border-0">
                     <CardContent className="p-8">
                         <div className="text-center mb-6">
-                            <Typography variant="h5" className="font-bold text-slate-800 mb-1">
+                            <Typography variant="subtitle1" color="text.primary" sx={{ mb: 0.5 }}>
                                 Register
                             </Typography>
-                            <Typography variant="body2" className="text-slate-500 text-sm">
+                            <Typography variant="body2" color="text.secondary">
                                 Fill in your details to get started
                             </Typography>
                         </div>
@@ -198,7 +198,7 @@ export default function RegisterPage() {
                             </Button>
                         </form>
 
-                        <Typography variant="body2" className="mt-8 text-center text-slate-600 text-sm">
+                        <Typography variant="body2" sx={{ mt: 4, textAlign: 'center', color: 'text.secondary' }}>
                             Already have an account?{" "}
                             <Link to="/login" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
                                 Sign In

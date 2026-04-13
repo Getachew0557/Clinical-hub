@@ -67,7 +67,10 @@ const doctorService = {
      */
     updateDoctor: async (id, doctorData) => {
         const response = await axios.put(`${API_URL}/${id}`, doctorData, {
-            headers: getAuthHeader()
+            headers: {
+                ...getAuthHeader(),
+                'Content-Type': 'multipart/form-data'
+            }
         });
         return response.data;
     },

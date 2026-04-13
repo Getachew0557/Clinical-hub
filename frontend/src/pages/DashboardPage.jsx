@@ -115,10 +115,10 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-6">
             {/* ── Page Header ── */}
             <div>
-                <Typography variant="h5" fontWeight={800} color="text.primary">
+                <Typography variant="h5" color="text.primary">
                     {role === 'Patient' ? t('dashboard.myPortal') : t('dashboard.title')}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                     {t('dashboard.welcome', { name: user?.fullName || 'User' })}
                 </Typography>
             </div>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                 {/* Main Stats Chart */}
                 <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, gridColumn: showAllCharts ? 'span 2' : 'span 2' }}>
                     <CardContent>
-                        <Typography variant="subtitle1" fontWeight={700}>{t('dashboard.activityOverview')}</Typography>
+                        <Typography variant="subtitle1">{t('dashboard.activityOverview')}</Typography>
                         <Typography variant="caption" color="text.secondary">{t('dashboard.activitySubtitle')}</Typography>
                         <div className="h-64 mt-4">
                             <ResponsiveContainer width="100%" height="100%">
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                     <CardContent>
                         <div className="flex items-center justify-between">
                             <div>
-                                <Typography variant="subtitle1" fontWeight={700}>{t('dashboard.yourSchedule')}</Typography>
+                                <Typography variant="subtitle1">{t('dashboard.yourSchedule')}</Typography>
                                 <Typography variant="caption" color="text.secondary">{t('dashboard.upcomingAppointments')}</Typography>
                             </div>
                             <Chip label={t('dashboard.liveLabel')} size="small" color="success" variant="outlined" sx={{ borderRadius: 1 }} />
@@ -189,8 +189,8 @@ export default function DashboardPage() {
                                         onClick={() => navigate(`/emr?patientId=${apt.patientId}`)}
                                     >
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-800 truncate">{apt.patientName || 'Patient'}</p>
-                                            <p className="text-xs text-slate-500 truncate">{apt.reason || t('common.generalConsultation')}</p>
+                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{apt.patientName || 'Patient'}</p>
+                                            <p className="text-[12px] text-slate-500 truncate">{apt.reason || t('common.generalConsultation')}</p>
                                         </div>
                                         <div className="flex flex-col items-end gap-1 shrink-0">
                                             <div className="flex items-center gap-1 text-xs text-slate-500">

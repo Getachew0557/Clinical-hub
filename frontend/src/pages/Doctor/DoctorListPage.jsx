@@ -14,6 +14,7 @@ import {
 import doctorService from '../../api/doctor.service';
 import authService from '../../api/auth.service';
 import { useSelector } from 'react-redux';
+import { getDoctorPhotoUrl } from '../../utils/cn';
 
 export default function DoctorListPage() {
     const { user } = useSelector((s) => s.auth);
@@ -30,9 +31,16 @@ export default function DoctorListPage() {
     const [formData, setFormData] = useState({
         fullName: '', email: '', password: '', phone: '',
         specialization: '', licenseNumber: '', experience: '',
-        qualification: '', bio: '', consultationFee: ''
+        qualification: '', bio: '', consultationFee: '',
+        clinicFee: '', videoFee: '',
+        serviceTypes: ['clinic', 'video'],
+        workingDays: [], workingHoursStart: '08:00', workingHoursEnd: '18:00',
+        breakStart: '13:00', breakEnd: '14:00',
+        maxPatientsPerHour: 10, slotDuration: 30,
+        languages: 'Amharic, English'
     });
     const [submitting, setSubmitting] = useState(false);
+    const [profilePhotoFile, setProfilePhotoFile] = useState(null);
 
     // Menu state
     const [anchorEl, setAnchorEl] = useState(null);
@@ -50,7 +58,8 @@ export default function DoctorListPage() {
             setError(null);
         } catch (err) {
             console.error('Fetch Doctors Error:', err);
-            setError('Failed to load doctors. Please ensure the doctor-service is running.');
+            const msg = err.response?.data?.message || err.message;
+            setError(`Failed to load doctors: ${msg}`);
         } finally {
             setLoading(false);
         }
@@ -80,7 +89,13 @@ export default function DoctorListPage() {
         setFormData({
             userId: '', fullName: '', email: '', phone: '',
             specialization: '', licenseNumber: '', experience: '',
-            qualification: '', bio: '', consultationFee: ''
+            qualification: '', bio: '', consultationFee: '',
+            clinicFee: '', videoFee: '',
+            serviceTypes: ['clinic', 'video'],
+            workingDays: [], workingHoursStart: '08:00', workingHoursEnd: '18:00',
+            breakStart: '13:00', breakEnd: '14:00',
+            maxPatientsPerHour: 10, slotDuration: 30,
+            languages: 'Amharic, English'
         });
     };
 
@@ -102,16 +117,29 @@ export default function DoctorListPage() {
                     role: 'Doctor'
                 });
 
-                // 2. Create Doctor Profile with returned userId
-                await doctorService.createDoctor({
-                    ...formData,
-                    userId: authUser.user.id
+                // 2. Build FormData to support photo upload
+                const fd = new FormData();
+                Object.entries({ ...formData, userId: authUser.user.id }).forEach(([k, v]) => {
+                    if (v !== '' && v !== null && v !== undefined && k !== 'password') {
+                        fd.append(k, typeof v === 'object' && !Array.isArray(v) ? JSON.stringify(v) : Array.isArray(v) ? JSON.stringify(v) : v);
+                    }
                 });
+                if (profilePhotoFile) fd.append('profilePhoto', profilePhotoFile);
+
+                await doctorService.createDoctor(fd);
                 alert('Doctor account and profile created successfully!');
             } else {
-                await doctorService.updateDoctor(selectedDoctor.id, formData);
+                const fd = new FormData();
+                Object.entries(formData).forEach(([k, v]) => {
+                    if (v !== '' && v !== null && v !== undefined && k !== 'password') {
+                        fd.append(k, typeof v === 'object' && !Array.isArray(v) ? JSON.stringify(v) : Array.isArray(v) ? JSON.stringify(v) : v);
+                    }
+                });
+                if (profilePhotoFile) fd.append('profilePhoto', profilePhotoFile);
+                await doctorService.updateDoctor(selectedDoctor.id, fd);
                 alert('Doctor profile updated successfully!');
             }
+            setProfilePhotoFile(null);
             handleCloseModal();
             fetchDoctors();
         } catch (err) {
@@ -166,8 +194,10 @@ export default function DoctorListPage() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={800} color="text.primary">Doctors</Typography>
-                    <Typography variant="body2" color="text.secondary">Manage your clinic's medical professionals</Typography>
+                    <Typography variant="h5" color="text.primary">Doctors</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                        Manage your clinic's medical professionals
+                    </Typography>
                 </div>
                 {isAdmin && (
                     <Button
@@ -230,7 +260,7 @@ export default function DoctorListPage() {
                             <CardContent className="p-5">
                                 <div className="flex justify-between items-start mb-4">
                                     <Avatar
-                                        src={doctor.profilePhoto}
+                                        src={getDoctorPhotoUrl(doctor.profilePhoto)}
                                         sx={{ width: 64, height: 64, borderRadius: 4, bgcolor: '#eff6ff', color: '#2563eb', fontWeight: 800 }}
                                     >
                                         {doctor.fullName?.split(' ').map(n => n[0]).join('')}
@@ -399,13 +429,195 @@ export default function DoctorListPage() {
                                 </Grid>
                                 <Grid item xs={12} md={4}>
                                     <TextField
-                                        label="Consultation Fee"
+                                        label="Consultation Fee (ETB)"
                                         name="consultationFee"
                                         type="number"
                                         fullWidth
+                                        helperText="Used for clinic visits"
                                         value={formData.consultationFee}
                                         onChange={handleInputChange}
                                     />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Video Consultation Fee (ETB)"
+                                        name="videoFee"
+                                        type="number"
+                                        fullWidth
+                                        placeholder="Leave blank to use same as clinic fee"
+                                        value={formData.videoFee}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Max Patients / Hour"
+                                        name="maxPatientsPerHour"
+                                        type="number"
+                                        fullWidth
+                                        value={formData.maxPatientsPerHour}
+                                        onChange={handleInputChange}
+                                        helperText="Default: 10 (= 5 per 30-min slot)"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Slot Duration (minutes)"
+                                        name="slotDuration"
+                                        type="number"
+                                        fullWidth
+                                        value={formData.slotDuration}
+                                        onChange={handleInputChange}
+                                        helperText="Default: 30 minutes"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField
+                                        label="Languages Spoken"
+                                        name="languages"
+                                        fullWidth
+                                        placeholder="e.g. Amharic, English, Tigrinya"
+                                        value={formData.languages}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                    <TextField
+                                        label="Work Start Time"
+                                        name="workingHoursStart"
+                                        type="time"
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        value={formData.workingHoursStart}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                    <TextField
+                                        label="Work End Time"
+                                        name="workingHoursEnd"
+                                        type="time"
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        value={formData.workingHoursEnd}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                    <TextField
+                                        label="Break Start"
+                                        name="breakStart"
+                                        type="time"
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        value={formData.breakStart}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                    <TextField
+                                        label="Break End"
+                                        name="breakEnd"
+                                        type="time"
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        value={formData.breakEnd}
+                                        onChange={handleInputChange}
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                                        Working Days
+                                    </Typography>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(day => {
+                                            const selected = (formData.workingDays || []).includes(day);
+                                            return (
+                                                <button
+                                                    key={day}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = formData.workingDays || [];
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            workingDays: selected
+                                                                ? current.filter(d => d !== day)
+                                                                : [...current, day]
+                                                        }));
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${
+                                                        selected
+                                                            ? 'bg-teal-600 text-white border-teal-600'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-teal-400'
+                                                    }`}
+                                                >
+                                                    {day.slice(0, 3)}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                                        Service Types Offered
+                                    </Typography>
+                                    <div className="flex gap-3">
+                                        {[{val:'clinic',label:'🏥 Clinic Visit'},{val:'video',label:'📹 Video Consultation'}].map(({val,label}) => {
+                                            const selected = (formData.serviceTypes || []).includes(val);
+                                            return (
+                                                <button
+                                                    key={val}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = formData.serviceTypes || [];
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            serviceTypes: selected
+                                                                ? current.filter(s => s !== val)
+                                                                : [...current, val]
+                                                        }));
+                                                    }}
+                                                    className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                                                        selected
+                                                            ? 'bg-teal-600 text-white border-teal-600'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-teal-400'
+                                                    }`}
+                                                >
+                                                    {label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                                        Profile Photo
+                                    </Typography>
+                                    <div className="flex items-center gap-4">
+                                        {(profilePhotoFile || formData.profilePhoto) && (
+                                            <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-teal-200 shrink-0">
+                                                <img
+                                                    src={profilePhotoFile ? URL.createObjectURL(profilePhotoFile) : getDoctorPhotoUrl(formData.profilePhoto)}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        )}
+                                        <label className="flex items-center gap-2 px-4 py-2.5 bg-teal-50 border-2 border-dashed border-teal-300 rounded-xl cursor-pointer hover:bg-teal-100 transition-all text-sm font-semibold text-teal-700">
+                                            <span>📷 {profilePhotoFile ? profilePhotoFile.name : 'Choose Photo'}</span>
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                                className="hidden"
+                                                onChange={(e) => setProfilePhotoFile(e.target.files[0] || null)}
+                                            />
+                                        </label>
+                                        {profilePhotoFile && (
+                                            <button type="button" onClick={() => setProfilePhotoFile(null)} className="text-red-400 hover:text-red-600 text-xs font-bold">
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <TextField

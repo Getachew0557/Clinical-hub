@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Container } from '@mui/material';
+import { Container, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 
 const AuthLayout = () => {
@@ -21,9 +21,9 @@ const AuthLayout = () => {
                 </motion.div>
 
                 <div className="mt-8 text-center">
-                    <p className="text-slate-400 text-sm font-medium">
+                    <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7 }}>
                         © {new Date().getFullYear()} Clinical Hub Clinic. Professional Management.
-                    </p>
+                    </Typography>
                 </div>
             </Container>
         </div>

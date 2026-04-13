@@ -90,8 +90,10 @@ export default function ProfilePage() {
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-12">
             <div>
-                <Typography variant="h4" fontWeight={800} color="text.primary">My Account</Typography>
-                <Typography variant="body1" color="text.secondary">Manage your personal information and security settings</Typography>
+                <Typography variant="h5" color="text.primary">My Account</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                    Manage your personal information and security settings
+                </Typography>
             </div>
 
             {(successMsg || errorMsg) && (
@@ -119,7 +121,7 @@ export default function ProfilePage() {
                             >
                                 {user?.fullName?.charAt(0)}
                             </Avatar>
-                            <Typography variant="h5" fontWeight={800}>{user?.fullName}</Typography>
+                            <Typography variant="h5">{user?.fullName}</Typography>
                             <Typography variant="body2" color="primary.main" fontWeight={700} sx={{ mt: 1, px: 2, py: 0.5, bgcolor: '#eff6ff', borderRadius: 2 }}>
                                 {user?.role}
                             </Typography>

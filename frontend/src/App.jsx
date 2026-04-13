@@ -44,10 +44,20 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"Inter", "system-ui", "-apple-system", "sans-serif"',
-    h5: { fontWeight: 800 },
-    h3: { fontWeight: 800 },
-    h4: { fontWeight: 700 },
-    button: { textTransform: 'none', fontWeight: 600 },
+    // Page titles
+    h4: { fontWeight: 800, fontSize: '1.75rem' },
+    h5: { fontWeight: 800, fontSize: '1.5rem' },  // Main page title — 24px
+    h6: { fontWeight: 700, fontSize: '1.125rem' }, // Sub-section title — 18px
+    // Card/section headings
+    subtitle1: { fontWeight: 700, fontSize: '1rem' },   // 16px section head
+    subtitle2: { fontWeight: 600, fontSize: '0.875rem' }, // 14px sub-head
+    // Body text
+    body1: { fontWeight: 400, fontSize: '0.875rem' },  // 14px body
+    body2: { fontWeight: 400, fontSize: '0.875rem' },  // 14px body
+    // Labels, hints, metadata
+    caption: { fontWeight: 400, fontSize: '0.75rem' }, // 12px caption
+    overline: { fontWeight: 700, fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase' }, // 10px badge
+    button: { textTransform: 'none', fontWeight: 600, fontSize: '0.875rem' },
   },
   shape: { borderRadius: 16 },
   components: {

@@ -8,6 +8,7 @@ import {
     MessageSquare, Send, X, Wifi, WifiOff, Loader2,
     AlertCircle, Camera, CameraOff
 } from 'lucide-react';
+import { Typography } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
 import useVideoCall from './useVideoCall';
 import { isParticipant, isVideoEligible } from './videoUtils';
@@ -64,10 +65,13 @@ export default function VideoConsultationPage() {
 
     const {
         localStream, remoteStream, connectionStatus,
-        isMuted, isCameraOff, isChatOpen, setIsChatOpen,
+        isMuted, isCameraOff, 
+        isRemoteMuted, isRemoteCameraOff,
+        isChatOpen, setIsChatOpen,
         messages, unreadCount, setUnreadCount,
         permissionError, roomFull, peerLeft,
         toggleMute, toggleCamera, endCall, sendMessage, retryMedia,
+        socketConnected,
     } = useVideoCall(accessError === null && !loadingAppt ? roomId : null);
 
     const localVideoRef = useRef(null);
@@ -78,7 +82,24 @@ export default function VideoConsultationPage() {
         if (!user) navigate('/login');
     }, [user, navigate]);
 
-    // Fetch and verify appointment
+    const [statusUpdated, setStatusUpdated] = useState(false);
+
+    // Auto-update status to 'In Progress' if Doctor joins
+    useEffect(() => {
+        if (user?.role === 'Doctor' && appointment?.status === 'Confirmed' && !statusUpdated) {
+            const updateStatus = async () => {
+                try {
+                    await appointmentService.updateStatus(roomId, 'In Progress');
+                    setStatusUpdated(true);
+                    console.log('Appointment status auto-updated to In Progress');
+                } catch (err) {
+                    console.error('Failed to auto-update appointment status:', err);
+                }
+            };
+            updateStatus();
+        }
+    }, [user, appointment, roomId, statusUpdated]);
+
     useEffect(() => {
         if (!roomId || !user) return;
         const verify = async () => {
@@ -104,16 +125,16 @@ export default function VideoConsultationPage() {
 
     // Attach streams to video elements
     useEffect(() => {
-        if (localVideoRef.current && localStream) {
+        if (localVideoRef.current && localStream && !isCameraOff) {
             localVideoRef.current.srcObject = localStream;
         }
-    }, [localStream]);
+    }, [localStream, isCameraOff]);
 
     useEffect(() => {
-        if (remoteVideoRef.current && remoteStream) {
+        if (remoteVideoRef.current && remoteStream && !isRemoteCameraOff) {
             remoteVideoRef.current.srcObject = remoteStream;
         }
-    }, [remoteStream]);
+    }, [remoteStream, isRemoteCameraOff]);
 
     // Auto-scroll chat
     useEffect(() => {
@@ -163,7 +184,9 @@ export default function VideoConsultationPage() {
                     <div className="w-16 h-16 bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
                         <AlertCircle className="w-8 h-8 text-red-400" />
                     </div>
-                    <h2 className="text-xl font-bold text-white mb-3">{messages_map[accessError]}</h2>
+                    <Typography variant="h5" color="text.primary" sx={{ mb: 3 }}>
+                        {messages_map[accessError]}
+                    </Typography>
                     <button
                         onClick={() => navigate('/dashboard')}
                         className="mt-6 px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all"
@@ -175,32 +198,14 @@ export default function VideoConsultationPage() {
         );
     }
 
-    // ── Permission Error ──
-    if (permissionError) {
-        return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-slate-800 rounded-3xl p-10 text-center">
-                    <div className="w-16 h-16 bg-amber-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Camera className="w-8 h-8 text-amber-400" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white mb-3">{t('videoConsult.permissionError')}</h2>
-                    <button
-                        onClick={retryMedia}
-                        className="mt-6 px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all"
-                    >
-                        {t('videoConsult.retry')}
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     // ── Room Full ──
     if (roomFull) {
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
                 <div className="max-w-md w-full bg-slate-800 rounded-3xl p-10 text-center">
-                    <h2 className="text-xl font-bold text-white mb-3">{t('videoConsult.roomFull')}</h2>
+                    <Typography variant="h5" color="text.primary" sx={{ mb: 3 }}>
+                        {t('videoConsult.roomFull')}
+                    </Typography>
                     <button onClick={() => navigate('/appointments')} className="mt-6 px-8 py-3 bg-teal-600 text-white rounded-xl font-bold">
                         Back to Appointments
                     </button>
@@ -209,27 +214,48 @@ export default function VideoConsultationPage() {
         );
     }
 
+    // ── Main Layout ──
     return (
         <div className="min-h-screen bg-slate-900 flex overflow-hidden">
             {/* ── Main Video Area ── */}
             <div className="flex-1 relative flex flex-col">
-                {/* Remote Video */}
-                <div className="flex-1 relative bg-slate-800">
-                    {remoteStream ? (
+                {/* Main Video (Remote) */}
+                <div className="flex-1 relative bg-slate-900 overflow-hidden">
+                    {remoteStream && !isRemoteCameraOff ? (
                         <video
                             ref={remoteVideoRef}
                             autoPlay
                             playsInline
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                         />
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                            <div className="w-24 h-24 rounded-full bg-teal-700 flex items-center justify-center text-4xl font-black text-white">
-                                {remoteName.charAt(0).toUpperCase()}
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800">
+                            <div className="w-28 h-28 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-500 mb-6 ring-8 ring-slate-800 ring-offset-4 ring-offset-slate-900 animate-pulse">
+                                {peerLeft ? <Users size={56} /> : (isRemoteCameraOff ? <CameraOff size={56} /> : <Loader2 size={56} className="animate-spin text-teal-500/50" />)}
                             </div>
-                            <p className="text-white/70 text-sm font-medium">
-                                {t('videoConsult.waitingFor', { name: remoteName })}
-                            </p>
+                            <div className="text-center max-w-sm px-6">
+                                <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
+                                    {peerLeft ? 'Participant Left' : (isRemoteCameraOff ? 'Camera is Off' : 'Waiting for Approval')}
+                                </Typography>
+                                <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                                    {peerLeft 
+                                        ? 'The other person has ended the call.' 
+                                        : isRemoteCameraOff 
+                                            ? 'The participant has turned off their video.'
+                                            : user?.role === 'Doctor' 
+                                                ? 'The patient has been notified. They will appear here once they join the link.'
+                                                : 'The doctor will be with you shortly. Please stay on this page to maintain your connection.'
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Remote Muted Badge */}
+                    {remoteStream && isRemoteMuted && !peerLeft && (
+                        <div className="absolute top-6 right-6 bg-red-500/90 text-white px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs font-black shadow-lg backdrop-blur-sm animate-in fade-in zoom-in duration-300">
+                            <MicOff size={14} />
+                            Muted
                         </div>
                     )}
 
@@ -256,8 +282,8 @@ export default function VideoConsultationPage() {
                 </div>
 
                 {/* Local Video (PiP) */}
-                <div className="absolute bottom-24 right-4 w-40 h-28 rounded-2xl overflow-hidden border-2 border-teal-500 shadow-2xl bg-slate-700">
-                    {localStream && !isCameraOff ? (
+                <div className="absolute bottom-24 right-4 w-40 h-28 rounded-2xl overflow-hidden border-2 border-teal-500 shadow-2xl bg-slate-700 z-50">
+                    {localStream && !isCameraOff && !permissionError ? (
                         <video
                             ref={localVideoRef}
                             autoPlay
@@ -266,18 +292,36 @@ export default function VideoConsultationPage() {
                             className="w-full h-full object-cover scale-x-[-1]"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-slate-700">
-                            <CameraOff className="text-slate-400 w-8 h-8" />
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-2 text-center">
+                            {permissionError ? (
+                                <>
+                                    <CameraOff className="text-amber-500 w-6 h-6 mb-1" />
+                                    <button onClick={retryMedia} className="text-[8px] font-bold text-teal-400 uppercase tracking-tighter">
+                                        Retry Camera
+                                    </button>
+                                </>
+                            ) : (
+                                <CameraOff className="text-slate-500 w-6 h-6" />
+                            )}
                         </div>
                     )}
-                    <div className="absolute bottom-1 left-1 bg-black/50 px-2 py-0.5 rounded-lg">
-                        <span className="text-white text-[10px] font-semibold">{t('videoConsult.you')}</span>
+                    <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded-lg">
+                        <span className="text-white text-[9px] font-bold tracking-tight">{t('videoConsult.you')}</span>
                     </div>
                 </div>
 
                 {/* Top Bar */}
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                    <StatusBadge status={connectionStatus} t={t} />
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-30">
+                    <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md border animate-in slide-in-from-top duration-500 ${
+                        connectionStatus === 'connected' 
+                            ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' 
+                            : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                    }`}>
+                        <div className={`w-2 h-2 rounded-full ${
+                            connectionStatus === 'connected' ? 'bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.5)]' : 'bg-amber-400 animate-pulse'
+                        }`} />
+                        {connectionStatus === 'connected' ? 'Clinical Session Live' : (socketConnected ? 'Establish Handshake...' : 'Searching for Signal...')}
+                    </div>
                     <div className="flex items-center gap-2">
                         {/* Chat toggle */}
                         <button

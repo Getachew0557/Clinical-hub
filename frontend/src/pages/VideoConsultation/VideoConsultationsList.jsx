@@ -45,10 +45,10 @@ export default function VideoConsultationsList() {
                     <Video className="text-teal-600 w-5 h-5" />
                 </div>
                 <div>
-                    <Typography variant="h5" fontWeight={800} color="text.primary">
+                    <Typography variant="h5" color="text.primary">
                         {t('videoConsult.pageTitle')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                         Your upcoming video consultations
                     </Typography>
                 </div>

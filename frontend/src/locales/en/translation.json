@@ -226,5 +226,26 @@
   "videoConsult.callEnded": "Call Ended",
   "videoConsult.notEligible": "This consultation is not yet available for video call.",
   "videoConsult.typeMessage": "Type a message...",
-  "videoConsult.you": "You"
+  "videoConsult.you": "You",
+
+  "sidebar.dashboard": "Dashboard",
+  "sidebar.patients": "Patients",
+  "sidebar.doctors": "Doctors",
+  "sidebar.receptionists": "Receptionists",
+  "sidebar.appointments": "Appointments",
+  "sidebar.medicalRecords": "Medical Records",
+  "sidebar.billing": "Billing",
+  "sidebar.inventory": "Inventory",
+  "sidebar.reports": "Reports",
+  "sidebar.settings": "Settings",
+  "sidebar.myAppointments": "My Appointments",
+  "sidebar.myPatients": "My Patients",
+  "sidebar.myPortal": "My Portal",
+  "sidebar.bookings": "Bookings",
+  "sidebar.myRecords": "My Records",
+  "sidebar.myBills": "My Bills",
+  "sidebar.clinicHours": "Clinic Hours",
+  "sidebar.weekdayHours": "Mon - Fri: 8:00 AM - 8:00 PM",
+  "sidebar.saturdayHours": "Sat: 9:00 AM - 4:00 PM",
+  "sidebar.roleAccess": "{{role}} Portal"
 }

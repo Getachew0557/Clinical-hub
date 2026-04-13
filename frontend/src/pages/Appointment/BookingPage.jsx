@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import doctorService from '../../api/doctor.service';
 import appointmentService from '../../api/appointment.service';
+import { getDoctorPhotoUrl } from '../../utils/cn';
 
 const BookingPage = () => {
     const { doctorId } = useParams();
@@ -148,7 +149,7 @@ const BookingPage = () => {
                         >
                             <div className="relative w-32 h-32 rounded-3xl overflow-hidden mb-6 border-4 border-white shadow-xl">
                                 <img
-                                    src={doctor?.profilePhoto || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop"}
+                                    src={getDoctorPhotoUrl(doctor?.profilePhoto) || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop"}
                                     className="w-full h-full object-cover"
                                     alt={doctor?.fullName}
                                 />

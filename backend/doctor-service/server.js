@@ -46,6 +46,30 @@ const startServer = async () => {
     await sequelize.sync();
     console.log('Database models synced.');
 
+    // ── Add new columns if they don't exist (safe migration) ──────────────
+    const qi = sequelize.getQueryInterface();
+    const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
+
+    const newColumns = {
+        videoFee:           'DECIMAL(10,2) NULL',
+        serviceTypes:       'JSON NULL',
+        slotDuration:       'INT NOT NULL DEFAULT 30',
+        breakStart:         'TIME NULL',
+        breakEnd:           'TIME NULL',
+        languages:          'JSON NULL',
+        education:          'JSON NULL',
+        workExperience:     'JSON NULL',
+        awards:             'JSON NULL',
+        maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
+    };
+
+    for (const [col, definition] of Object.entries(newColumns)) {
+        if (!tableDesc[col]) {
+            await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
+            console.log(`Added column: ${col}`);
+        }
+    }
+
     app.listen(PORT, () => {
       console.log(`doctor-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     });

@@ -47,6 +47,11 @@ const Appointment = sequelize.define('Appointment', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
         comment: 'Must be true for Doctors to see/confirm the appointment'
+    },
+    type: {
+        type: DataTypes.ENUM('clinic', 'video'),
+        defaultValue: 'clinic',
+        comment: 'clinic = in-person visit, video = online video consultation'
     }
 });
 

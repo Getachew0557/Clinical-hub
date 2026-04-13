@@ -125,10 +125,10 @@ export default function PatientListPage() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={800} color="text.primary">
+                    <Typography variant="h5" color="text.primary">
                         {role === 'Patient' ? 'My Medical Profile' : 'Patient Management'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                         {isStaff ? 'List of all registered clinic patients' : isDoctor ? 'Patients currently under your care' : 'View and update your personal health record'}
                     </Typography>
                 </div>
@@ -196,7 +196,7 @@ export default function PatientListPage() {
                                                 <UserCircle size={32} />
                                             </Avatar>
                                             <div>
-                                                <Typography variant="subtitle1" fontWeight={800} color="text.primary">
+                                                <Typography variant="subtitle1" color="text.primary">
                                                     {pt.fullName}
                                                 </Typography>
                                                 <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -261,7 +261,7 @@ export default function PatientListPage() {
                                 <>
                                     <AlertCircle size={64} strokeWidth={1} className="text-blue-200" />
                                     <div className="text-center">
-                                        <Typography variant="h6" fontWeight={700} color="text.primary">Profile Not Found</Typography>
+                                        <Typography variant="subtitle1" color="text.primary">Profile Not Found</Typography>
                                         <Typography variant="body2" sx={{ maxWidth: 400, mt: 1 }}>
                                             It looks like your medical profile hasn't been set up yet.
                                             Please contact the clinic reception to complete your registration.
@@ -271,7 +271,7 @@ export default function PatientListPage() {
                             ) : (
                                 <>
                                     <Users size={64} strokeWidth={1} />
-                                    <Typography variant="h6" fontWeight={700}>No Patients Found</Typography>
+                                    <Typography variant="subtitle1" color="text.primary">No Patients Found</Typography>
                                     <Typography variant="body2">Try adjusting your search criteria.</Typography>
                                 </>
                             )}
