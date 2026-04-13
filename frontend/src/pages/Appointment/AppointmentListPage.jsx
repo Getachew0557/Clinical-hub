@@ -3,17 +3,9 @@ import {
     Calendar, Clock, Filter, Plus, Search,
     MoreHorizontal, CheckCircle, XCircle,
     AlertCircle, User, Stethoscope as DoctorIcon,
-    Trash2, Edit
+    Trash2, Edit, Video
 } from 'lucide-react';
-import {
-    Typography, Button, Card, CardContent, InputBase,
-    Avatar, Chip, IconButton, Menu, MenuItem,
-    CircularProgress, Alert, Tabs, Tab, Box
-} from '@mui/material';
-import appointmentService from '../../api/appointment.service';
-import BookAppointmentModal from '../../components/appointments/BookAppointmentModal';
-import EditAppointmentModal from '../../components/appointments/EditAppointmentModal';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 function TabPanel(props) {
@@ -27,6 +19,7 @@ function TabPanel(props) {
 
 export default function AppointmentListPage() {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const urlPatientId = searchParams.get('patientId');
     const urlStatus = searchParams.get('status');
 
@@ -281,6 +274,15 @@ export default function AppointmentListPage() {
                                                 </div>
                                                 <div className="flex flex-col items-end gap-3">
                                                     {getStatusChip(apt)}
+                                                    {(apt.status === 'Confirmed' || apt.status === 'In Progress') && (
+                                                        <button
+                                                            onClick={() => navigate(`/video/${apt.id}`)}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-xl text-xs font-bold hover:bg-teal-700 transition-all shadow-sm"
+                                                        >
+                                                            <Video size={13} />
+                                                            Join Video Call
+                                                        </button>
+                                                    )}
                                                     <IconButton size="small" onClick={(e) => handleMenuOpen(e, apt)}>
                                                         <MoreHorizontal size={18} />
                                                     </IconButton>

@@ -15,6 +15,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 // Dashboard
 import DashboardPage from './pages/DashboardPage';
 import DoctorListPage from './pages/Doctor/DoctorListPage';
+import DoctorProfilePage from './pages/Doctor/DoctorProfilePage';
 import AppointmentListPage from './pages/Appointment/AppointmentListPage';
 import PatientListPage from './pages/Patient/PatientListPage';
 import InventoryListPage from './pages/Inventory/InventoryListPage';
@@ -30,6 +31,8 @@ import SettingsPage from './pages/Common/SettingsPage';
 import PatientPortalDashboard from './pages/Patient/PatientPortalDashboard';
 import ReceptionistListPage from './pages/Admin/ReceptionistListPage';
 import RoleGuard from './components/common/RoleGuard';
+import VideoConsultationPage from './pages/VideoConsultation/VideoConsultationPage';
+import VideoConsultationsList from './pages/VideoConsultation/VideoConsultationsList';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -106,6 +109,19 @@ const App = () => (
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
 
+        {/* ── Public Doctor Profile (no auth required to view) ── */}
+        <Route path="/doctor/:doctorId" element={<DoctorProfilePage />} />
+
+        {/* ── Video Consultation (full-screen, outside DashboardLayout) ── */}
+        <Route
+          path="/video/:roomId"
+          element={
+            <ProtectedRoute>
+              <VideoConsultationPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* ── Public auth routes ── */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
@@ -133,6 +149,7 @@ const App = () => (
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/book/:doctorId" element={<BookingPage />} />
+          <Route path="/video-consultations" element={<RoleGuard allowedRoles={['Doctor']}><VideoConsultationsList /></RoleGuard>} />
         </Route>
 
         {/* Fallback */}

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
     LayoutDashboard, Users, CalendarDays, FileText, Receipt,
     Package, BarChart3, Settings, ChevronLeft, ChevronRight,
-    X, Stethoscope, UserCog, ClipboardList, Home, ShieldCheck
+    X, Stethoscope, UserCog, ClipboardList, Home, ShieldCheck, Video
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -25,6 +25,7 @@ const NAV_BY_ROLE = {
     Doctor: [
         { to: '/dashboard', icon: LayoutDashboard, labelKey: 'sidebar.dashboard', end: true },
         { to: '/appointments', icon: CalendarDays, labelKey: 'sidebar.myAppointments' },
+        { to: '/video-consultations', icon: Video, labelKey: 'sidebar.videoConsultations' },
         { to: '/emr', icon: FileText, labelKey: 'sidebar.medicalRecords' },
         { to: '/patients', icon: Users, labelKey: 'sidebar.myPatients' },
         { to: '/settings', icon: UserCog, labelKey: 'sidebar.settings' },

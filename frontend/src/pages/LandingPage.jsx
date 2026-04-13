@@ -8,9 +8,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination } from 'swiper/modules';
-import 'swiper/css';
 import { useTranslation } from 'react-i18next';
 import doctorService from '../api/doctor.service';
 import heroImg from '../assets/clinic-hero.png';
@@ -20,11 +17,10 @@ import LanguageSwitcher from '../components/common/LanguageSwitcher';
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const NAV_LINKS = [
-  { key: 'nav.services', href: '#services' },
-  { key: 'nav.doctors', href: '#doctors' },
+  { key: 'nav.home', href: '#' },
   { key: 'nav.about', href: '#about' },
-  { key: 'nav.faq', href: '#faq' },
-  { key: 'nav.emergency', href: '#emergency' },
+  { key: 'nav.doctors', href: '#doctors' },
+  { key: 'nav.services', href: '#services' },
 ];
 
 const STATS_CONFIG = [
@@ -170,6 +166,9 @@ export default function LandingPage() {
   // FAQ state
   const [openFaq, setOpenFaq] = useState(null);
 
+  // Doctors show-more state
+  const [showAllDoctors, setShowAllDoctors] = useState(false);
+
   // Scroll listener
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -269,29 +268,33 @@ export default function LandingPage() {
 
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((link, i) => (
-              <motion.a
-                key={link.key}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                href={link.href}
-                className="text-sm font-semibold text-slate-600 hover:text-teal-600 transition-colors"
+            <div className="flex items-center gap-8 mr-4">
+              {NAV_LINKS.map((link, i) => (
+                <motion.a
+                  key={link.key}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  href={link.href}
+                  className="text-sm font-bold text-slate-600 hover:text-teal-600 transition-colors"
+                >
+                  {t(link.key)}
+                </motion.a>
+              ))}
+            </div>
+            <div className="flex items-center gap-4 border-l border-slate-200 pl-8">
+              <LanguageSwitcher />
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/login')}
+                className="bg-teal-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20"
               >
-                {t(link.key)}
-              </motion.a>
-            ))}
-            <LanguageSwitcher />
-            <motion.button
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/login')}
-              className="bg-teal-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20"
-            >
-              {t('nav.patientPortal')}
-            </motion.button>
+                {t('nav.patientPortal')}
+              </motion.button>
+            </div>
           </div>
 
           {/* Mobile Toggle */}
@@ -374,7 +377,7 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 900,
-                fontSize: 'clamp(3rem, 7vw, 5.5rem)',
+                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
               }}
             >
               Your Health,{' '}
@@ -487,7 +490,7 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 700,
-                fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               }}
             >
               {t('services.heading')}
@@ -538,7 +541,7 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 700,
-                fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               }}
             >
               {t('doctors.heading')}
@@ -608,15 +611,17 @@ export default function LandingPage() {
 
           {/* Doctor Cards */}
           {!loadingDoctors && !doctorError && doctors.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {doctors.slice(0, 6).map((doc, i) => (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {(showAllDoctors ? doctors : doctors.slice(0, 3)).map((doc, i) => (
                 <motion.div
                   key={doc.id}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
-                  className="group rounded-3xl border border-slate-100 bg-white overflow-hidden hover:-translate-y-2 hover:border-teal-200 hover:shadow-2xl hover:shadow-teal-600/8 transition-all duration-300"
+                  className="group rounded-3xl border border-slate-100 bg-white overflow-hidden hover:-translate-y-2 hover:border-teal-200 hover:shadow-2xl hover:shadow-teal-600/8 transition-all duration-300 cursor-pointer"
+                  onClick={() => navigate(`/doctor/${doc.id}`)}
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                     {doc.profilePhoto ? (
@@ -654,15 +659,34 @@ export default function LandingPage() {
                       <p className="text-slate-400 text-xs mb-4">{doc.reviewsCount} reviews</p>
                     )}
                     <button
-                      onClick={() => handleBookingClick(doc.id)}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/doctor/${doc.id}`); }}
                       className="w-full py-3 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-700 transition-all shadow-md shadow-teal-600/15 hover:shadow-teal-600/25"
                     >
-                      {t('doctors.bookBtn')}
+                      View Profile & Book
                     </button>
                   </div>
                 </motion.div>
-              ))}
-            </div>
+                ))}
+              </div>
+
+              {/* See More / Show Less */}
+              {doctors.length > 3 && (
+                <div className="flex justify-center mt-10">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowAllDoctors(!showAllDoctors)}
+                    className="flex items-center gap-2 px-8 py-3.5 rounded-2xl border-2 border-teal-600 text-teal-600 font-bold text-sm hover:bg-teal-600 hover:text-white transition-all"
+                  >
+                    {showAllDoctors ? (
+                      <>Show Less</>
+                    ) : (
+                      <>See All {doctors.length} Doctors</>
+                    )}
+                  </motion.button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
@@ -678,7 +702,7 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 700,
-                fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               }}
             >
               {t('howItWorks.heading')}
@@ -710,7 +734,66 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          7. TESTIMONIALS
+          7. VIDEO CONSULTATION BANNER
+      ══════════════════════════════════════════════════════════════ */}
+      <section id="video-consult" className="py-16" style={{ backgroundColor: '#e6faf8' }}>
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row items-center gap-10 bg-white rounded-[2.5rem] shadow-xl shadow-teal-600/8 overflow-hidden"
+          >
+            {/* Doctor Image */}
+            <div className="md:w-72 shrink-0 hidden md:block">
+              <img
+                src="https://images.unsplash.com/photo-1559839734-2b71f1e3c770?q=80&w=600&auto=format&fit=crop"
+                alt="Specialist Doctor"
+                className="w-full h-72 object-cover object-top"
+              />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 px-8 py-10 md:py-0">
+              <h2
+                className="text-slate-900 mb-3"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontWeight: 700,
+                  fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+                }}
+              >
+                {t('videoConsult.banner.heading')}
+              </h2>
+              <p className="text-slate-500 text-base mb-6 font-medium">
+                {t('videoConsult.banner.subtext')}
+              </p>
+              <div className="flex items-center gap-5 flex-wrap">
+                {/* 24/7 Badge */}
+                <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-400/30">
+                  <span className="text-white font-black text-sm leading-tight text-center">
+                    {t('videoConsult.banner.badge')}
+                  </span>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => scrollTo('doctors')}
+                  className="bg-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-sm hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  {t('videoConsult.banner.cta')}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════
+          8. TESTIMONIALS (was 7)
       ══════════════════════════════════════════════════════════════ */}
       <section className="py-28 bg-white">
         <div className="max-w-7xl mx-auto px-6">
@@ -723,48 +806,59 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 700,
-                fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               }}
             >
               {t('testimonials.heading')}
             </h2>
           </div>
 
-          <Swiper
-            modules={[Autoplay, Pagination]}
-            spaceBetween={24}
-            slidesPerView={1}
-            breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-            }}
-            autoplay={{ delay: 3000, disableOnInteraction: false }}
-            loop
-            pagination={{ clickable: true }}
-            className="pb-12"
-          >
-            {TESTIMONIALS.map((testimonial, i) => (
-              <SwiperSlide key={i}>
-                <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 h-full flex flex-col gap-4">
-                  <div className="flex gap-1">
-                    {Array.from({ length: testimonial.rating }).map((_, j) => (
-                      <Star key={j} size={16} className="text-amber-400 fill-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-slate-600 text-sm leading-relaxed flex-1">"{testimonial.text}"</p>
-                  <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-                    <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm">
-                      {testimonial.initial}
+          <div className="relative group">
+            {/* Scroll Container */}
+            <div 
+              className="flex gap-6 overflow-x-auto pb-12 snap-x snap-mandatory no-scrollbar"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {TESTIMONIALS.map((testimonial, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] snap-center"
+                >
+                  <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 h-full flex flex-col gap-4 hover:border-teal-200 hover:bg-white hover:shadow-xl hover:shadow-teal-900/5 transition-all duration-300">
+                    <div className="flex gap-1">
+                      {Array.from({ length: testimonial.rating }).map((_, j) => (
+                        <Star key={j} size={16} className="text-amber-400 fill-amber-400" />
+                      ))}
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">{testimonial.name}</p>
-                      <p className="text-xs text-slate-400">{testimonial.role}</p>
+                    <p className="text-slate-600 text-sm leading-relaxed flex-1">"{testimonial.text}"</p>
+                    <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+                      <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm">
+                        {testimonial.initial}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{testimonial.name}</p>
+                        <p className="text-xs text-slate-400">{testimonial.role}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Pagination Indicators (Visual Only) */}
+            <div className="flex justify-center gap-2 mt-4">
+              {[0, 1, 2].map((i) => (
+                <div 
+                  key={i} 
+                  className={`h-1.5 rounded-full transition-all duration-300 ${i === 0 ? 'w-8 bg-teal-600' : 'w-2 bg-slate-200'}`} 
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -804,7 +898,7 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 700,
-                fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               }}
             >
               Precision Meets Compassionate Care.
@@ -859,7 +953,7 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontWeight: 700,
-                fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
               }}
             >
               {t('faq.heading')}
@@ -920,7 +1014,7 @@ export default function LandingPage() {
               <p className="text-white/80 text-sm font-bold uppercase tracking-widest">{t('emergency.label')}</p>
               <p
                 className="text-white font-black"
-                style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)' }}
+                style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
               >
                 +251 911 22 33 44
               </p>
@@ -1040,3 +1134,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
