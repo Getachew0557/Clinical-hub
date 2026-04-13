@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, fn, col } from 'sequelize';
 import Appointment from '../models/Appointment.js';
 import moment from 'moment';
 import axios from 'axios';
@@ -254,11 +254,27 @@ export const getAllAppointments = async (req, res) => {
         const patientsRes = await axios.get(patientUrl, authHeader).catch(() => ({ data: { patients: [] } }));
         const patientsList = patientsRes.data.patients || [];
 
+        // Also fetch doctor names for Admin/Receptionist
+        let doctorsList = [];
+        try {
+            const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+            const docRes = await axios.get(`${doctorUrl}/public`, { params: { search: '' } }).catch(() => ({ data: { doctors: [] } }));
+            doctorsList = docRes.data.doctors || docRes.data.records || [];
+        } catch { /* use empty list */ }
+
         const enriched = appointments.map(apt => {
-            const patient = patientsList.find(p => p.userId === apt.patientId || p.id === apt.patientId);
+            const patient = patientsList.find(p =>
+                p.userId === apt.patientId || p.id === apt.patientId ||
+                String(p.userId) === String(apt.patientId) || String(p.id) === String(apt.patientId)
+            );
+            const doctor = doctorsList.find(d =>
+                d.userId === apt.doctorId || d.id === apt.doctorId ||
+                String(d.userId) === String(apt.doctorId) || String(d.id) === String(apt.doctorId)
+            );
             return {
                 ...apt.toJSON(),
-                patientName: patient ? patient.fullName : 'Guest Patient',
+                patientName: patient ? (patient.fullName || patient.name) : null,
+                doctorName: doctor ? (doctor.fullName || doctor.name) : null,
                 patientDetails: patient || null
             };
         });
@@ -301,23 +317,57 @@ export const getMyAppointments = async (req, res) => {
             order: [['appointmentDate', 'ASC'], ['appointmentTime', 'ASC']]
         });
 
-        // ─── If Staff/Admin, append Patient Details ───
+        // ─── If Staff/Admin, append Patient + Doctor Details ───
         if (['Doctor', 'Admin', 'Receptionist'].includes(req.user.role)) {
             const authHeader = { headers: { Authorization: req.headers.authorization } };
             const patientUrl = process.env.PATIENT_SERVICE_URL;
+            const doctorUrl = process.env.DOCTOR_SERVICE_URL;
 
-            const patientsRes = await axios.get(patientUrl, authHeader).catch(() => ({ data: { patients: [] } }));
+            const [patientsRes, doctorsRes] = await Promise.all([
+                axios.get(patientUrl, authHeader).catch(() => ({ data: { patients: [] } })),
+                axios.get(`${doctorUrl}/public`, { params: { search: '' } }).catch(() => ({ data: { doctors: [] } }))
+            ]);
             const patientsList = patientsRes.data.patients || [];
+            const doctorsList = doctorsRes.data.doctors || doctorsRes.data.records || [];
 
             const enriched = appointments.map(apt => {
-                const patient = patientsList.find(p => p.id === apt.patientId || p.userId === apt.patientId);
+                const patient = patientsList.find(p =>
+                    p.id === apt.patientId || p.userId === apt.patientId ||
+                    String(p.id) === String(apt.patientId) || String(p.userId) === String(apt.patientId)
+                );
+                const doctor = doctorsList.find(d =>
+                    d.userId === apt.doctorId || d.id === apt.doctorId ||
+                    String(d.userId) === String(apt.doctorId) || String(d.id) === String(apt.doctorId)
+                );
                 return {
                     ...apt.toJSON(),
-                    patientName: patient ? patient.fullName : 'Guest Patient',
+                    patientName: patient ? (patient.fullName || patient.name) : null,
+                    doctorName: doctor ? (doctor.fullName || doctor.name) : null,
                     patientDetails: patient || null
                 };
             });
             return res.status(200).json({ count: appointments.length, appointments: enriched });
+        }
+
+        // ─── For Patient role, enrich with Doctor name ───
+        if (req.user.role === 'Patient') {
+            const authHeader = { headers: { Authorization: req.headers.authorization } };
+            const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+            try {
+                const doctorsRes = await axios.get(`${doctorUrl}/public`, {}).catch(() => ({ data: { doctors: [] } }));
+                const doctorsList = doctorsRes.data.doctors || [];
+                const enriched = appointments.map(apt => {
+                    const doctor = doctorsList.find(d => d.userId === apt.doctorId || d.id === apt.doctorId);
+                    return {
+                        ...apt.toJSON(),
+                        doctorName: doctor ? doctor.fullName : 'Doctor',
+                        doctorSpecialization: doctor ? doctor.specialization : null,
+                    };
+                });
+                return res.status(200).json({ count: appointments.length, appointments: enriched });
+            } catch {
+                // fall through to plain return
+            }
         }
 
         res.status(200).json({ count: appointments.length, appointments });
@@ -415,16 +465,24 @@ export const updateAppointmentStatus = async (req, res) => {
             try {
                 const billingUrl = `${process.env.BILLING_SERVICE_URL}/invoices`;
                 const authHeader = { headers: { Authorization: req.headers.authorization } };
+                const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+
+                // Fetch doctor's actual consultation fee
+                let consultationFee = 150.00;
+                try {
+                    const docRes = await axios.get(`${doctorUrl}/${appointment.doctorId}`, authHeader);
+                    consultationFee = parseFloat(docRes.data.consultationFee) || 150.00;
+                } catch { /* use default */ }
 
                 await axios.post(billingUrl, {
                     appointmentId: appointment.id,
                     patientId: appointment.patientId,
                     doctorId: appointment.doctorId,
-                    amount: 150.00, // Default consultation fee
-                    description: `Dental Consultation - Ref: ${appointment.reason || 'Routine Checkup'}`,
-                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+                    amount: consultationFee,
+                    description: `Clinical Consultation - ${appointment.reason || 'Routine Checkup'}`,
+                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
                 }, authHeader);
-                console.log(`Auto-invoice generated for completed appointment ${appointment.id}`);
+                console.log(`Auto-invoice generated for completed appointment ${appointment.id} — ETB ${consultationFee}`);
             } catch (err) {
                 console.error('Failed to generate auto-invoice:', err.message);
             }
@@ -535,6 +593,62 @@ export const updateAppointment = async (req, res) => {
 
         await appointment.save();
         res.status(200).json({ message: 'Appointment updated successfully', appointment });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ─── STATUS COUNTS ─────────────────────────────────────────────────────────
+
+/**
+ * GET /api/appointments/status-counts
+ * Returns live + cumulative counts per status for the dashboard.
+ * Doctor: scoped to their own appointments.
+ * Admin/Receptionist: all appointments.
+ * Optional ?type=clinic|video filter.
+ */
+export const getStatusCounts = async (req, res) => {
+    try {
+        const { type } = req.query;
+        const where = {};
+
+        if (req.user.role === 'Doctor') {
+            where.doctorId = req.user.id;
+        }
+        if (type && ['clinic', 'video'].includes(type)) {
+            where.type = type;
+        }
+
+        const rows = await Appointment.findAll({
+            where,
+            attributes: ['status', [fn('COUNT', col('id')), 'count']],
+            group: ['status'],
+            raw: true
+        });
+
+        // Build live counts, defaulting all to 0
+        const live = { Pending: 0, Confirmed: 0, 'In Progress': 0, Completed: 0, Cancelled: 0 };
+        rows.forEach(r => {
+            if (live.hasOwnProperty(r.status)) {
+                live[r.status] = parseInt(r.count, 10);
+            }
+        });
+
+        // Derive cumulative counts (no audit table needed)
+        const cumulative = {
+            Pending:       live.Pending + live.Confirmed + live['In Progress'] + live.Completed + live.Cancelled,
+            Confirmed:     live.Confirmed + live['In Progress'] + live.Completed,
+            'In Progress': live['In Progress'] + live.Completed,
+            Completed:     live.Completed,
+            Cancelled:     live.Cancelled,
+        };
+
+        const counts = {};
+        Object.keys(live).forEach(status => {
+            counts[status] = { live: live[status], cumulative: cumulative[status] };
+        });
+
+        res.status(200).json(counts);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

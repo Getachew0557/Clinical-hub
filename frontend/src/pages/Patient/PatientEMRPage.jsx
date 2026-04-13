@@ -14,6 +14,7 @@ import emrService from '../../api/emr.service';
 import patientService from '../../api/patient.service';
 import reportService from '../../api/report.service';
 import aiService from '../../api/ai.service';
+import appointmentService from '../../api/appointment.service';
 import { useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { Sparkles, Brain, Lightbulb } from 'lucide-react';
@@ -61,12 +62,49 @@ export default function PatientEMRPage() {
     const fetchAllPatients = async () => {
         try {
             setLoading(true);
-            const data = (role === 'Doctor')
-                ? await reportService.getDetailedPatients()
-                : await patientService.getAllPatients();
 
-            // Standardizing based on observed behavior (report service returns array, patient service returns {patients: []})
-            setAllPatients(Array.isArray(data) ? data : (data.patients || data.records || []));
+            if (role === 'Doctor') {
+                // Doctor: only show patients from their own appointments
+                const [apptData, allPatientsData] = await Promise.all([
+                    appointmentService.getMyAppointments().catch(() => ({ appointments: [] })),
+                    patientService.getAllPatients().catch(() => ({ patients: [] }))
+                ]);
+                const appointments = apptData.appointments || [];
+                const allPatients = allPatientsData.patients || [];
+
+                // Unique patientIds from this doctor's appointments
+                const patientIds = [...new Set(appointments.map(a => a.patientId))];
+
+                let doctorPatients = allPatients.filter(p =>
+                    patientIds.includes(p.userId) || patientIds.includes(p.id) ||
+                    patientIds.includes(String(p.userId)) || patientIds.includes(String(p.id))
+                );
+
+                // Fallback: build from enriched appointment data if patient service didn't match
+                if (doctorPatients.length === 0 && appointments.length > 0) {
+                    const seen = new Set();
+                    doctorPatients = appointments
+                        .filter(a => {
+                            if (seen.has(a.patientId)) return false;
+                            seen.add(a.patientId);
+                            return true;
+                        })
+                        .map(a => ({
+                            id: a.patientId,
+                            userId: a.patientId,
+                            fullName: a.patientName || `Patient #${a.patientId?.slice(-6)}`,
+                            phone: a.patientDetails?.phone,
+                            bloodGroup: a.patientDetails?.bloodGroup,
+                            profilePhoto: a.patientDetails?.profilePhoto,
+                        }));
+                }
+
+                setAllPatients(doctorPatients);
+            } else {
+                const data = await patientService.getAllPatients();
+                setAllPatients(data.patients || data.records || []);
+            }
+
             setError(null);
         } catch (err) {
             console.error('Fetch All Patients Error:', err);

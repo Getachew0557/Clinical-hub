@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, Plus, Search, MoreHorizontal,
-    UserPlus, Heart, Phone, FileText,
+    UserPlus, Phone, FileText,
     Calendar, Trash2, Edit, AlertCircle,
     UserCircle
 } from 'lucide-react';
@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import patientService from '../../api/patient.service';
 import reportService from '../../api/report.service';
+import appointmentService from '../../api/appointment.service';
 import AddPatientModal from '../../components/patients/AddPatientModal';
 import EditPatientModal from '../../components/patients/EditPatientModal';
 import { useSelector } from 'react-redux';
@@ -49,13 +50,49 @@ export default function PatientListPage() {
     const fetchPatients = async () => {
         try {
             setLoading(true);
-            const data = (role === 'Doctor')
-                ? await reportService.getDetailedPatients()
-                : await patientService.getAllPatients();
+            let patientData = [];
 
-            console.log('Fetched Patients:', data);
-            // Report service returns array directly, patient service returns {patients: []}
-            setPatients(Array.isArray(data) ? data : (data.patients || []));
+            if (role === 'Doctor') {
+                // For doctors: get their appointments, extract unique patients
+                const [apptData, allPatientsData] = await Promise.all([
+                    appointmentService.getMyAppointments().catch(() => ({ appointments: [] })),
+                    patientService.getAllPatients().catch(() => ({ patients: [] }))
+                ]);
+                const appointments = apptData.appointments || [];
+                const allPatients = allPatientsData.patients || [];
+
+                // Get unique patientIds from doctor's appointments
+                const patientIds = [...new Set(appointments.map(a => a.patientId))];
+
+                // Match against patient records
+                patientData = allPatients.filter(p =>
+                    patientIds.includes(p.userId) || patientIds.includes(p.id) ||
+                    patientIds.includes(String(p.userId)) || patientIds.includes(String(p.id))
+                );
+
+                // If patient service didn't return matches, use enriched names from appointments
+                if (patientData.length === 0 && appointments.length > 0) {
+                    const seen = new Set();
+                    patientData = appointments
+                        .filter(a => {
+                            if (seen.has(a.patientId)) return false;
+                            seen.add(a.patientId);
+                            return true;
+                        })
+                        .map(a => ({
+                            id: a.patientId,
+                            userId: a.patientId,
+                            fullName: a.patientName || `Patient #${a.patientId?.slice(-6)}`,
+                            patientDetails: a.patientDetails
+                        }));
+                }
+            } else {
+                const data = await patientService.getAllPatients();
+                patientData = data.patients || [];
+            }
+
+            console.log('Fetched Patients:', patientData);
+            setPatients(patientData);
             setError(null);
         } catch (err) {
             console.error('Fetch Patients Error:', err);
@@ -191,16 +228,16 @@ export default function PatientListPage() {
                                         <div className="flex items-center gap-4">
                                             <Avatar
                                                 src={pt.profilePhoto}
-                                                sx={{ width: 60, height: 60, borderRadius: 3, bgcolor: '#eff6ff', color: '#3b82f6' }}
+                                                sx={{ width: 56, height: 56, borderRadius: 3, bgcolor: '#eff6ff', color: '#3b82f6', fontWeight: 800, fontSize: '1.2rem' }}
                                             >
-                                                <UserCircle size={32} />
+                                                {pt.fullName?.charAt(0) || <UserCircle size={28} />}
                                             </Avatar>
                                             <div>
-                                                <Typography variant="subtitle1" color="text.primary">
+                                                <Typography variant="subtitle1" fontWeight={700} color="text.primary">
                                                     {pt.fullName}
                                                 </Typography>
                                                 <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    <Heart size={12} className="text-red-500" /> Last visit: 2 days ago
+                                                    ID: #{(pt.userId || pt.id)?.slice(-6)}
                                                 </Typography>
                                             </div>
                                         </div>
@@ -228,6 +265,16 @@ export default function PatientListPage() {
                                                 {pt.bloodGroup || 'Not set'}
                                             </Typography>
                                         </div>
+                                        {pt.email && (
+                                            <div className="col-span-2 rounded-2xl bg-slate-50 p-2.5 px-3">
+                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                                    Email
+                                                </Typography>
+                                                <Typography variant="body2" fontWeight={600} className="truncate">
+                                                    {pt.email}
+                                                </Typography>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="p-3 bg-slate-50/50 border-t border-slate-100 flex gap-2">

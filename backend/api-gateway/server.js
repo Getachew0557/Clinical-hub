@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -22,14 +23,13 @@ const services = {
   '/api/doctors': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010'
 };
 
-// Setup proxies
+// Setup HTTP proxies
 Object.entries(services).forEach(([path, target]) => {
   app.use(path, createProxyMiddleware({
     target,
     changeOrigin: true,
     pathRewrite: (pathStr, req) => req.originalUrl,
-    onProxyReq: (proxyReq, req, res) => {
-      // Log proxy requests for debugging
+    onProxyReq: (proxyReq, req) => {
       console.log(`[Proxy] ${req.method} ${req.url} -> ${target}${proxyReq.path}`);
     },
     onError: (err, req, res) => {
@@ -39,23 +39,28 @@ Object.entries(services).forEach(([path, target]) => {
   }));
 });
 
-// Dedicated Signaling Proxy (Socket.IO)
-// Forwards both polling and websocket upgrades to the notification service
-app.use('/socket.io', createProxyMiddleware({
+// Dedicated Socket.IO / WebSocket proxy — must use http.createServer + server.on('upgrade')
+const socketProxy = createProxyMiddleware({
   target: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5008',
   ws: true,
   changeOrigin: true,
-  onProxyReq: (proxyReq, req) => {
-    // Some Socket.IO clients might need this header
-    proxyReq.setHeader('Access-Control-Allow-Origin', '*');
-  }
-}));
+  logLevel: 'warn',
+});
+
+app.use('/socket.io', socketProxy);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ service: 'api-gateway', status: 'healthy' });
 });
 
 const PORT = process.env.PORT || 5050;
-app.listen(PORT, () => {
+
+// Use http.createServer so the 'upgrade' event fires for WebSocket proxying
+const server = http.createServer(app);
+
+// Wire WebSocket upgrades through the socket proxy
+server.on('upgrade', socketProxy.upgrade);
+
+server.listen(PORT, () => {
   console.log(`api-gateway running on port ${PORT}`);
 });

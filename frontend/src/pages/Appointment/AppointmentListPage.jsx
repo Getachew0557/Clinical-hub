@@ -34,12 +34,22 @@ export default function AppointmentListPage() {
     const { user } = useSelector((s) => s.auth);
     const role = user?.role || 'Patient';
     const isStaff = ['Admin', 'Receptionist'].includes(role);
+    const isDoctor = role === 'Doctor';
+    const isPatient = role === 'Patient';
+
+    // Role-based tab definitions
+    const TABS = isDoctor
+        ? ['In Progress', 'Completed', 'Cancelled']           // Doctor sees actionable + cancelled
+        : isPatient
+            ? ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']  // Patient sees all their own
+            : ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']; // Admin/Receptionist sees all
 
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState(urlPatientId || '');
     const [tabValue, setTabValue] = useState(0);
+    const [statusCounts, setStatusCounts] = useState({});
 
     // Modal state
     const [bookModalOpen, setBookModalOpen] = useState(false);
@@ -51,11 +61,21 @@ export default function AppointmentListPage() {
 
     useEffect(() => {
         if (urlStatus) {
-            const statusMap = { 'Pending': 0, 'Confirmed': 1, 'In Progress': 2, 'Completed': 3, 'Cancelled': 4 };
-            if (statusMap[urlStatus] !== undefined) setTabValue(statusMap[urlStatus]);
+            const idx = TABS.indexOf(urlStatus);
+            if (idx >= 0) setTabValue(idx);
         }
         fetchAppointments();
+        fetchStatusCounts();
     }, [urlStatus]);
+
+    const fetchStatusCounts = async () => {
+        try {
+            const data = await appointmentService.getStatusCounts();
+            setStatusCounts(data);
+        } catch (err) {
+            console.warn('Could not fetch status counts:', err.message);
+        }
+    };
 
     const fetchAppointments = async () => {
         try {
@@ -93,7 +113,7 @@ export default function AppointmentListPage() {
                 a.id === selectedApt.id ? { ...a, status: newStatus } : a
             ));
             handleMenuClose();
-            alert(`Appointment marked as ${newStatus} successfully!`);
+            fetchStatusCounts();
         } catch (err) {
             alert('Failed to update status');
         }
@@ -107,7 +127,7 @@ export default function AppointmentListPage() {
                 a.id === selectedApt.id ? { ...a, isAdminApproved: true } : a
             ));
             handleMenuClose();
-            alert('Appointment approved successfully!');
+            fetchStatusCounts();
         } catch (err) {
             alert('Failed to approve appointment');
         }
@@ -128,42 +148,30 @@ export default function AppointmentListPage() {
     const filteredAppointments = appointments.filter(a => {
         const matchesSearch = (
             a.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            a.patientId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            a.doctorId?.toLowerCase().includes(searchQuery.toLowerCase())
+            (a.patientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (a.doctorName || '').toLowerCase().includes(searchQuery.toLowerCase())
         );
-
-        if (tabValue === 0) return a.status === 'Pending' && matchesSearch;
-        if (tabValue === 1) return a.status === 'Confirmed' && matchesSearch;
-        if (tabValue === 2) return a.status === 'In Progress' && matchesSearch;
-        if (tabValue === 3) return a.status === 'Completed' && matchesSearch;
-        if (tabValue === 4) return a.status === 'Cancelled' && matchesSearch;
-        return matchesSearch;
+        const currentStatus = TABS[tabValue];
+        return a.status === currentStatus && matchesSearch;
     });
 
     const getStatusChip = (apt) => {
-        const { status, isAdminApproved } = apt;
+        const { status, isAdminApproved, type } = apt;
         const configs = {
-            'Pending': { color: 'warning', icon: AlertCircle },
-            'Confirmed': { color: 'info', icon: CheckCircle },
-            'In Progress': { color: 'primary', icon: DoctorIcon },
-            'Completed': { color: 'success', icon: CheckCircle },
-            'Cancelled': { color: 'error', icon: XCircle },
+            'Pending':     { color: 'warning', label: isStaff ? (isAdminApproved ? 'Pending (Approved)' : 'Pending — Review') : 'Pending Approval' },
+            'Confirmed':   { color: 'info',    label: type === 'video' ? '📹 Confirmed (Video)' : '🏥 Confirmed (Clinic)' },
+            'In Progress': { color: 'primary', label: '🔴 In Progress' },
+            'Completed':   { color: 'success', label: '✅ Completed' },
+            'Cancelled':   { color: 'error',   label: '❌ Cancelled' },
         };
         const config = configs[status] || configs.Pending;
-
-        let label = status;
-        if (status === 'Pending' && isStaff) {
-            label = isAdminApproved ? 'Pending (Approved)' : 'Pending (Review Required)';
-        }
-
         return (
             <Chip
-                label={label}
+                label={config.label}
                 color={config.color}
                 size="small"
                 variant={status === 'Pending' && !isAdminApproved ? 'filled' : 'outlined'}
-                icon={<config.icon size={14} />}
-                sx={{ fontWeight: 700, borderRadius: 2 }}
+                sx={{ fontWeight: 700, borderRadius: 2, fontSize: '0.65rem' }}
             />
         );
     };
@@ -174,13 +182,17 @@ export default function AppointmentListPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <Typography variant="h5" color="text.primary">
-                        {role === 'Patient' ? 'My Appointments' : 'Clinic Schedule'}
+                        {isDoctor ? 'My Consultations' : isPatient ? 'My Appointments' : 'Clinic Schedule'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                        {isStaff ? 'Manage and monitor all clinic visits' : 'View and track your dental visits'}
+                        {isDoctor
+                            ? 'Manage your confirmed and active consultations'
+                            : isStaff
+                                ? 'Manage and monitor all clinic visits'
+                                : 'View and track your visits'}
                     </Typography>
                 </div>
-                {(role === 'Patient' || isStaff) && (
+                {(isPatient || isStaff) && (
                     <Button
                         variant="contained"
                         startIcon={<Plus size={18} />}
@@ -200,18 +212,34 @@ export default function AppointmentListPage() {
                             value={tabValue}
                             onChange={(e, v) => setTabValue(v)}
                             sx={{
-                                '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minWidth: 100 },
-                                '& .Mui-selected': { color: '#2563eb' }
+                                '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minWidth: 90 },
+                                '& .Mui-selected': { color: '#0d9488' }
                             }}
                         >
-                            <Tab label="Pending" />
-                            <Tab label="Confirmed" />
-                            <Tab label="In Progress" />
-                            <Tab label="Completed" />
-                            <Tab label="Cancelled" />
+                            {TABS.map(tab => {
+                                const counts = statusCounts[tab];
+                                const live = counts?.live ?? appointments.filter(a => a.status === tab).length;
+                                const cumulative = counts?.cumulative;
+                                return (
+                                    <Tab
+                                        key={tab}
+                                        label={
+                                            <span className="flex flex-col items-center gap-0.5">
+                                                <span>{tab}</span>
+                                                <span className="flex items-center gap-1 text-[10px] font-normal">
+                                                    <span className="bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full font-bold">{live}</span>
+                                                    {cumulative !== undefined && cumulative !== live && (
+                                                        <span className="text-slate-400">/ {cumulative} total</span>
+                                                    )}
+                                                </span>
+                                            </span>
+                                        }
+                                    />
+                                );
+                            })}
                         </Tabs>
 
-                        <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-1.5 border border-slate-100 focus-within:border-blue-500 focus-within:bg-white transition-all w-full md:w-80">
+                        <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-1.5 border border-slate-100 focus-within:border-teal-500 focus-within:bg-white transition-all w-full md:w-80">
                             <Search size={18} className="text-slate-400" />
                             <InputBase
                                 placeholder="Search appointments..."
@@ -266,30 +294,69 @@ export default function AppointmentListPage() {
                                         <div className="flex-1">
                                             <div className="flex items-start justify-between">
                                                 <div>
-                                                    <Typography variant="subtitle2" color="text.primary">
-                                                        {apt.reason}
-                                                    </Typography>
-                                                    <div className="flex flex-wrap items-center gap-4 mt-2">
-                                                        <div className="flex items-center gap-1.5 text-slate-500">
-                                                            <User size={13} />
-                                                            <Typography variant="caption">Patient: {apt.patientName || 'Guest'}</Typography>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-slate-500">
-                                                            <DoctorIcon size={13} />
-                                                            <Typography variant="caption">Doctor ID: {apt.doctorId.slice(0, 8)}</Typography>
-                                                        </div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <Typography variant="subtitle2" color="text.primary">
+                                                            {apt.reason}
+                                                        </Typography>
+                                                        {apt.type === 'video' && (
+                                                            <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-bold rounded-full border border-teal-100 flex items-center gap-1">
+                                                                <Video size={10} /> Video
+                                                            </span>
+                                                        )}
+                                                        {apt.type === 'clinic' && (
+                                                            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full border border-amber-100">
+                                                                🏥 Clinic
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-4 mt-1">
+                                                        {/* Show patient name for Doctor/Admin/Receptionist */}
+                                                        {!isPatient && (
+                                                            <div className="flex items-start gap-1.5 text-slate-500">
+                                                                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[9px] shrink-0 mt-0.5">
+                                                                    {(apt.patientName || apt.patientDetails?.fullName || '?').charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <Typography variant="caption" fontWeight={700} color="text.primary">
+                                                                        {apt.patientName || apt.patientDetails?.fullName || `Patient #${apt.patientId?.slice(-6)}`}
+                                                                    </Typography>
+                                                                    <span className="text-[10px] text-slate-400">
+                                                                        ID: #{apt.patientId?.slice(-6)}
+                                                                        {apt.patientDetails?.phone && ` · ${apt.patientDetails.phone}`}
+                                                                        {apt.patientDetails?.email && ` · ${apt.patientDetails.email}`}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {/* Show doctor name for Patient */}
+                                                        {isPatient && (
+                                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                                <DoctorIcon size={13} />
+                                                                <Typography variant="caption">Dr. {apt.doctorName || 'Doctor'}</Typography>
+                                                            </div>
+                                                        )}
+                                                        {/* Show doctor name for Admin/Receptionist */}
+                                                        {isStaff && apt.doctorName && (
+                                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                                <DoctorIcon size={13} />
+                                                                <Typography variant="caption">Dr. {apt.doctorName}</Typography>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-3">
                                                     {getStatusChip(apt)}
-                                                    {(apt.status === 'Confirmed' || apt.status === 'In Progress') && (
+                                                    {(apt.status === 'Confirmed' || apt.status === 'In Progress') && apt.type === 'video' && (
                                                         <button
                                                             onClick={() => navigate(`/video/${apt.id}`)}
                                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-xl text-xs font-bold hover:bg-teal-700 transition-all shadow-sm"
                                                         >
                                                             <Video size={13} />
-                                                            Join Video Call
+                                                            {role === 'Doctor' ? 'Start Video Call' : 'Join Video Call'}
                                                         </button>
+                                                    )}
+                                                    {apt.status === 'Pending' && !apt.isAdminApproved && role === 'Patient' && (
+                                                        <span className="text-[10px] text-amber-600 font-semibold">Awaiting clinic approval</span>
                                                     )}
                                                     <IconButton size="small" onClick={(e) => handleMenuOpen(e, apt)}>
                                                         <MoreHorizontal size={18} />
@@ -326,69 +393,75 @@ export default function AppointmentListPage() {
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
-                PaperProps={{
-                    sx: { borderRadius: 3, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', mt: 1 }
-                }}
+                PaperProps={{ sx: { borderRadius: 3, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', mt: 1 } }}
             >
+                {/* Admin/Receptionist: Approve pending */}
                 {selectedApt?.status === 'Pending' && isStaff && !selectedApt?.isAdminApproved && (
                     <MenuItem onClick={handleApprove} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <CheckCircle size={16} className="text-blue-600" />
                         <span className="text-sm font-medium text-blue-600">Approve Booking</span>
                     </MenuItem>
                 )}
+                {/* Admin/Receptionist: Confirm */}
                 {selectedApt?.status === 'Pending' && isStaff && (
                     <MenuItem onClick={() => handleUpdateStatus('Confirmed')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <CheckCircle size={16} className="text-green-500" />
                         <span className="text-sm font-medium">Confirm Booking</span>
                     </MenuItem>
                 )}
-                {selectedApt?.status === 'Confirmed' && role === 'Doctor' && (
+                {/* Doctor: Start consultation (Confirmed → In Progress) */}
+                {selectedApt?.status === 'Confirmed' && isDoctor && (
                     <MenuItem
-                        onClick={() => {
-                            handleUpdateStatus('In Progress');
-                            navigate(`/emr?patientId=${selectedApt.patientId}`);
-                        }}
+                        onClick={() => { handleUpdateStatus('In Progress'); handleMenuClose(); }}
                         sx={{ gap: 1.5, py: 1.2, px: 2 }}
                     >
-                        <DoctorIcon size={16} className="text-primary-main" />
-                        <span className="text-sm font-medium">Start Consultation</span>
+                        <DoctorIcon size={16} className="text-teal-600" />
+                        <span className="text-sm font-medium text-teal-700">Start Consultation</span>
                     </MenuItem>
                 )}
-                {selectedApt?.status === 'In Progress' && role === 'Doctor' && (
+                {/* Doctor: Complete (In Progress → Completed) */}
+                {selectedApt?.status === 'In Progress' && isDoctor && (
                     <MenuItem onClick={() => handleUpdateStatus('Completed')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
-                        <CheckCircle size={16} className="text-blue-500" />
-                        <span className="text-sm font-medium">Complete & Mark Done</span>
+                        <CheckCircle size={16} className="text-emerald-500" />
+                        <span className="text-sm font-medium text-emerald-700">Mark as Completed</span>
                     </MenuItem>
                 )}
-                {['Pending', 'Confirmed', 'In Progress'].includes(selectedApt?.status) && (
+                {/* Doctor: Add/edit notes */}
+                {isDoctor && (
+                    <MenuItem onClick={() => navigate(`/emr?patientId=${selectedApt?.patientId}`)} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                        <FileIcon size={16} className="text-blue-500" />
+                        <span className="text-sm font-medium">View / Add Notes (EMR)</span>
+                    </MenuItem>
+                )}
+                {/* Patient: Reschedule pending */}
+                {isPatient && selectedApt?.status === 'Pending' && (
+                    <MenuItem onClick={() => { setEditModalOpen(true); handleMenuClose(); }} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                        <Edit size={16} className="text-blue-500" />
+                        <span className="text-sm font-medium">Reschedule</span>
+                    </MenuItem>
+                )}
+                {/* Cancel — Patient (Pending only), Staff (any active) */}
+                {((isPatient && selectedApt?.status === 'Pending') ||
+                  (isStaff && ['Pending', 'Confirmed', 'In Progress'].includes(selectedApt?.status))) && (
                     <MenuItem onClick={() => handleUpdateStatus('Cancelled')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <XCircle size={16} className="text-red-500" />
-                        <span className="text-sm font-medium">Cancel Appointment</span>
+                        <span className="text-sm font-medium text-red-600">Cancel Appointment</span>
                     </MenuItem>
                 )}
-
-                <MenuItem onClick={() => { setEditModalOpen(true); handleMenuClose(); }} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
-                    <Edit size={16} className="text-blue-500" />
-                    <span className="text-sm font-medium">Edit / Reschedule</span>
-                </MenuItem>
-
-                {role === 'Admin' && (
-                    <MenuItem onClick={() => navigate(`/emr?patientId=${selectedApt.patientId}`)} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                {/* Admin: View EMR */}
+                {isStaff && (
+                    <MenuItem onClick={() => navigate(`/emr?patientId=${selectedApt?.patientId}`)} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <FileIcon size={16} className="text-blue-500" />
                         <span className="text-sm font-medium">View Medical Records</span>
                     </MenuItem>
                 )}
-
+                {/* Admin only: Delete */}
                 {role === 'Admin' && (
                     <MenuItem onClick={handleDelete} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <Trash2 size={16} className="text-red-600" />
                         <span className="text-sm font-medium text-red-600">Delete Permanently</span>
                     </MenuItem>
                 )}
-                <MenuItem onClick={handleMenuClose} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
-                    <FileIcon size={16} className="text-slate-400" />
-                    <span className="text-sm font-medium">View Details</span>
-                </MenuItem>
             </Menu>
 
             {/* ── Modals ── */}

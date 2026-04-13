@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Mic, MicOff, Video, VideoOff, PhoneOff,
-    MessageSquare, Send, X, Wifi, WifiOff, Loader2,
-    AlertCircle, Camera, CameraOff
+    MessageSquare, Send, X, Loader2,
+    AlertCircle, CameraOff, Users
 } from 'lucide-react';
 import { Typography } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
@@ -74,7 +74,6 @@ export default function VideoConsultationPage() {
         socketConnected,
     } = useVideoCall(accessError === null && !loadingAppt ? roomId : null);
 
-    const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
 
     // Redirect if not authenticated
@@ -124,17 +123,18 @@ export default function VideoConsultationPage() {
     }, [roomId, user]);
 
     // Attach streams to video elements
-    useEffect(() => {
-        if (localVideoRef.current && localStream && !isCameraOff) {
-            localVideoRef.current.srcObject = localStream;
+    // Use callback refs so srcObject is set immediately when element mounts/remounts
+    const localVideoRef = useCallback((node) => {
+        if (node && localStream) {
+            node.srcObject = localStream;
         }
-    }, [localStream, isCameraOff]);
+    }, [localStream]);
 
     useEffect(() => {
-        if (remoteVideoRef.current && remoteStream && !isRemoteCameraOff) {
+        if (remoteVideoRef.current && remoteStream) {
             remoteVideoRef.current.srcObject = remoteStream;
         }
-    }, [remoteStream, isRemoteCameraOff]);
+    }, [remoteStream]);
 
     // Auto-scroll chat
     useEffect(() => {

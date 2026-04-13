@@ -24,9 +24,12 @@ const BookingPage = () => {
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
     const [slots, setSlots] = useState([]);
+    const [slotsMessage, setSlotsMessage] = useState('');
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedTime, setSelectedTime] = useState(null);
     const [reason, setReason] = useState('');
+    const [consultationType, setConsultationType] = useState('clinic');
+    const [availableTypes, setAvailableTypes] = useState(['clinic', 'video']);
     const [booking, setBooking] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
@@ -37,12 +40,21 @@ const BookingPage = () => {
 
     useEffect(() => {
         if (selectedDate) fetchAvailability();
-    }, [selectedDate, doctorId]);
+    }, [selectedDate, doctorId, consultationType]);
 
     const fetchDoctor = async () => {
         try {
             const data = await doctorService.getDoctorById(doctorId);
             setDoctor(data);
+            // Set available service types from doctor's profile
+            const types = Array.isArray(data?.serviceTypes)
+                ? data.serviceTypes
+                : (data?.serviceTypes ? JSON.parse(data.serviceTypes) : ['clinic', 'video']);
+            setAvailableTypes(types);
+            // Default to first available type
+            if (types.length > 0 && !types.includes(consultationType)) {
+                setConsultationType(types[0]);
+            }
         } catch (err) {
             setNotFound(true);
         } finally {
@@ -52,10 +64,12 @@ const BookingPage = () => {
 
     const fetchAvailability = async () => {
         try {
-            const data = await appointmentService.getAvailability(doctorId, selectedDate);
+            const data = await appointmentService.getAvailability(doctorId, selectedDate, consultationType);
             setSlots(data.slots || []);
+            setSlotsMessage(data.message || '');
         } catch (err) {
             console.error('Availability fetch failed', err);
+            setSlots([]);
         }
     };
 
@@ -71,7 +85,8 @@ const BookingPage = () => {
                 doctorId,
                 appointmentDate: selectedDate,
                 appointmentTime: selectedTime.timeValue,
-                reason
+                reason,
+                type: consultationType
             });
             setSuccess(true);
             setTimeout(() => navigate('/dashboard'), 3000);
@@ -241,7 +256,42 @@ const BookingPage = () => {
                                     </div>
                                     {!slots.length && (
                                         <div className="p-8 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl">
-                                            No slots available for this date.
+                                            {slotsMessage || 'No slots available for this date.'}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Consultation Type — filtered by doctor's serviceTypes */}
+                                <div>
+                                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                                        Consultation Type
+                                    </label>
+                                    {availableTypes.length === 0 ? (
+                                        <p className="text-sm text-slate-400">No service types available for this doctor.</p>
+                                    ) : (
+                                        <div className="flex gap-3">
+                                            {[
+                                                { val: 'clinic', label: '🏥 Clinic Visit', desc: 'In-person at the clinic' },
+                                                { val: 'video',  label: '📹 Video Call',   desc: 'Online video consultation' },
+                                            ]
+                                            .filter(({ val }) => availableTypes.includes(val))
+                                            .map(({ val, label, desc }) => (
+                                                <button
+                                                    key={val}
+                                                    type="button"
+                                                    onClick={() => { setConsultationType(val); setSelectedTime(null); }}
+                                                    className={`flex-1 flex flex-col items-center gap-1 py-3 px-4 rounded-2xl border-2 transition-all text-sm font-bold ${
+                                                        consultationType === val
+                                                            ? val === 'video'
+                                                                ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-600/20'
+                                                                : 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'
+                                                    }`}
+                                                >
+                                                    <span>{label}</span>
+                                                    <span className={`text-[10px] font-medium ${consultationType === val ? 'text-white/80' : 'text-slate-400'}`}>{desc}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     )}
                                 </div>

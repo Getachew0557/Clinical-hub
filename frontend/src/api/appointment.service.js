@@ -91,6 +91,19 @@ const appointmentService = {
     },
 
     /**
+     * Get status counts (live + cumulative) per status for the dashboard
+     * Doctor: scoped to own appointments. Admin/Receptionist: all.
+     * @param {object} params - optional { type: 'clinic' | 'video' }
+     */
+    getStatusCounts: async (params = {}) => {
+        const response = await axios.get(`${API_URL}/status-counts`, {
+            headers: getAuthHeader(),
+            params
+        });
+        return response.data;
+    },
+
+    /**
      * Get availability slots for a doctor on a specific date
      * @param {string} type - 'clinic' | 'video' | 'all'
      */

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
     CalendarDays, FileText, Receipt, Clock, 
-    ArrowRight, Star, PlusCircle, CheckCircle2
+    ArrowRight, Star, PlusCircle, CheckCircle2, Video
 } from 'lucide-react';
 import {
     Card, CardContent, Typography, Button, 
@@ -13,11 +13,11 @@ import appointmentService from '../../api/appointment.service';
 import reportService from '../../api/report.service';
 
 const statusColors = {
-    Scheduled: { bg: '#eff6ff', text: '#2563eb' },
-    'In Progress': { bg: '#f0fdf4', text: '#059669' },
-    Confirmed: { bg: '#eff6ff', text: '#2563eb' },
-    Completed: { bg: '#f8fafc', text: '#64748b' },
-    Cancelled: { bg: '#fef2f2', text: '#dc2626' },
+    Pending:      { bg: '#fffbeb', text: '#d97706' },
+    'In Progress':{ bg: '#f0fdf4', text: '#059669' },
+    Confirmed:    { bg: '#eff6ff', text: '#2563eb' },
+    Completed:    { bg: '#f8fafc', text: '#64748b' },
+    Cancelled:    { bg: '#fef2f2', text: '#dc2626' },
 };
 
 const HEALTH_TIPS = [
@@ -52,17 +52,27 @@ export default function PatientPortalDashboard() {
                 reportService.getFinanceSummary().catch(() => ({ pendingCount: 0 }))
             ]);
 
-            setAppointments(myApts.appointments || []);
+            const allApts = myApts.appointments || [];
+            setAppointments(allApts);
             
-            // Find next appointment
-            const upcoming = (myApts.appointments || [])
-                .filter(a => new Date(a.date) >= new Date() && a.status !== 'Cancelled')
-                .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+            // Find next upcoming appointment (use appointmentDate not date)
+            const upcoming = allApts
+                .filter(a => a.appointmentDate >= new Date().toISOString().split('T')[0] && a.status !== 'Cancelled')
+                .sort((a, b) => {
+                    const da = a.appointmentDate + ' ' + (a.appointmentTime || '');
+                    const db = b.appointmentDate + ' ' + (b.appointmentTime || '');
+                    return da.localeCompare(db);
+                })[0];
+
+            // Find last completed appointment
+            const lastCompleted = allApts
+                .filter(a => a.status === 'Completed')
+                .sort((a, b) => b.appointmentDate?.localeCompare(a.appointmentDate))[0];
 
             setSummary({
                 pendingBills: finance.pendingCount || 0,
-                lastCheckup: '2 weeks ago', // Mocked for now
-                nextAppointment: upcoming ? upcoming.date : 'None'
+                lastCheckup: lastCompleted ? lastCompleted.appointmentDate : 'Never',
+                nextAppointment: upcoming ? `${upcoming.appointmentDate} ${upcoming.appointmentTime?.slice(0,5) || ''}` : 'None'
             });
         } catch (err) {
             console.error('Patient Dashboard Error:', err);
@@ -183,17 +193,26 @@ export default function PatientPortalDashboard() {
                                             <div>
                                                 <Typography variant="subtitle2" fontWeight={800}>{apt.doctorName || 'General Practitioner'}</Typography>
                                                 <Typography variant="caption" color="text.secondary">{apt.reason || 'General Consultation'}</Typography>
+                                                <div className="text-xs text-slate-400 mt-0.5">{apt.appointmentDate} · {apt.appointmentTime?.slice(0,5)}</div>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
-                                                <Clock size={12} /> {apt.appointmentTime}
-                                            </div>
+                                        <div className="text-right flex flex-col items-end gap-2">
                                             <Chip 
                                                 label={apt.status} 
                                                 size="small" 
-                                                sx={{ mt: 1, fontSize: '10px', height: 20, bgcolor: sc.bg, color: sc.text, fontWeight: 700 }} 
+                                                sx={{ fontSize: '10px', height: 20, bgcolor: sc.bg, color: sc.text, fontWeight: 700 }} 
                                             />
+                                            {(apt.status === 'Confirmed' || apt.status === 'In Progress') && (
+                                                <button
+                                                    onClick={() => navigate(`/video/${apt.id}`)}
+                                                    className="flex items-center gap-1 px-2.5 py-1 bg-teal-600 text-white rounded-lg text-[10px] font-bold hover:bg-teal-700 transition-all"
+                                                >
+                                                    <Video size={11} /> Join Video
+                                                </button>
+                                            )}
+                                            {apt.status === 'Pending' && (
+                                                <span className="text-[10px] text-amber-600 font-semibold">Awaiting approval</span>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>

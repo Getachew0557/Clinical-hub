@@ -9,7 +9,8 @@ import {
     approveAppointment,
     updateAppointment,
     deleteAppointment,
-    getAvailability
+    getAvailability,
+    getStatusCounts
 } from '../controllers/appointmentController.js';
 
 const router = express.Router();
@@ -21,6 +22,9 @@ router.post('/', protect, createAppointment);
 
 // My appointments: any authenticated user sees their own
 router.get('/my', protect, getMyAppointments);
+
+// Status counts: Doctor (own), Admin/Receptionist (all) — MUST be before /:id
+router.get('/status-counts', protect, authorize('Admin', 'Receptionist', 'Doctor'), getStatusCounts);
 
 // Availability: public — no auth required so unauthenticated patients can browse slots
 router.get('/availability/:doctorId', getAvailability);

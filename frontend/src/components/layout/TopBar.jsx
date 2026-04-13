@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,9 @@ import {
 import { logout } from '../../store/slices/authSlice';
 import NotificationsMenu from './NotificationsMenu';
 import LanguageSwitcher from '../common/LanguageSwitcher';
+import doctorService from '../../api/doctor.service';
+import patientService from '../../api/patient.service';
+import { getDoctorPhotoUrl } from '../../utils/cn';
 
 export default function TopBar({ onMenuClick }) {
     const { user } = useSelector((s) => s.auth);
@@ -19,10 +22,31 @@ export default function TopBar({ onMenuClick }) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const [anchorEl, setAnchorEl] = useState(null);
+    const [profilePhoto, setProfilePhoto] = useState(null);
 
     const initials = user?.fullName
         ? user.fullName.split(' ').map((n) => n[0]).join('').toUpperCase()
         : 'U';
+
+    // Load profile photo based on role
+    useEffect(() => {
+        if (!user) return;
+        if (user.role === 'Doctor') {
+            doctorService.getMyProfile()
+                .then(data => {
+                    const p = data?.doctor || data;
+                    if (p?.profilePhoto) setProfilePhoto(getDoctorPhotoUrl(p.profilePhoto));
+                })
+                .catch(() => {});
+        } else if (user.role === 'Patient') {
+            patientService.getMyProfile()
+                .then(data => {
+                    const p = data?.patient || data;
+                    if (p?.profilePhoto) setProfilePhoto(p.profilePhoto);
+                })
+                .catch(() => {});
+        }
+    }, [user]);
 
     const handleLogout = () => {
         dispatch(logout());
@@ -41,15 +65,17 @@ export default function TopBar({ onMenuClick }) {
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6 shadow-sm">
             {/* Left: Menu + Search */}
             <div className="flex items-center gap-4">
-                <IconButton
-                    onClick={onMenuClick}
-                    size="small"
-                    className="lg:hidden"
-                    sx={{ color: '#64748b' }}
-                    aria-label="Open menu"
-                >
-                    <Menu size={20} />
-                </IconButton>
+                {/* Mobile-only hamburger */}
+                <div className="lg:hidden">
+                    <IconButton
+                        onClick={onMenuClick}
+                        size="small"
+                        sx={{ color: '#64748b' }}
+                        aria-label="Open menu"
+                    >
+                        <Menu size={20} />
+                    </IconButton>
+                </div>
 
                 {/* Search bar */}
                 <div className="hidden md:flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 min-w-[260px]">
@@ -77,9 +103,10 @@ export default function TopBar({ onMenuClick }) {
                     aria-label="User menu"
                 >
                     <Avatar
+                        src={profilePhoto || undefined}
                         sx={{ width: 34, height: 34, bgcolor: roleColor, fontSize: '0.8rem', fontWeight: 700 }}
                     >
-                        {initials}
+                        {!profilePhoto && initials}
                     </Avatar>
                     <div className="hidden md:flex flex-col items-start leading-tight">
                         <span className="text-sm font-semibold text-slate-800">{user?.fullName || 'User'}</span>
@@ -105,9 +132,17 @@ export default function TopBar({ onMenuClick }) {
                         sx: { borderRadius: 3, minWidth: 180, mt: 1 },
                     }}
                 >
-                    <div className="px-4 py-2">
-                        <Typography variant="subtitle2" fontWeight={700}>{user?.fullName}</Typography>
-                        <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
+                    <div className="px-4 py-3 flex items-center gap-3">
+                        <Avatar
+                            src={profilePhoto || undefined}
+                            sx={{ width: 40, height: 40, bgcolor: roleColor, fontSize: '0.9rem', fontWeight: 700 }}
+                        >
+                            {!profilePhoto && initials}
+                        </Avatar>
+                        <div>
+                            <Typography variant="subtitle2" fontWeight={700}>{user?.fullName}</Typography>
+                            <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
+                        </div>
                     </div>
                     <Divider />
                     <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile'); }}>
