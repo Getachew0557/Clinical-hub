@@ -85,10 +85,10 @@ export default function DashboardPage() {
                 { month: 'Mar', revenue: 4800 },
             ]);
             setTreatmentData([
-                { name: 'Cleaning', value: 40 },
-                { name: 'Root Canal', value: 20 },
-                { name: 'Braces', value: 30 },
-                { name: 'Other', value: 10 },
+                { name: 'General Consultation', value: 40 },
+                { name: 'Surgical Procedure', value: 20 },
+                { name: 'Pediatric Care', value: 25 },
+                { name: 'Other', value: 15 },
             ]);
 
         } catch (err) {
@@ -188,7 +188,7 @@ export default function DashboardPage() {
                                     >
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-semibold text-slate-800 truncate">{apt.patientName || 'Patient'}</p>
-                                            <p className="text-xs text-slate-500 truncate">{apt.reason || 'Dental Consultation'}</p>
+                                            <p className="text-xs text-slate-500 truncate">{apt.reason || 'General Consultation'}</p>
                                         </div>
                                         <div className="flex flex-col items-end gap-1 shrink-0">
                                             <div className="flex items-center gap-1 text-xs text-slate-500">

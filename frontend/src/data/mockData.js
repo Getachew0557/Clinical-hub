@@ -1,5 +1,5 @@
 // ============================================================
-// MOCK DATA – Ras Dental Clinic Specialty Center
+// MOCK DATA – Clinical Hub Clinic Specialty Center
 // ============================================================
 
 export const patients = [

@@ -19,14 +19,14 @@ const NAV_BY_ROLE = {
         { to: '/emr', icon: FileText, label: 'Medical Records' },
         { to: '/inventory', icon: Package, label: 'Inventory' },
         { to: '/reports', icon: BarChart3, label: 'Reports' },
-        { to: '/profile', icon: UserCog, label: 'My Settings' },
+        { to: '/settings', icon: UserCog, label: 'Settings' },
     ],
     Doctor: [
         { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
         { to: '/appointments', icon: CalendarDays, label: 'My Appointments' },
         { to: '/emr', icon: FileText, label: 'Medical Records' },
         { to: '/patients', icon: Users, label: 'My Patients' },
-        { to: '/profile', icon: UserCog, label: 'My Settings' },
+        { to: '/settings', icon: UserCog, label: 'Settings' },
     ],
     Receptionist: [
         { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -34,14 +34,14 @@ const NAV_BY_ROLE = {
         { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
         { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
         { to: '/inventory', icon: Package, label: 'Inventory' },
-        { to: '/profile', icon: UserCog, label: 'My Settings' },
+        { to: '/settings', icon: UserCog, label: 'Settings' },
     ],
     Patient: [
         { to: '/dashboard', icon: Home, label: 'My Portal', end: true },
         { to: '/appointments', icon: CalendarDays, label: 'Bookings' },
         { to: '/emr', icon: FileText, label: 'My Records' },
-        { to: '/patients', icon: Users, label: 'My Identity' },
-        { to: '/profile', icon: UserCog, label: 'Account' },
+        { to: '/billing', icon: Receipt, label: 'My Bills' },
+        { to: '/settings', icon: UserCog, label: 'Settings' },
     ],
 };
 
@@ -52,17 +52,17 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
     const navItems = NAV_BY_ROLE[role] || NAV_BY_ROLE.Patient;
 
     const sidebarContent = (
-        <div className="flex h-full flex-col" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%)', color: '#e2e8f0' }}>
+        <div className="flex h-full flex-col" style={{ background: 'linear-gradient(180deg, #0a2540 0%, #0d4f4a 100%)', color: '#e2e8f0' }}>
             {/* ── Logo ── */}
             <div className="flex h-16 items-center justify-between border-b border-white/10 px-4">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500 shadow-lg">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-500 shadow-lg">
                         <Stethoscope className="h-5 w-5 text-white" />
                     </div>
                     {!collapsed && (
                         <div className="flex flex-col leading-tight">
-                            <span className="text-sm font-bold text-white">Ras Dental</span>
-                            <span className="text-[11px] text-blue-300">Specialty Center</span>
+                            <span className="text-sm font-bold text-white" style={{ fontFamily: 'Inter, sans-serif' }}>Biruh Tena</span>
+                            <span className="text-[11px] text-teal-300" style={{ fontFamily: 'Noto Serif Ethiopic, serif' }}>ብሩህ ጤና</span>
                         </div>
                     )}
                 </div>
@@ -88,8 +88,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             {!collapsed && (
                 <div className="px-4 py-3">
                     <div className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2">
-                        <UserCog className="h-4 w-4 text-blue-300" />
-                        <span className="text-xs font-medium text-blue-200">{role} Access</span>
+                        <UserCog className="h-4 w-4 text-teal-300" />
+                        <span className="text-xs font-medium text-teal-200">{role} Access</span>
                     </div>
                 </div>
             )}
@@ -110,7 +110,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                                     className={cn(
                                         'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                                         isActive
-                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                                            ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
                                             : 'text-white/60 hover:bg-white/10 hover:text-white'
                                     )}
                                     title={collapsed ? item.label : undefined}

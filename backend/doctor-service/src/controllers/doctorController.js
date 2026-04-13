@@ -50,6 +50,41 @@ export const createDoctorProfile = async (req, res) => {
     }
 };
 
+// ─── GET PUBLIC (unauthenticated, landing page) ────────────────────────────
+
+/**
+ * GET /api/doctors/public
+ * No auth required. Returns active doctors only.
+ * Supports: ?search=<name or specialty>  ?specialty=<exact match>
+ */
+export const getPublicDoctors = async (req, res) => {
+    try {
+        const { search, specialty } = req.query;
+        const where = { isActive: true };
+
+        if (search) {
+            where[Op.or] = [
+                { fullName: { [Op.iLike]: `%${search}%` } },
+                { specialization: { [Op.iLike]: `%${search}%` } }
+            ];
+        }
+
+        if (specialty && specialty.trim() !== '') {
+            where.specialization = specialty.trim();
+        }
+
+        const doctors = await DoctorProfile.findAll({
+            where,
+            order: [['fullName', 'ASC']],
+            attributes: ['id', 'fullName', 'specialization', 'experience', 'qualification', 'bio', 'profilePhoto', 'consultationFee', 'rating', 'reviewsCount', 'isActive']
+        });
+
+        res.status(200).json({ count: doctors.length, doctors });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // ─── GET ALL ───────────────────────────────────────────────────────────────
 
 /**

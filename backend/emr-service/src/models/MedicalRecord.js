@@ -34,6 +34,10 @@ const MedicalRecord = sequelize.define('MedicalRecord', {
     visitDate: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
+    },
+    attachmentUrl: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     timestamps: true

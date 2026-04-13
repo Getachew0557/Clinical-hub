@@ -9,7 +9,8 @@ import Prescription from '../models/Prescription.js';
 export const createRecord = async (req, res) => {
     try {
         const { patientId, appointmentId, diagnosis, treatment, notes, prescriptions } = req.body;
-        const doctorId = req.user.id; // From JWT
+        const doctorId = req.user.id; 
+        const attachmentUrl = req.file ? req.file.path : null;
 
         // 1. Create Medical Record
         const record = await MedicalRecord.create({
@@ -18,7 +19,8 @@ export const createRecord = async (req, res) => {
             appointmentId,
             diagnosis,
             treatment,
-            notes
+            notes,
+            attachmentUrl
         });
 
         // 2. Create Prescriptions if provided

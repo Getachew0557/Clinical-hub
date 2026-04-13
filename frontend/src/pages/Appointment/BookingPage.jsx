@@ -21,6 +21,7 @@ const BookingPage = () => {
     // States
     const [doctor, setDoctor] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [notFound, setNotFound] = useState(false);
     const [slots, setSlots] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedTime, setSelectedTime] = useState(null);
@@ -42,7 +43,7 @@ const BookingPage = () => {
             const data = await doctorService.getDoctorById(doctorId);
             setDoctor(data);
         } catch (err) {
-            setError('Failed to load doctor details');
+            setNotFound(true);
         } finally {
             setLoading(false);
         }
@@ -82,7 +83,25 @@ const BookingPage = () => {
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
-            <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+            <Loader2 className="w-12 h-12 text-teal-600 animate-spin" />
+        </div>
+    );
+
+    if (notFound) return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+            <div className="max-w-md w-full glass p-10 rounded-[2.5rem] text-center">
+                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <AlertCircle className="w-10 h-10 text-red-500" />
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 mb-2">Doctor Not Found</h2>
+                <p className="text-slate-500 font-medium mb-8">The doctor you're looking for is no longer available or the link may be incorrect.</p>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-teal-600 transition-all"
+                >
+                    Go Back
+                </button>
+            </div>
         </div>
     );
 
@@ -135,7 +154,7 @@ const BookingPage = () => {
                                 />
                             </div>
                             <h1 className="text-3xl font-black text-slate-900 mb-2 leading-none">{doctor?.fullName}</h1>
-                            <p className="text-blue-600 font-black mb-6">{doctor?.specialization}</p>
+                            <p className="text-teal-600 font-black mb-6">{doctor?.specialization}</p>
 
                             <div className="flex gap-4 mb-8">
                                 <div className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -153,12 +172,12 @@ const BookingPage = () => {
 
                             <div className="space-y-4">
                                 <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                                    <p className="text-slate-500 text-sm font-medium">Board certified clinical excellence</p>
+                                    <CheckCircle2 className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
+                                    <p className="text-slate-500 text-sm font-medium">Evidence-based clinical protocols</p>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                                    <p className="text-slate-500 text-sm font-medium">Digital X-ray & Modern diagnostics</p>
+                                    <CheckCircle2 className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
+                                    <p className="text-slate-500 text-sm font-medium">Multi-specialty care network</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -207,8 +226,8 @@ const BookingPage = () => {
                                                     ${!slot.available
                                                         ? 'bg-slate-50 text-slate-300 border-slate-50 cursor-not-allowed'
                                                         : selectedTime?.timeValue === slot.timeValue
-                                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20 scale-105'
-                                                            : 'bg-white text-slate-600 border-slate-100 hover:border-blue-600 hover:text-blue-600'
+                                                            ? 'bg-teal-600 text-white border-teal-600 shadow-lg shadow-teal-600/20 scale-105'
+                                                            : 'bg-white text-slate-600 border-slate-100 hover:border-teal-600 hover:text-teal-600'
                                                     }
                                                 `}
                                             >
@@ -236,7 +255,7 @@ const BookingPage = () => {
                                         required
                                         value={reason}
                                         onChange={(e) => setReason(e.target.value)}
-                                        placeholder="e.g., Routine checkup, teeth cleaning..."
+                                        placeholder="e.g., Routine checkup, follow-up visit..."
                                         className="w-full p-6 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-none min-h-[120px]"
                                     />
                                 </div>
@@ -255,7 +274,7 @@ const BookingPage = () => {
                                         w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all
                                         ${!selectedTime || booking
                                             ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                            : 'bg-slate-900 text-white hover:bg-blue-600 shadow-xl'
+                                            : 'bg-slate-900 text-white hover:bg-teal-600 shadow-xl'
                                         }
                                     `}
                                 >

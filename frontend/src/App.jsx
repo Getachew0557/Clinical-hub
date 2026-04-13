@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 
@@ -26,12 +26,15 @@ import ReportsPage from './pages/Admin/ReportsPage';
 import LandingPage from './pages/LandingPage';
 import BookingPage from './pages/Appointment/BookingPage';
 import ProfilePage from './pages/Common/ProfilePage';
+import SettingsPage from './pages/Common/SettingsPage';
+import PatientPortalDashboard from './pages/Patient/PatientPortalDashboard';
 import ReceptionistListPage from './pages/Admin/ReceptionistListPage';
+import RoleGuard from './components/common/RoleGuard';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
   palette: {
-    primary: { main: '#2563eb', light: '#60a5fa', dark: '#1d4ed8' },
+    primary: { main: '#0d9488', light: '#ccfbf1', dark: '#0f766e' },
     secondary: { main: '#64748b' },
     background: { default: '#f8fafc', paper: '#ffffff' },
     text: { primary: '#0f172a', secondary: '#64748b' },
@@ -77,8 +80,21 @@ const theme = createTheme({
 // ── Protected Route ──────────────────────────────────────
 const ProtectedRoute = ({ children }) => {
   const { user } = useSelector((state) => state.auth);
-  if (!user) return <Navigate to="/login" replace />;
+  const location = useLocation();
+  if (!user) {
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${redirect}`} replace />;
+  }
   return children;
+};
+
+// ── Role-based Dashboard Router ──────────────────────────
+const DashboardRouter = () => {
+  const { user } = useSelector((state) => state.auth);
+  if (user?.role === 'Patient') {
+    return <PatientPortalDashboard />;
+  }
+  return <DashboardPage />;
 };
 
 // ── App ──────────────────────────────────────────────────
@@ -105,18 +121,18 @@ const App = () => (
             </ProtectedRoute>
           }
         >
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/doctors" element={<DoctorListPage />} />
+          <Route path="/dashboard" element={<DashboardRouter />} />
+          <Route path="/doctors" element={<RoleGuard allowedRoles={['Admin','Doctor','Receptionist']}><DoctorListPage /></RoleGuard>} />
           <Route path="/appointments" element={<AppointmentListPage />} />
           <Route path="/patients" element={<PatientListPage />} />
-          <Route path="/emr" element={<PatientEMRPage />} />
+          <Route path="/emr" element={<RoleGuard allowedRoles={['Admin','Doctor','Patient']}><PatientEMRPage /></RoleGuard>} />
           <Route path="/billing" element={<BillingPage />} />
-          <Route path="/inventory" element={<InventoryListPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/receptionists" element={<ReceptionistListPage />} />
+          <Route path="/inventory" element={<RoleGuard allowedRoles={['Admin','Receptionist']}><InventoryListPage /></RoleGuard>} />
+          <Route path="/reports" element={<RoleGuard allowedRoles={['Admin']}><ReportsPage /></RoleGuard>} />
+          <Route path="/receptionists" element={<RoleGuard allowedRoles={['Admin']}><ReceptionistListPage /></RoleGuard>} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/book/:doctorId" element={<BookingPage />} />
-          <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
 
         {/* Fallback */}

@@ -22,7 +22,7 @@ const AuthLayout = () => {
 
                 <div className="mt-8 text-center">
                     <p className="text-slate-400 text-sm font-medium">
-                        © {new Date().getFullYear()} Ras Dental Clinic. Professional Management.
+                        © {new Date().getFullYear()} Clinical Hub Clinic. Professional Management.
                     </p>
                 </div>
             </Container>

@@ -9,7 +9,8 @@ import {
     getMyProfile,
     updateDoctorProfile,
     toggleDoctorStatus,
-    deleteDoctorProfile
+    deleteDoctorProfile,
+    getPublicDoctors
 } from '../controllers/doctorController.js';
 
 const router = express.Router();
@@ -41,8 +42,8 @@ router.get('/my-profile', protect, authorize('Doctor'), getMyProfile);
 
 // ─── Admin & Receptionist ─────────────────────────────────────────────────
 
-// Publicly list all doctors (for landing page)
-router.get('/public', getAllDoctors);
+// Publicly list all doctors (for landing page) — no auth required
+router.get('/public', getPublicDoctors);
 
 // List all doctors (with optional search/filter)
 router.get('/', protect, authorize('Admin', 'Receptionist', 'Doctor', 'Patient'), getAllDoctors);

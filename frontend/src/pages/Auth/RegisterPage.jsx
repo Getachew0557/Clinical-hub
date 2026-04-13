@@ -85,7 +85,7 @@ export default function RegisterPage() {
                             Create Account
                         </Typography>
                         <Typography variant="body2" className="text-slate-500 font-medium">
-                            Register for Ras Dental Clinic System
+                            Register for Clinical Hub Clinic System
                         </Typography>
                     </div>
                 </div>

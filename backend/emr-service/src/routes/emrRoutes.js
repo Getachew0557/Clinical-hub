@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
+import upload from '../middlewares/uploadMiddleware.js';
 import {
     createRecord,
     getPatientRecords,
@@ -12,8 +13,8 @@ const router = express.Router();
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 
-// Create record - (Doctor Only)
-router.post('/', protect, authorize('Doctor'), createRecord);
+// Create record - (Doctor Only) includes single file attachment
+router.post('/', protect, authorize('Doctor'), upload.single('attachment'), createRecord);
 
 // Get specific patient's record library - (Admin, Doctor, or Patient owner)
 router.get('/patient/:patientId', protect, authorize('Admin', 'Doctor', 'Patient'), getPatientRecords);

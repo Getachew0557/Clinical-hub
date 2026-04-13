@@ -34,7 +34,11 @@ export default function LoginPage() {
         if (isSuccess || user) {
             const params = new URLSearchParams(location.search);
             const redirect = params.get("redirect");
-            navigate(redirect || "/dashboard");
+            // Validate: only allow relative paths, prevent open redirect
+            const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+                ? redirect
+                : '/dashboard';
+            navigate(safeRedirect);
         }
         dispatch(reset());
     }, [user, isSuccess, navigate, dispatch, location]);
@@ -54,7 +58,7 @@ export default function LoginPage() {
                     </div>
                     <div className="text-center">
                         <Typography variant="h4" className="font-bold text-slate-900">
-                            Ras Dental Clinic
+                            Clinical Hub
                         </Typography>
                         <Typography variant="body2" className="text-slate-500 font-medium">
                             Specialty Center Management
