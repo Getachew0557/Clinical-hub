@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
     LayoutDashboard, Users, CalendarDays, FileText, Receipt,
     Package, BarChart3, Settings, ChevronLeft, ChevronRight,
@@ -8,46 +9,47 @@ import {
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
-// ── Role-based nav items ─────────────────────────────────
+// ── Role-based nav items (use translation keys) ──────────────────────────────
 const NAV_BY_ROLE = {
     Admin: [
-        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
-        { to: '/patients', icon: Users, label: 'Patients' },
-        { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
-        { to: '/receptionists', icon: ShieldCheck, label: 'Receptionists' },
-        { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
-        { to: '/emr', icon: FileText, label: 'Medical Records' },
-        { to: '/inventory', icon: Package, label: 'Inventory' },
-        { to: '/reports', icon: BarChart3, label: 'Reports' },
-        { to: '/settings', icon: UserCog, label: 'Settings' },
+        { to: '/dashboard', icon: LayoutDashboard, labelKey: 'sidebar.dashboard', end: true },
+        { to: '/patients', icon: Users, labelKey: 'sidebar.patients' },
+        { to: '/doctors', icon: Stethoscope, labelKey: 'sidebar.doctors' },
+        { to: '/receptionists', icon: ShieldCheck, labelKey: 'sidebar.receptionists' },
+        { to: '/appointments', icon: CalendarDays, labelKey: 'sidebar.appointments' },
+        { to: '/emr', icon: FileText, labelKey: 'sidebar.medicalRecords' },
+        { to: '/inventory', icon: Package, labelKey: 'sidebar.inventory' },
+        { to: '/reports', icon: BarChart3, labelKey: 'sidebar.reports' },
+        { to: '/settings', icon: UserCog, labelKey: 'sidebar.settings' },
     ],
     Doctor: [
-        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
-        { to: '/appointments', icon: CalendarDays, label: 'My Appointments' },
-        { to: '/emr', icon: FileText, label: 'Medical Records' },
-        { to: '/patients', icon: Users, label: 'My Patients' },
-        { to: '/settings', icon: UserCog, label: 'Settings' },
+        { to: '/dashboard', icon: LayoutDashboard, labelKey: 'sidebar.dashboard', end: true },
+        { to: '/appointments', icon: CalendarDays, labelKey: 'sidebar.myAppointments' },
+        { to: '/emr', icon: FileText, labelKey: 'sidebar.medicalRecords' },
+        { to: '/patients', icon: Users, labelKey: 'sidebar.myPatients' },
+        { to: '/settings', icon: UserCog, labelKey: 'sidebar.settings' },
     ],
     Receptionist: [
-        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
-        { to: '/patients', icon: Users, label: 'Patients' },
-        { to: '/doctors', icon: Stethoscope, label: 'Doctors' },
-        { to: '/appointments', icon: CalendarDays, label: 'Appointments' },
-        { to: '/inventory', icon: Package, label: 'Inventory' },
-        { to: '/settings', icon: UserCog, label: 'Settings' },
+        { to: '/dashboard', icon: LayoutDashboard, labelKey: 'sidebar.dashboard', end: true },
+        { to: '/patients', icon: Users, labelKey: 'sidebar.patients' },
+        { to: '/doctors', icon: Stethoscope, labelKey: 'sidebar.doctors' },
+        { to: '/appointments', icon: CalendarDays, labelKey: 'sidebar.appointments' },
+        { to: '/inventory', icon: Package, labelKey: 'sidebar.inventory' },
+        { to: '/settings', icon: UserCog, labelKey: 'sidebar.settings' },
     ],
     Patient: [
-        { to: '/dashboard', icon: Home, label: 'My Portal', end: true },
-        { to: '/appointments', icon: CalendarDays, label: 'Bookings' },
-        { to: '/emr', icon: FileText, label: 'My Records' },
-        { to: '/billing', icon: Receipt, label: 'My Bills' },
-        { to: '/settings', icon: UserCog, label: 'Settings' },
+        { to: '/dashboard', icon: Home, labelKey: 'sidebar.myPortal', end: true },
+        { to: '/appointments', icon: CalendarDays, labelKey: 'sidebar.bookings' },
+        { to: '/emr', icon: FileText, labelKey: 'sidebar.myRecords' },
+        { to: '/billing', icon: Receipt, labelKey: 'sidebar.myBills' },
+        { to: '/settings', icon: UserCog, labelKey: 'sidebar.settings' },
     ],
 };
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
     const location = useLocation();
     const { user } = useSelector((s) => s.auth);
+    const { t } = useTranslation();
     const role = user?.role || 'Patient';
     const navItems = NAV_BY_ROLE[role] || NAV_BY_ROLE.Patient;
 
@@ -89,7 +91,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                 <div className="px-4 py-3">
                     <div className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2">
                         <UserCog className="h-4 w-4 text-teal-300" />
-                        <span className="text-xs font-medium text-teal-200">{role} Access</span>
+                        <span className="text-xs font-medium text-teal-200">{t('sidebar.roleAccess', { role })}</span>
                     </div>
                 </div>
             )}
@@ -113,10 +115,10 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                                             ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/30'
                                             : 'text-white/60 hover:bg-white/10 hover:text-white'
                                     )}
-                                    title={collapsed ? item.label : undefined}
+                                    title={collapsed ? t(item.labelKey) : undefined}
                                 >
                                     <item.icon className="h-5 w-5 shrink-0" />
-                                    {!collapsed && <span>{item.label}</span>}
+                                    {!collapsed && <span>{t(item.labelKey)}</span>}
                                 </NavLink>
                             </li>
                         );
@@ -128,9 +130,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             {!collapsed && (
                 <div className="border-t border-white/10 p-4">
                     <div className="rounded-xl bg-white/10 px-3 py-3">
-                        <p className="text-xs font-semibold text-white/80">Clinic Hours</p>
-                        <p className="text-[11px] text-white/50 mt-0.5">Mon–Fri: 8AM – 6PM</p>
-                        <p className="text-[11px] text-white/50">Sat: 9AM – 2PM</p>
+                        <p className="text-xs font-semibold text-white/80">{t('sidebar.clinicHours')}</p>
+                        <p className="text-[11px] text-white/50 mt-0.5">{t('sidebar.weekdayHours')}</p>
+                        <p className="text-[11px] text-white/50">{t('sidebar.saturdayHours')}</p>
                     </div>
                 </div>
             )}

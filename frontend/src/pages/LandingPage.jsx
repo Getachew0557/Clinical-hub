@@ -11,70 +11,36 @@ import { useSelector } from 'react-redux';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
+import { useTranslation } from 'react-i18next';
 import doctorService from '../api/doctor.service';
 import heroImg from '../assets/clinic-hero.png';
 import GeminiChatbot from '../components/common/GeminiChatbot';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const NAV_LINKS = [
-  { name: 'Services', href: '#services' },
-  { name: 'Doctors', href: '#doctors' },
-  { name: 'About', href: '#about' },
-  { name: 'FAQ', href: '#faq' },
-  { name: 'Emergency', href: '#emergency' },
+  { key: 'nav.services', href: '#services' },
+  { key: 'nav.doctors', href: '#doctors' },
+  { key: 'nav.about', href: '#about' },
+  { key: 'nav.faq', href: '#faq' },
+  { key: 'nav.emergency', href: '#emergency' },
 ];
 
-const STATS = [
-  { label: 'Patients Served', value: 15000, suffix: '+' },
-  { label: 'Expert Doctors', value: 24, suffix: '' },
-  { label: 'Clinic Locations', value: 5, suffix: '' },
-  { label: 'Years of Excellence', value: 12, suffix: '' },
+const STATS_CONFIG = [
+  { labelKey: 'stats.patients', value: 15000, suffix: '+' },
+  { labelKey: 'stats.doctors', value: 24, suffix: '' },
+  { labelKey: 'stats.locations', value: 5, suffix: '' },
+  { labelKey: 'stats.years', value: 12, suffix: '' },
 ];
 
-const SERVICES = [
-  {
-    icon: Heart,
-    color: 'text-teal-600',
-    bg: 'bg-teal-50',
-    title: 'General Medicine',
-    desc: 'Comprehensive primary care and preventive medicine for patients of all ages.',
-  },
-  {
-    icon: Baby,
-    color: 'text-pink-500',
-    bg: 'bg-pink-50',
-    title: 'Pediatrics',
-    desc: 'Specialized care for infants, children, and adolescents by expert pediatricians.',
-  },
-  {
-    icon: Shield,
-    color: 'text-purple-500',
-    bg: 'bg-purple-50',
-    title: 'Gynecology & Obstetrics',
-    desc: "Complete women's health services from routine exams to maternity care.",
-  },
-  {
-    icon: Activity,
-    color: 'text-red-500',
-    bg: 'bg-red-50',
-    title: 'Surgery',
-    desc: 'Advanced surgical procedures performed by board-certified surgeons.',
-  },
-  {
-    icon: Star,
-    color: 'text-amber-500',
-    bg: 'bg-amber-50',
-    title: 'Dermatology',
-    desc: 'Expert diagnosis and treatment of skin, hair, and nail conditions.',
-  },
-  {
-    icon: Eye,
-    color: 'text-blue-500',
-    bg: 'bg-blue-50',
-    title: 'Ophthalmology',
-    desc: 'Full-spectrum eye care from routine exams to complex surgical interventions.',
-  },
+const SERVICES_CONFIG = [
+  { icon: Heart, color: 'text-teal-600', bg: 'bg-teal-50', titleKey: 'services.generalMedicine', descKey: 'services.generalMedicineDesc' },
+  { icon: Baby, color: 'text-pink-500', bg: 'bg-pink-50', titleKey: 'services.pediatrics', descKey: 'services.pediatricsDesc' },
+  { icon: Shield, color: 'text-purple-500', bg: 'bg-purple-50', titleKey: 'services.gynecology', descKey: 'services.gynecologyDesc' },
+  { icon: Activity, color: 'text-red-500', bg: 'bg-red-50', titleKey: 'services.surgery', descKey: 'services.surgeryDesc' },
+  { icon: Star, color: 'text-amber-500', bg: 'bg-amber-50', titleKey: 'services.dermatology', descKey: 'services.dermatologyDesc' },
+  { icon: Eye, color: 'text-blue-500', bg: 'bg-blue-50', titleKey: 'services.ophthalmology', descKey: 'services.ophthalmologyDesc' },
 ];
 
 const SPECIALTY_OPTIONS = [
@@ -90,22 +56,20 @@ const SPECIALTY_OPTIONS = [
   'Psychiatry',
 ];
 
-const HOW_IT_WORKS = [
-  {
-    step: '01',
-    title: 'Register & Search',
-    desc: 'Create your account and find the right specialist for your needs.',
-  },
-  {
-    step: '02',
-    title: 'Book Appointment',
-    desc: 'Choose a convenient date and time slot that fits your schedule.',
-  },
-  {
-    step: '03',
-    title: 'Receive Care',
-    desc: 'Visit our clinic and receive world-class clinical care.',
-  },
+const HOW_IT_WORKS_CONFIG = [
+  { step: '01', titleKey: 'howItWorks.step1Title', descKey: 'howItWorks.step1Desc' },
+  { step: '02', titleKey: 'howItWorks.step2Title', descKey: 'howItWorks.step2Desc' },
+  { step: '03', titleKey: 'howItWorks.step3Title', descKey: 'howItWorks.step3Desc' },
+];
+
+const FAQS_CONFIG = [
+  { qKey: 'faq.q1', aKey: 'faq.a1' },
+  { qKey: 'faq.q2', aKey: 'faq.a2' },
+  { qKey: 'faq.q3', aKey: 'faq.a3' },
+  { qKey: 'faq.q4', aKey: 'faq.a4' },
+  { qKey: 'faq.q5', aKey: 'faq.a5' },
+  { qKey: 'faq.q6', aKey: 'faq.a6' },
+  { qKey: 'faq.q7', aKey: 'faq.a7' },
 ];
 
 const TESTIMONIALS = [
@@ -143,37 +107,6 @@ const TESTIMONIALS = [
     text: "As a healthcare professional myself, I trust Biruh Tena for my own family's care.",
     rating: 5,
     initial: 'S',
-  },
-];
-
-const FAQS = [
-  {
-    q: 'How do I book an appointment?',
-    a: 'You can book online through our Patient Portal or call our emergency line. Select your preferred doctor, choose a date and time, and confirm your booking.',
-  },
-  {
-    q: 'Do you accept insurance?',
-    a: 'Yes, we work with major Ethiopian insurance providers including CBE Birr, Awash Insurance, and Nyala Insurance. Contact us to verify your coverage.',
-  },
-  {
-    q: 'What should I bring to my first visit?',
-    a: 'Please bring a valid ID, your insurance card if applicable, and any previous medical records or test results relevant to your visit.',
-  },
-  {
-    q: 'Is there emergency care available?',
-    a: 'Yes, our emergency line (+251 911 22 33 44) is available 24/7. For life-threatening emergencies, please call immediately.',
-  },
-  {
-    q: 'How can I access my medical records?',
-    a: "Registered patients can access their complete medical records through the Patient Portal under 'My Records'.",
-  },
-  {
-    q: 'What are your clinic hours?',
-    a: 'Our clinics are open Monday–Friday 8AM–6PM and Saturday 9AM–2PM. Emergency services are available 24/7.',
-  },
-  {
-    q: 'Can I reschedule or cancel my appointment?',
-    a: 'Yes, you can reschedule or cancel up to 24 hours before your appointment through the Patient Portal or by calling us.',
   },
 ];
 
@@ -221,6 +154,7 @@ function SkeletonCard() {
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const { t } = useTranslation();
 
   // NavBar state
   const [isScrolled, setIsScrolled] = useState(false);
@@ -260,7 +194,7 @@ export default function LandingPage() {
       setDoctors(data.doctors || data.records || []);
     } catch (err) {
       console.error('Fetch doctors error:', err);
-      setDoctorError('Unable to load doctors. Please try again.');
+      setDoctorError(t('doctors.error'));
     } finally {
       setLoadingDoctors(false);
     }
@@ -337,16 +271,17 @@ export default function LandingPage() {
           <div className="hidden lg:flex items-center gap-8">
             {NAV_LINKS.map((link, i) => (
               <motion.a
-                key={link.name}
+                key={link.key}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
                 href={link.href}
                 className="text-sm font-semibold text-slate-600 hover:text-teal-600 transition-colors"
               >
-                {link.name}
+                {t(link.key)}
               </motion.a>
             ))}
+            <LanguageSwitcher />
             <motion.button
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -355,7 +290,7 @@ export default function LandingPage() {
               onClick={() => navigate('/login')}
               className="bg-teal-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20"
             >
-              Patient Portal
+              {t('nav.patientPortal')}
             </motion.button>
           </div>
 
@@ -387,19 +322,20 @@ export default function LandingPage() {
             </button>
             {NAV_LINKS.map((link) => (
               <a
-                key={link.name}
+                key={link.key}
                 href={link.href}
                 className="text-2xl font-bold text-slate-900 hover:text-teal-600 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                {link.name}
+                {t(link.key)}
               </a>
             ))}
+            <LanguageSwitcher variant="dark" />
             <button
               onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
               className="bg-teal-600 text-white px-10 py-4 rounded-2xl text-lg font-bold shadow-xl shadow-teal-600/30"
             >
-              Patient Portal
+              {t('nav.patientPortal')}
             </button>
           </motion.div>
         )}
@@ -431,7 +367,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8 }}
           >
             <span className="inline-block px-4 py-2 rounded-full bg-teal-50 text-teal-700 text-xs font-bold uppercase tracking-widest mb-6 border border-teal-100">
-              Ethiopian Clinical Excellence
+              {t('hero.badge')}
             </span>
             <h1
               className="leading-[1.1] mb-6 text-slate-900"
@@ -447,7 +383,7 @@ export default function LandingPage() {
               <span className="text-gradient">Biruh Tena.</span>
             </h1>
             <p className="text-base text-slate-500 max-w-lg mb-8 font-medium leading-relaxed">
-              World-class multi-specialty clinical care, rooted in Ethiopian values. Book your appointment today.
+              {t('hero.subtext')}
             </p>
             <div className="flex flex-wrap gap-4">
               <motion.button
@@ -456,14 +392,14 @@ export default function LandingPage() {
                 onClick={() => scrollTo('doctors')}
                 className="bg-teal-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl shadow-teal-600/25 hover:bg-teal-700 transition-all group"
               >
-                Book Appointment
+                {t('hero.bookBtn')}
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </motion.button>
               <button
                 onClick={() => scrollTo('about')}
                 className="px-8 py-4 rounded-2xl font-bold text-slate-700 border border-slate-200 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50 transition-all"
               >
-                Learn More
+                {t('hero.learnBtn')}
               </button>
             </div>
           </motion.div>
@@ -494,8 +430,8 @@ export default function LandingPage() {
                 <Star size={20} strokeWidth={2.5} className="fill-amber-400" />
               </div>
               <div>
-                <p className="text-sm font-black text-slate-900">4.9 / 5 Rating</p>
-                <p className="text-xs text-slate-500">From 2,000+ Reviews</p>
+                <p className="text-sm font-black text-slate-900">{t('hero.rating')}</p>
+                <p className="text-xs text-slate-500">{t('hero.ratingReviews')}</p>
               </div>
             </motion.div>
 
@@ -506,7 +442,7 @@ export default function LandingPage() {
               className="absolute -bottom-4 -left-4 glass px-5 py-3 rounded-2xl shadow-xl hidden lg:flex items-center gap-2"
             >
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-sm font-bold text-slate-900">Available Now</span>
+              <span className="text-sm font-bold text-slate-900">{t('hero.availableNow')}</span>
             </motion.div>
           </motion.div>
         </div>
@@ -518,7 +454,7 @@ export default function LandingPage() {
       <section style={{ backgroundColor: '#0d4f4a' }} className="py-16">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
-            {STATS.map((stat, i) => (
+            {STATS_CONFIG.map((stat, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -530,7 +466,7 @@ export default function LandingPage() {
                 <span className="text-4xl lg:text-5xl font-black text-white tracking-tight">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                 </span>
-                <span className="text-teal-300 text-xs font-bold uppercase tracking-widest">{stat.label}</span>
+                <span className="text-teal-300 text-xs font-bold uppercase tracking-widest">{t(stat.labelKey)}</span>
               </motion.div>
             ))}
           </div>
@@ -544,7 +480,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
-              Our Specialties
+              {t('services.label')}
             </span>
             <h2
               className="text-slate-900 mb-4"
@@ -554,15 +490,15 @@ export default function LandingPage() {
                 fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               }}
             >
-              Specialized care for every patient.
+              {t('services.heading')}
             </h2>
             <p className="text-slate-500 text-sm leading-relaxed">
-              From routine checkups to complex procedures, our specialists deliver excellence across every discipline.
+              {t('services.description')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {SERVICES.map((svc, i) => {
+            {SERVICES_CONFIG.map((svc, i) => {
               const Icon = svc.icon;
               return (
                 <motion.div
@@ -576,10 +512,10 @@ export default function LandingPage() {
                   <div className={`w-14 h-14 rounded-2xl ${svc.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`${svc.color} w-7 h-7`} />
                   </div>
-                  <h3 className="text-xl font-extrabold text-slate-900 mb-3">{svc.title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed mb-5">{svc.desc}</p>
+                  <h3 className="text-xl font-extrabold text-slate-900 mb-3">{t(svc.titleKey)}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed mb-5">{t(svc.descKey)}</p>
                   <button className="flex items-center gap-2 text-teal-600 text-sm font-bold hover:gap-3 transition-all">
-                    Learn More <ChevronRight size={16} />
+                    {t('services.learnMore')} <ChevronRight size={16} />
                   </button>
                 </motion.div>
               );
@@ -595,7 +531,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
-              Meet Our Clinicians
+              {t('doctors.label')}
             </span>
             <h2
               className="text-slate-900 mb-4"
@@ -605,10 +541,10 @@ export default function LandingPage() {
                 fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               }}
             >
-              Find the right specialist for you.
+              {t('doctors.heading')}
             </h2>
             <p className="text-slate-500 text-sm leading-relaxed">
-              Search by name or specialty to find the perfect doctor for your needs.
+              {t('doctors.description')}
             </p>
           </div>
 
@@ -618,7 +554,7 @@ export default function LandingPage() {
               type="text"
               value={query}
               onChange={handleQueryChange}
-              placeholder="Search by name or specialty..."
+              placeholder={t('doctors.searchPlaceholder')}
               className="flex-1 px-5 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
             />
             <select
@@ -628,7 +564,7 @@ export default function LandingPage() {
             >
               {SPECIALTY_OPTIONS.map((opt) => (
                 <option key={opt} value={opt === 'All Specialties' ? '' : opt}>
-                  {opt}
+                  {opt === 'All Specialties' ? t('doctors.allSpecialties') : opt}
                 </option>
               ))}
             </select>
@@ -654,7 +590,7 @@ export default function LandingPage() {
                 onClick={() => fetchDoctors(query, specialty)}
                 className="flex items-center gap-2 text-teal-600 font-bold text-sm hover:text-teal-700 transition-colors"
               >
-                <RefreshCw size={16} /> Retry
+                <RefreshCw size={16} /> {t('doctors.retry')}
               </button>
             </div>
           )}
@@ -665,8 +601,8 @@ export default function LandingPage() {
               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Stethoscope className="text-slate-400 w-8 h-8" />
               </div>
-              <p className="text-slate-500 font-medium">No doctors found for your search.</p>
-              <p className="text-slate-400 text-sm mt-1">Try a different name or specialty.</p>
+              <p className="text-slate-500 font-medium">{t('doctors.noResults')}</p>
+              <p className="text-slate-400 text-sm mt-1">{t('doctors.noResultsHint')}</p>
             </div>
           )}
 
@@ -721,7 +657,7 @@ export default function LandingPage() {
                       onClick={() => handleBookingClick(doc.id)}
                       className="w-full py-3 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-700 transition-all shadow-md shadow-teal-600/15 hover:shadow-teal-600/25"
                     >
-                      Book Consultation
+                      {t('doctors.bookBtn')}
                     </button>
                   </div>
                 </motion.div>
@@ -745,11 +681,11 @@ export default function LandingPage() {
                 fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               }}
             >
-              How Biruh Tena Works
+              {t('howItWorks.heading')}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {HOW_IT_WORKS.map((item, i) => (
+            {HOW_IT_WORKS_CONFIG.map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -762,10 +698,10 @@ export default function LandingPage() {
                   {item.step}
                 </span>
                 <h3 className="text-xl font-extrabold text-slate-900 group-hover:text-white mb-3 transition-colors">
-                  {item.title}
+                  {t(item.titleKey)}
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed group-hover:text-white/80 transition-colors">
-                  {item.desc}
+                  {t(item.descKey)}
                 </p>
               </motion.div>
             ))}
@@ -780,7 +716,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto mb-16">
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
-              Patient Stories
+              {t('testimonials.label')}
             </span>
             <h2
               className="text-slate-900"
@@ -790,7 +726,7 @@ export default function LandingPage() {
                 fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               }}
             >
-              What Our Patients Say
+              {t('testimonials.heading')}
             </h2>
           </div>
 
@@ -807,22 +743,22 @@ export default function LandingPage() {
             pagination={{ clickable: true }}
             className="pb-12"
           >
-            {TESTIMONIALS.map((t, i) => (
+            {TESTIMONIALS.map((testimonial, i) => (
               <SwiperSlide key={i}>
                 <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 h-full flex flex-col gap-4">
                   <div className="flex gap-1">
-                    {Array.from({ length: t.rating }).map((_, j) => (
+                    {Array.from({ length: testimonial.rating }).map((_, j) => (
                       <Star key={j} size={16} className="text-amber-400 fill-amber-400" />
                     ))}
                   </div>
-                  <p className="text-slate-600 text-sm leading-relaxed flex-1">"{t.text}"</p>
+                  <p className="text-slate-600 text-sm leading-relaxed flex-1">"{testimonial.text}"</p>
                   <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
                     <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm">
-                      {t.initial}
+                      {testimonial.initial}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">{t.name}</p>
-                      <p className="text-xs text-slate-400">{t.role}</p>
+                      <p className="text-sm font-bold text-slate-900">{testimonial.name}</p>
+                      <p className="text-xs text-slate-400">{testimonial.role}</p>
                     </div>
                   </div>
                 </div>
@@ -916,7 +852,7 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
-              Got Questions?
+              {t('faq.label')}
             </span>
             <h2
               className="text-slate-900"
@@ -926,12 +862,12 @@ export default function LandingPage() {
                 fontSize: 'clamp(2rem, 4vw, 3.5rem)',
               }}
             >
-              Frequently Asked Questions
+              {t('faq.heading')}
             </h2>
           </div>
 
           <div className="space-y-3">
-            {FAQS.map((faq, i) => (
+            {FAQS_CONFIG.map((faq, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
@@ -944,7 +880,7 @@ export default function LandingPage() {
                   className="w-full flex items-center justify-between px-6 py-5 text-left"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 >
-                  <span className="font-bold text-slate-900 text-sm pr-4">{faq.q}</span>
+                  <span className="font-bold text-slate-900 text-sm pr-4">{t(faq.qKey)}</span>
                   <motion.div
                     animate={{ rotate: openFaq === i ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
@@ -963,7 +899,7 @@ export default function LandingPage() {
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <p className="px-6 pb-5 text-sm text-slate-500 leading-relaxed">{faq.a}</p>
+                      <p className="px-6 pb-5 text-sm text-slate-500 leading-relaxed">{t(faq.aKey)}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -981,7 +917,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
             <div>
-              <p className="text-white/80 text-sm font-bold uppercase tracking-widest">24/7 Emergency Line</p>
+              <p className="text-white/80 text-sm font-bold uppercase tracking-widest">{t('emergency.label')}</p>
               <p
                 className="text-white font-black"
                 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)' }}
@@ -994,7 +930,7 @@ export default function LandingPage() {
             href="tel:+251911223344"
             className="bg-white text-red-600 px-8 py-4 rounded-2xl font-black text-sm hover:bg-red-50 transition-all shadow-xl shadow-red-900/20 flex items-center gap-2"
           >
-            <Phone size={18} /> Call Now
+            <Phone size={18} /> {t('emergency.callBtn')}
           </a>
         </div>
       </section>
@@ -1022,19 +958,19 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-white/50 text-sm leading-relaxed max-w-xs mb-8">
-                World-class multi-specialty clinical care, rooted in Ethiopian values. Your health is our mission.
+                {t('footer.tagline')}
               </p>
               <button
                 onClick={() => navigate('/login')}
                 className="bg-teal-600 text-white px-8 py-3.5 rounded-2xl font-bold text-sm hover:bg-teal-500 transition-all flex items-center gap-2 shadow-lg shadow-teal-900/30"
               >
-                Get Started <ChevronRight size={16} />
+                {t('footer.getStarted')} <ChevronRight size={16} />
               </button>
             </div>
 
             {/* Col 2 — Contact */}
             <div>
-              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">Contact</p>
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">{t('footer.contact')}</p>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3 text-white/60 text-sm">
                   <MapPin size={16} className="text-teal-400 mt-0.5 shrink-0" />
@@ -1053,26 +989,26 @@ export default function LandingPage() {
 
             {/* Col 3 — Quick Links + Social */}
             <div>
-              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">Quick Links</p>
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">{t('footer.quickLinks')}</p>
               <ul className="space-y-3 mb-8">
                 {[
-                  { label: 'Services', href: '#services' },
-                  { label: 'Doctors', href: '#doctors' },
-                  { label: 'About', href: '#about' },
-                  { label: 'FAQ', href: '#faq' },
-                  { label: 'Patient Portal', href: '/login' },
+                  { label: 'nav.services', href: '#services' },
+                  { label: 'nav.doctors', href: '#doctors' },
+                  { label: 'nav.about', href: '#about' },
+                  { label: 'nav.faq', href: '#faq' },
+                  { label: 'nav.patientPortal', href: '/login' },
                 ].map((link) => (
                   <li key={link.label}>
                     <a
                       href={link.href}
                       className="text-white/50 text-sm hover:text-teal-400 transition-colors"
                     >
-                      {link.label}
+                      {t(link.label)}
                     </a>
                   </li>
                 ))}
               </ul>
-              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-4">Social</p>
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-4">{t('footer.social')}</p>
               <div className="flex gap-3">
                 {[Instagram, Facebook, Twitter].map((Icon, i) => (
                   <a
@@ -1089,11 +1025,11 @@ export default function LandingPage() {
 
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between gap-4">
             <p className="text-white/30 text-xs">
-              © 2025 Biruh Tena Specialty Center. All rights reserved.
+              {t('footer.copyright')}
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-white/30 text-xs hover:text-white/60 transition-colors">Privacy Policy</a>
-              <a href="#" className="text-white/30 text-xs hover:text-white/60 transition-colors">Terms of Service</a>
+              <a href="#" className="text-white/30 text-xs hover:text-white/60 transition-colors">{t('footer.privacyPolicy')}</a>
+              <a href="#" className="text-white/30 text-xs hover:text-white/60 transition-colors">{t('footer.termsOfService')}</a>
             </div>
           </div>
         </div>

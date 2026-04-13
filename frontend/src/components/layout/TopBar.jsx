@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Menu, Bell, Search, LogOut, Settings, ChevronDown, User,
 } from 'lucide-react';
@@ -10,11 +11,13 @@ import {
 } from '@mui/material';
 import { logout } from '../../store/slices/authSlice';
 import NotificationsMenu from './NotificationsMenu';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 
 export default function TopBar({ onMenuClick }) {
     const { user } = useSelector((s) => s.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [anchorEl, setAnchorEl] = useState(null);
 
     const initials = user?.fullName
@@ -52,15 +55,18 @@ export default function TopBar({ onMenuClick }) {
                 <div className="hidden md:flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 min-w-[260px]">
                     <Search className="h-4 w-4 text-slate-400 shrink-0" />
                     <InputBase
-                        placeholder="Search patients, appointments…"
+                        placeholder={t('common.searchPlaceholder')}
                         sx={{ fontSize: '0.875rem', flex: 1, color: '#334155' }}
                         inputProps={{ 'aria-label': 'search' }}
                     />
                 </div>
             </div>
 
-            {/* Right: Notifications + User */}
+            {/* Right: Language + Notifications + User */}
             <div className="flex items-center gap-2">
+                {/* Language Switcher */}
+                <LanguageSwitcher />
+
                 {/* Notification Menu */}
                 <NotificationsMenu />
 
@@ -106,11 +112,11 @@ export default function TopBar({ onMenuClick }) {
                     <Divider />
                     <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile'); }}>
                         <ListItemIcon><Settings size={16} /></ListItemIcon>
-                        Settings
+                        {t('common.settings')}
                     </MenuItem>
                     <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                         <ListItemIcon><LogOut size={16} color="#ef4444" /></ListItemIcon>
-                        Logout
+                        {t('common.signOut')}
                     </MenuItem>
                 </MuiMenu>
             </div>

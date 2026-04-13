@@ -52,6 +52,12 @@ body {
   }
 }
 
+/* Ethiopic script font override — applied to <html> when lang is am or ti */
+html.lang-ethiopic,
+html.lang-ethiopic * {
+  font-family: 'Noto Serif Ethiopic', serif;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }

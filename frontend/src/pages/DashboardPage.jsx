@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Users, CalendarDays, Receipt, TrendingUp, Clock, AlertTriangle,
     Activity, BarChart2,
@@ -35,6 +36,7 @@ const statusColors = {
 export default function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useSelector((s) => s.auth);
+    const { t } = useTranslation();
     const role = user?.role || 'Patient';
 
     const [loading, setLoading] = useState(true);
@@ -60,12 +62,12 @@ export default function DashboardPage() {
             ]);
 
             const allStats = {
-                totalPatients: { title: 'Total Patients', value: patDemo.totalPatients || 0, change: '+5%', icon: Users, color: '#2563eb', bg: '#eff6ff' },
-                todayApts: { title: "Today's Appointments", value: aptStats.total || 0, change: 'Updated', icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
-                revenue: { title: 'Total Revenue', value: `$${(finance.totalRevenue || 0).toLocaleString()}`, change: 'Actual', icon: Receipt, color: '#7c3aed', bg: '#f5f3ff' },
-                lowStock: { title: 'Low Stock Items', value: invSummary.lowStockItems || 0, change: 'Check Inventory', icon: AlertTriangle, color: '#d97706', bg: '#fffbeb' },
-                myApts: { title: 'My Appointments Today', value: (myApts.appointments || []).length, change: 'Next: Soon', icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
-                pendingInvoices: { title: 'Pending Invoices', value: finance.pendingCount || 0, change: 'Action needed', icon: Activity, color: '#dc2626', bg: '#fef2f2' },
+                totalPatients: { title: t('dashboard.totalPatients'), value: patDemo.totalPatients || 0, change: '+5%', icon: Users, color: '#0d9488', bg: '#ccfbf1' },
+                todayApts: { title: t('dashboard.todayAppointments'), value: aptStats.total || 0, change: t('dashboard.updated'), icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
+                revenue: { title: t('dashboard.totalRevenue'), value: `${(finance.totalRevenue || 0).toLocaleString()}`, change: t('dashboard.actual'), icon: Receipt, color: '#7c3aed', bg: '#f5f3ff' },
+                lowStock: { title: t('dashboard.lowStockItems'), value: invSummary.lowStockItems || 0, change: t('dashboard.checkInventory'), icon: AlertTriangle, color: '#d97706', bg: '#fffbeb' },
+                myApts: { title: t('dashboard.myAppointmentsToday'), value: (myApts.appointments || []).length, change: t('dashboard.nextSoon'), icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
+                pendingInvoices: { title: t('dashboard.pendingInvoices'), value: finance.pendingCount || 0, change: t('dashboard.actionNeeded'), icon: Activity, color: '#dc2626', bg: '#fef2f2' },
             };
 
             const byRole = {
@@ -114,10 +116,10 @@ export default function DashboardPage() {
             {/* ── Page Header ── */}
             <div>
                 <Typography variant="h5" fontWeight={800} color="text.primary">
-                    {role === 'Patient' ? 'My Portal' : 'Dashboard'}
+                    {role === 'Patient' ? t('dashboard.myPortal') : t('dashboard.title')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                    Welcome back, <strong>{user?.fullName || 'User'}</strong>. Here's your clinic overview.
+                    {t('dashboard.welcome', { name: user?.fullName || 'User' })}
                 </Typography>
             </div>
 
@@ -150,8 +152,8 @@ export default function DashboardPage() {
                 {/* Main Stats Chart */}
                 <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, gridColumn: showAllCharts ? 'span 2' : 'span 2' }}>
                     <CardContent>
-                        <Typography variant="subtitle1" fontWeight={700}>Activity Overview</Typography>
-                        <Typography variant="caption" color="text.secondary">Real-time clinical throughput</Typography>
+                        <Typography variant="subtitle1" fontWeight={700}>{t('dashboard.activityOverview')}</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('dashboard.activitySubtitle')}</Typography>
                         <div className="h-64 mt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={revenueData}>
@@ -171,10 +173,10 @@ export default function DashboardPage() {
                     <CardContent>
                         <div className="flex items-center justify-between">
                             <div>
-                                <Typography variant="subtitle1" fontWeight={700}>Your Schedule</Typography>
-                                <Typography variant="caption" color="text.secondary">Upcoming appointments</Typography>
+                                <Typography variant="subtitle1" fontWeight={700}>{t('dashboard.yourSchedule')}</Typography>
+                                <Typography variant="caption" color="text.secondary">{t('dashboard.upcomingAppointments')}</Typography>
                             </div>
-                            <Chip label="Live" size="small" color="success" variant="outlined" sx={{ borderRadius: 1 }} />
+                            <Chip label={t('dashboard.liveLabel')} size="small" color="success" variant="outlined" sx={{ borderRadius: 1 }} />
                         </div>
 
                         <div className="flex flex-col gap-3 mt-4">
@@ -188,7 +190,7 @@ export default function DashboardPage() {
                                     >
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-semibold text-slate-800 truncate">{apt.patientName || 'Patient'}</p>
-                                            <p className="text-xs text-slate-500 truncate">{apt.reason || 'General Consultation'}</p>
+                                            <p className="text-xs text-slate-500 truncate">{apt.reason || t('common.generalConsultation')}</p>
                                         </div>
                                         <div className="flex flex-col items-end gap-1 shrink-0">
                                             <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -207,7 +209,7 @@ export default function DashboardPage() {
                             }) : (
                                 <div className="py-10 text-center">
                                     <CalendarDays size={40} className="mx-auto text-slate-200 mb-2" />
-                                    <Typography variant="caption" color="text.secondary">No appointments scheduled</Typography>
+                                    <Typography variant="caption" color="text.secondary">{t('dashboard.noAppointments')}</Typography>
                                 </div>
                             )}
                         </div>

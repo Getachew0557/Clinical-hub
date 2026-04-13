@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { login, reset } from "../../store/slices/authSlice";
 import {
     Button,
@@ -20,6 +21,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const { t } = useTranslation();
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -58,10 +60,10 @@ export default function LoginPage() {
                     </div>
                     <div className="text-center">
                         <Typography variant="h4" className="font-bold text-slate-900">
-                            Clinical Hub
+                            {t('auth.login.systemName')}
                         </Typography>
                         <Typography variant="body2" className="text-slate-500 font-medium">
-                            Specialty Center Management
+                            {t('auth.login.systemSubtitle')}
                         </Typography>
                     </div>
                 </div>
@@ -70,23 +72,23 @@ export default function LoginPage() {
                     <CardContent className="p-8">
                         <div className="text-center mb-6">
                             <Typography variant="h5" className="font-bold text-slate-800 mb-1">
-                                Sign In
+                                {t('auth.login.title')}
                             </Typography>
                             <Typography variant="body2" className="text-slate-500 text-sm">
-                                Enter your credentials to access the system
+                                {t('auth.login.subtitle')}
                             </Typography>
                         </div>
 
                         {isError && (
                             <Alert severity="error" className="mb-6 rounded-xl text-sm">
-                                {message || "Invalid credentials"}
+                                {message || t('auth.login.invalidCredentials')}
                             </Alert>
                         )}
 
                         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                             <TextField
                                 fullWidth
-                                label="Email"
+                                label={t('auth.login.email')}
                                 type="email"
                                 placeholder="name@clinic.com"
                                 value={email}
@@ -97,7 +99,7 @@ export default function LoginPage() {
 
                             <TextField
                                 fullWidth
-                                label="Password"
+                                label={t('auth.login.password')}
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -122,7 +124,7 @@ export default function LoginPage() {
                                     to="/forgot-password"
                                     className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                                 >
-                                    Forgot password?
+                                    {t('auth.login.forgotPassword')}
                                 </Link>
                             </div>
 
@@ -136,15 +138,15 @@ export default function LoginPage() {
                                 {isLoading ? (
                                     <CircularProgress size={24} color="inherit" />
                                 ) : (
-                                    "Sign In"
+                                    t('auth.login.submit')
                                 )}
                             </Button>
                         </form>
 
                         <Typography variant="body2" className="mt-8 text-center text-slate-600 text-sm">
-                            Don't have an account yet?{" "}
+                            {t('auth.login.noAccount')}{" "}
                             <Link to="/register" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                                Create Account
+                                {t('auth.login.register')}
                             </Link>
                         </Typography>
                     </CardContent>
