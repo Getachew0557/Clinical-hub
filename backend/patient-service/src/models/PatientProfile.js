@@ -10,7 +10,7 @@ const PatientProfile = sequelize.define('PatientProfile', {
     userId: {
         type: DataTypes.UUID,
         allowNull: false,
-        unique: true
+        // unique index already exists in DB — don't redeclare to avoid ER_TOO_MANY_KEYS on alter
     },
     fullName: {
         type: DataTypes.STRING,
@@ -27,7 +27,7 @@ const PatientProfile = sequelize.define('PatientProfile', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+        // unique index already exists in DB — don't redeclare to avoid ER_TOO_MANY_KEYS on alter
         validate: { isEmail: true }
     },
     phone: {

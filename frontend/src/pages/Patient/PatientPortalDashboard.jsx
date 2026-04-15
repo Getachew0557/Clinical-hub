@@ -10,7 +10,6 @@ import {
     Avatar, CircularProgress, Box, Grid, Chip
 } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
-import reportService from '../../api/report.service';
 
 const statusColors = {
     Pending:      { bg: '#fffbeb', text: '#d97706' },
@@ -47,10 +46,8 @@ export default function PatientPortalDashboard() {
     const fetchPatientData = async () => {
         try {
             setLoading(true);
-            const [myApts, finance] = await Promise.all([
-                appointmentService.getMyAppointments().catch(() => ({ appointments: [] })),
-                reportService.getFinanceSummary().catch(() => ({ pendingCount: 0 }))
-            ]);
+            // getMyAppointments works for all roles; finance summary is staff-only so catch gracefully
+            const myApts = await appointmentService.getMyAppointments().catch(() => ({ appointments: [] }));
 
             const allApts = myApts.appointments || [];
             setAppointments(allApts);
@@ -70,7 +67,7 @@ export default function PatientPortalDashboard() {
                 .sort((a, b) => b.appointmentDate?.localeCompare(a.appointmentDate))[0];
 
             setSummary({
-                pendingBills: finance.pendingCount || 0,
+                pendingBills: 0,
                 lastCheckup: lastCompleted ? lastCompleted.appointmentDate : 'Never',
                 nextAppointment: upcoming ? `${upcoming.appointmentDate} ${upcoming.appointmentTime?.slice(0,5) || ''}` : 'None'
             });

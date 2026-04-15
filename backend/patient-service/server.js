@@ -43,6 +43,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
+    // Sync models — add new columns without re-creating existing indexes
     await sequelize.sync({ alter: true });
     console.log('Database models synced.');
 

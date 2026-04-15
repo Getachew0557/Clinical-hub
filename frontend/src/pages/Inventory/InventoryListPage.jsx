@@ -193,7 +193,7 @@ export default function InventoryListPage() {
 
                                         <div className="flex items-center justify-between mb-3 px-1">
                                             <div>
-                                                <Typography variant="h4" fontWeight={800} color="text.primary" sx={{ display: 'inline-block', mr: 1 }}>
+                                                <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ display: 'inline-block', mr: 1 }}>
                                                     {item.quantity}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary" sx={{ display: 'inline-block' }}>

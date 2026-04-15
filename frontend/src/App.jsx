@@ -33,6 +33,9 @@ import ReceptionistListPage from './pages/Admin/ReceptionistListPage';
 import RoleGuard from './components/common/RoleGuard';
 import VideoConsultationPage from './pages/VideoConsultation/VideoConsultationPage';
 import VideoConsultationsList from './pages/VideoConsultation/VideoConsultationsList';
+import StatusDashboard from './pages/Appointment/StatusDashboard';
+import VideoStatusDashboard from './pages/VideoConsultation/VideoStatusDashboard';
+import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -44,19 +47,24 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"Inter", "system-ui", "-apple-system", "sans-serif"',
-    // Page titles
-    h4: { fontWeight: 800, fontSize: '1.75rem' },
-    h5: { fontWeight: 800, fontSize: '1.5rem' },  // Main page title — 24px
-    h6: { fontWeight: 700, fontSize: '1.125rem' }, // Sub-section title — 18px
+    htmlFontSize: 16,
+    fontSize: 14,
+    // Page titles — used as the main heading of each page
+    h1: { fontWeight: 800, fontSize: '1.75rem', lineHeight: 1.2 },   // 28px
+    h2: { fontWeight: 800, fontSize: '1.5rem',  lineHeight: 1.25 },  // 24px
+    h3: { fontWeight: 800, fontSize: '1.25rem', lineHeight: 1.3 },   // 20px
+    h4: { fontWeight: 800, fontSize: '1.25rem', lineHeight: 1.3 },   // 20px — was 1.75rem (too large)
+    h5: { fontWeight: 700, fontSize: '1.125rem', lineHeight: 1.35 }, // 18px — was 1.5rem (too large)
+    h6: { fontWeight: 700, fontSize: '1rem',    lineHeight: 1.4 },   // 16px
     // Card/section headings
-    subtitle1: { fontWeight: 700, fontSize: '1rem' },   // 16px section head
-    subtitle2: { fontWeight: 600, fontSize: '0.875rem' }, // 14px sub-head
-    // Body text
-    body1: { fontWeight: 400, fontSize: '0.875rem' },  // 14px body
-    body2: { fontWeight: 400, fontSize: '0.875rem' },  // 14px body
+    subtitle1: { fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.5 }, // 15px
+    subtitle2: { fontWeight: 600, fontSize: '0.875rem',  lineHeight: 1.5 }, // 14px
+    // Body text — consistent 14px everywhere
+    body1: { fontWeight: 400, fontSize: '0.875rem', lineHeight: 1.6 },
+    body2: { fontWeight: 400, fontSize: '0.875rem', lineHeight: 1.6 },
     // Labels, hints, metadata
-    caption: { fontWeight: 400, fontSize: '0.75rem' }, // 12px caption
-    overline: { fontWeight: 700, fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase' }, // 10px badge
+    caption: { fontWeight: 400, fontSize: '0.75rem', lineHeight: 1.5 },  // 12px
+    overline: { fontWeight: 700, fontSize: '0.6875rem', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1.5 },
     button: { textTransform: 'none', fontWeight: 600, fontSize: '0.875rem' },
   },
   shape: { borderRadius: 16 },
@@ -64,10 +72,13 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          padding: '10px 24px',
+          padding: '8px 20px',
           boxShadow: 'none',
+          fontSize: '0.875rem',
           '&:hover': { boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' },
         },
+        sizeSmall: { padding: '5px 14px', fontSize: '0.8125rem' },
+        sizeLarge: { padding: '11px 28px', fontSize: '0.9375rem' },
       },
     },
     MuiTextField: {
@@ -76,16 +87,42 @@ const theme = createTheme({
           '& .MuiOutlinedInput-root': {
             borderRadius: 12,
             backgroundColor: '#f8fafc',
+            fontSize: '0.875rem',
             '& fieldset': { borderColor: '#e2e8f0' },
             '&:hover fieldset': { borderColor: '#cbd5e1' },
           },
+          '& .MuiInputLabel-root': { fontSize: '0.875rem' },
         },
       },
     },
     MuiCard: {
+      styleOverrides: { root: { borderRadius: 20 } },
+    },
+    MuiChip: {
       styleOverrides: {
-        root: { borderRadius: 24 },
+        root: { fontSize: '0.75rem', fontWeight: 600 },
+        sizeSmall: { fontSize: '0.6875rem' },
       },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: { fontSize: '0.875rem', padding: '10px 16px' },
+        head: { fontSize: '0.8125rem', fontWeight: 700 },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: { fontSize: '0.875rem', fontWeight: 600, textTransform: 'none', minHeight: 44 },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: { root: { fontSize: '0.875rem' } },
+    },
+    MuiAlert: {
+      styleOverrides: { message: { fontSize: '0.875rem' } },
+    },
+    MuiTooltip: {
+      styleOverrides: { tooltip: { fontSize: '0.75rem' } },
     },
   },
 });
@@ -137,6 +174,7 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         {/* ── Protected dashboard routes ── */}
@@ -149,7 +187,7 @@ const App = () => (
         >
           <Route path="/dashboard" element={<DashboardRouter />} />
           <Route path="/doctors" element={<RoleGuard allowedRoles={['Admin','Doctor','Receptionist']}><DoctorListPage /></RoleGuard>} />
-          <Route path="/appointments" element={<AppointmentListPage />} />
+          <Route path="/appointments" element={<StatusDashboard />} />
           <Route path="/patients" element={<PatientListPage />} />
           <Route path="/emr" element={<RoleGuard allowedRoles={['Admin','Doctor','Patient']}><PatientEMRPage /></RoleGuard>} />
           <Route path="/billing" element={<BillingPage />} />
@@ -159,7 +197,7 @@ const App = () => (
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/book/:doctorId" element={<BookingPage />} />
-          <Route path="/video-consultations" element={<RoleGuard allowedRoles={['Doctor']}><VideoConsultationsList /></RoleGuard>} />
+          <Route path="/video-consultations" element={<RoleGuard allowedRoles={['Doctor', 'Admin', 'Receptionist']}><VideoStatusDashboard /></RoleGuard>} />
         </Route>
 
         {/* Fallback */}

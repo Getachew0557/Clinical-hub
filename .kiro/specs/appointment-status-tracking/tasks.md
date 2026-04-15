@@ -30,7 +30,7 @@ Replace the flat tab-based `AppointmentListPage` with a horizontal kanban-style 
     - Accepts `{ type }` optional param
     - _Requirements: 5.1, 5.4_
 
-- [ ] 4. Create pure utility functions for dashboard logic
+- [x] 4. Create pure utility functions for dashboard logic
   - Create `frontend/src/utils/appointmentDashboard.js` with the following exported pure functions:
     - `getBuckets(role)` — returns the correct bucket label array for the given role
     - `deriveLiveCounts(appointments)` — counts appointments per status from an array
@@ -110,12 +110,12 @@ Replace the flat tab-based `AppointmentListPage` with a horizontal kanban-style 
 - [ ] 5. Checkpoint — verify utility functions and property tests
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Create `useInterval` hook
+- [x] 6. Create `useInterval` hook
   - Create `frontend/src/hooks/useInterval.js`
     - Standard Dan Abramov implementation: accept `(callback, delay)`, store latest callback in a `useRef`, clear and reset the interval when `delay` changes, clear on unmount
     - _Requirements: 8.1_
 
-- [ ] 7. Create `useStatusDashboard` hook
+- [x] 7. Create `useStatusDashboard` hook
   - Create `frontend/src/hooks/useStatusDashboard.js`
     - Accept `{ type, role, userId }` options
     - On mount: fetch full appointment list via `getAllAppointments` (Admin/Receptionist) or `getMyAppointments` (Doctor), filtered by `type` if provided; derive initial `counts` from the local array using `deriveLiveCounts` and `deriveCumulativeCounts`
@@ -124,7 +124,7 @@ Replace the flat tab-based `AppointmentListPage` with a horizontal kanban-style 
     - Expose `{ appointments, counts, loading, error, handleStatusChange, refetch }`
     - _Requirements: 1.3, 3.6, 3.7, 4.5, 4.6, 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 8. Create `StatusBadge` component
+- [x] 8. Create `StatusBadge` component
   - Create `frontend/src/components/appointments/StatusBadge.jsx`
     - Accept `{ status }` prop
     - Render a small pill/badge with the correct Tailwind color classes per the design color mapping: gray (Pending), blue (Confirmed), amber (In Progress), green (Completed), red (Cancelled)
@@ -134,7 +134,7 @@ Replace the flat tab-based `AppointmentListPage` with a horizontal kanban-style 
     - Render each of the 5 statuses and assert the correct color class is present in the output
     - _Requirements: 2.2, 2.3, 2.4, 2.5, 2.6_
 
-- [ ] 9. Create `AppointmentCard` component
+- [x] 9. Create `AppointmentCard` component
   - Create `frontend/src/components/appointments/AppointmentCard.jsx`
     - Accept `{ appointment, role, isVideo, onStatusChange }` props
     - Render patient name, date, time, reason, and `StatusBadge`
@@ -162,7 +162,7 @@ Replace the flat tab-based `AppointmentListPage` with a horizontal kanban-style 
     - Video + `Completed` → "Join Video Call" button absent
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 7.1, 7.2_
 
-- [ ] 10. Create `StatusBucket` component
+- [x] 10. Create `StatusBucket` component
   - Create `frontend/src/components/appointments/StatusBucket.jsx`
     - Accept `{ status, appointments, liveCount, cumulativeCount, isVideo, onStatusChange, onError }` props
     - Render bucket header with status label, "Now" badge (liveCount), and "Total" label (cumulativeCount)
@@ -175,7 +175,7 @@ Replace the flat tab-based `AppointmentListPage` with a horizontal kanban-style 
 - [ ] 11. Checkpoint — verify component rendering
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 12. Create `StatusDashboard` page
+- [x] 12. Create `StatusDashboard` page
   - Create `frontend/src/pages/Appointment/StatusDashboard.jsx`
     - Read `role` and `userId` from Redux `auth` slice
     - Call `useStatusDashboard({ role, userId })` (no `type` filter)
@@ -185,7 +185,7 @@ Replace the flat tab-based `AppointmentListPage` with a horizontal kanban-style 
     - Show MUI `Alert` with a "Retry" button on initial load failure
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 9.1, 9.2_
 
-- [ ] 13. Create `VideoStatusDashboard` page
+- [x] 13. Create `VideoStatusDashboard` page
   - Create `frontend/src/pages/VideoConsultation/VideoStatusDashboard.jsx`
     - Same structure as `StatusDashboard` but passes `type: 'video'` to `useStatusDashboard`
     - Passes `isVideo={true}` to all `StatusBucket` components

@@ -8,7 +8,7 @@ const EXCHANGE = 'clinical_hub_events';
 /**
  * Connect to RabbitMQ
  */
-export const connectEventBus = async () => {
+export const connectEventBus = async (retries = 5) => {
     try {
         const url = process.env.RABBITMQ_URL || 'amqp://localhost';
         connection = await amqp.connect(url);
@@ -16,8 +16,13 @@ export const connectEventBus = async () => {
         await channel.assertExchange(EXCHANGE, 'topic', { durable: true });
         console.log('✅ Connected to RabbitMQ Event Bus');
     } catch (error) {
-        console.error('❌ RabbitMQ Connection Error:', error.message);
-        // We don't exit process, allowing the service to run without events if needed (graceful degradation)
+        console.error(`❌ RabbitMQ Connection Error: ${error.message}`);
+        if (retries > 0) {
+            console.log(`⏳ Retrying RabbitMQ connection in 5s... (${retries} retries left)`);
+            setTimeout(() => connectEventBus(retries - 1), 5000);
+        } else {
+            console.warn('⚠️ Could not connect to RabbitMQ after multiple attempts. Some features may be degraded.');
+        }
     }
 };
 

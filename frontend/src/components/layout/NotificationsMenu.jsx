@@ -56,23 +56,25 @@ export default function NotificationsMenu() {
         }
     };
 
-    const handleNotificationClick = async (notification) => {
-        // Mark as read if unread
-        if (!notification.isRead) {
-            try {
-                await notificationService.markAsRead(notification.id);
-                setNotifications(prev =>
-                    prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
-                );
-            } catch (error) {
-                console.error('Failed to mark read:', error);
-            }
+    const handleNotificationClick = (notification) => {
+        const targetLink = notification.link;
+
+        // Navigate immediately for better UX
+        if (targetLink) {
+            handleClose();
+            navigate(targetLink);
         }
 
-        // Navigate if link exists
-        if (notification.link) {
-            handleClose();
-            navigate(notification.link);
+        // Mark as read in the background
+        if (!notification.isRead) {
+            // Optimistic UI update
+            setNotifications(prev =>
+                prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
+            );
+            // Async API call without blocking UI
+            notificationService.markAsRead(notification.id).catch(error => {
+                console.error('Failed to mark read:', error);
+            });
         }
     };
 

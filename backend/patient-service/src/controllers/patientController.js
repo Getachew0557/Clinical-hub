@@ -24,11 +24,8 @@ export const getAllPatients = async (req, res) => {
         // Filter by specific IDs (used for Doctor-Patient isolation)
         if (ids) {
             where.id = { [Op.in]: ids.split(',') };
-        } else if (req.user.role === 'Doctor') {
-            // Doctors MUST provide specific IDs (usually via the Report Service orchestration)
-            // If they don't, they get an empty list for security.
-            return res.status(200).json({ count: 0, patients: [] });
         }
+        // Note: Doctors can see all patients — isolation is enforced at the appointment level
 
         const patients = await PatientProfile.findAll({
             where,

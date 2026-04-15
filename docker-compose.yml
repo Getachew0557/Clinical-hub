@@ -2,15 +2,33 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    image: mysql:8.0
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: dental_clinic
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: dental_clinic
     ports:
-      - "5432:5432"
+      - "3307:3306"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mysqldata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
@@ -19,7 +37,19 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:5050/api
+      - VITE_API_AUTH_URL=http://localhost:5050/api/auth
+      - VITE_API_PATIENT_URL=http://localhost:5050/api/patients
+      - VITE_API_APPOINTMENT_URL=http://localhost:5050/api/appointments
+      - VITE_API_EMR_URL=http://localhost:5050/api/emr
+      - VITE_API_BILLING_URL=http://localhost:5050/api/billing
+      - VITE_API_INVENTORY_URL=http://localhost:5050/api/inventory
+      - VITE_API_REPORT_URL=http://localhost:5050/api/reports
+      - VITE_API_NOTIFICATION_URL=http://localhost:5050/api/notifications
+      - VITE_API_AI_URL=http://localhost:5050/api/ai
+      - VITE_API_DOCTOR_URL=http://localhost:5050/api/doctors
+      - VITE_API_GATEWAY_URL=http://localhost:5050/api
+      - VITE_DOCTOR_SERVICE_URL=http://localhost:5010
+      - VITE_API_SIGNALING_URL=http://localhost:5008
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -33,9 +63,20 @@ services:
       - "5050:5050"
     environment:
       - PORT=5050
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - PATIENT_SERVICE_URL=http://patient-service:5002
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:5003
+      - EMR_SERVICE_URL=http://emr-service:5004
+      - BILLING_SERVICE_URL=http://billing-service:5005
+      - INVENTORY_SERVICE_URL=http://inventory-service:5006
+      - REPORT_SERVICE_URL=http://report-service:5007
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5008
+      - AI_SERVICE_URL=http://ai-service:5009
+      - DOCTOR_SERVICE_URL=http://doctor-service:5010
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./backend/api-gateway:/app
       - /app/node_modules
@@ -48,9 +89,20 @@ services:
       - "5001:5001"
     environment:
       - PORT=5001
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - JWT_SECRET=9bf0d8211778c3fd59351f8482db2a68c32cbebd1d1f91817cf4867255c93309
+      - JWT_EXPIRES_IN=24h
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - PATIENT_SERVICE_URL=http://patient-service:5002/api/patients
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/auth-service:/app
       - /app/node_modules
@@ -63,9 +115,17 @@ services:
       - "5002:5002"
     environment:
       - PORT=5002
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/patient-service:/app
       - /app/node_modules
@@ -78,9 +138,17 @@ services:
       - "5003:5003"
     environment:
       - PORT=5003
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/appointment-service:/app
       - /app/node_modules
@@ -93,9 +161,17 @@ services:
       - "5004:5004"
     environment:
       - PORT=5004
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/emr-service:/app
       - /app/node_modules
@@ -108,9 +184,17 @@ services:
       - "5005:5005"
     environment:
       - PORT=5005
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/billing-service:/app
       - /app/node_modules
@@ -123,9 +207,17 @@ services:
       - "5006:5006"
     environment:
       - PORT=5006
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/inventory-service:/app
       - /app/node_modules
@@ -138,9 +230,17 @@ services:
       - "5007:5007"
     environment:
       - PORT=5007
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/report-service:/app
       - /app/node_modules
@@ -153,9 +253,17 @@ services:
       - "5008:5008"
     environment:
       - PORT=5008
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/notification-service:/app
       - /app/node_modules
@@ -168,9 +276,17 @@ services:
       - "5009:5009"
     environment:
       - PORT=5009
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/ai-service:/app
       - /app/node_modules
@@ -183,12 +299,20 @@ services:
       - "5010:5010"
     environment:
       - PORT=5010
-      - DATABASE_URL=postgres://postgres:password@db:5432/dental_clinic
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=password
+      - DB_NAME=dental_clinic
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./backend/doctor-service:/app
       - /app/node_modules
 
 volumes:
-  pgdata:
+  mysqldata:

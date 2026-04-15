@@ -15,7 +15,7 @@ const User = sequelize.define('User', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+        // unique index already exists in DB — don't redeclare to avoid ER_TOO_MANY_KEYS on alter
         validate: {
             isEmail: true
         }
@@ -27,6 +27,14 @@ const User = sequelize.define('User', {
     role: {
         type: DataTypes.ENUM('Admin', 'Doctor', 'Receptionist', 'Patient'),
         defaultValue: 'Patient'
+    },
+    resetPasswordToken: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    resetPasswordExpires: {
+        type: DataTypes.DATE,
+        allowNull: true
     }
 }, {
     hooks: {

@@ -53,6 +53,7 @@ export default function PatientEMRPage() {
         if (patientId) {
             fetchData(patientId);
         } else if (role === 'Patient') {
+            // Patient always sees their own records — never the registry
             fetchMyData();
         } else {
             fetchAllPatients();
@@ -141,15 +142,33 @@ export default function PatientEMRPage() {
             setLoading(true);
             const pData = await patientService.getMyProfile();
             setPatient(pData);
-            console.log('My EMR Profile:', pData);
-            if (pData?.id) {
-                const rData = await emrService.getPatientRecords(pData.id);
+            // EMR records may be stored with either the profile id or the auth userId
+            // Try profile id first, then fall back to userId
+            const profileId = pData?.id;
+            const authUserId = pData?.userId || user?.id;
+            try {
+                const rData = await emrService.getPatientRecords(profileId || authUserId);
                 setRecords(rData.records || []);
+            } catch {
+                // Fallback: try with auth userId
+                if (authUserId && authUserId !== profileId) {
+                    const rData = await emrService.getPatientRecords(authUserId);
+                    setRecords(rData.records || []);
+                } else {
+                    setRecords([]);
+                }
             }
             setError(null);
         } catch (err) {
             console.error('Fetch My EMR Error:', err);
-            setError('Failed to load your records.');
+            if (err.response?.status === 404) {
+                // No profile yet — show empty state gracefully
+                setPatient({ fullName: user?.fullName, id: user?.id });
+                setRecords([]);
+                setError(null);
+            } else {
+                setError('Failed to load your records.');
+            }
         } finally {
             setLoading(false);
         }

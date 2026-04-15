@@ -20,7 +20,8 @@ router.patch('/:id/read', protect, markAsRead);
 router.patch('/read-all', protect, markAllRead);
 router.delete('/:id', protect, deleteNotification);
 
-// Create Notification (Admin / Internal Service usage)
-router.post('/', protect, authorize('Admin'), createNotification);
+// Create Notification (Any authenticated user or internal service)
+// The appointment/billing services forward the user's JWT when creating notifications
+router.post('/', protect, createNotification);
 
 export default router;

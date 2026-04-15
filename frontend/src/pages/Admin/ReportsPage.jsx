@@ -295,7 +295,7 @@ export default function ReportsPage() {
             <Box id="full-clinical-report" sx={{ bgcolor: 'white', borderRadius: 6, p: 4, border: '1px solid #f1f5f9' }}>
                 <Box className="mb-10 flex justify-between items-end border-b pb-8 border-slate-100">
                     <Box>
-                        <Typography variant="h4" sx={{ letterSpacing: '-0.03em', color: '#0f172a' }}>
+                        <Typography variant="h5" sx={{ letterSpacing: '-0.02em', color: '#0f172a' }}>
                             Health System Performance Dashboard
                         </Typography>
                         <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -321,7 +321,7 @@ export default function ReportsPage() {
                                     {kpi.icon}
                                     <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>{kpi.label}</Typography>
                                 </Box>
-                                <Typography variant="h3" sx={{ fontWeight: 900, color: '#1e293b' }}>{kpi.value.toLocaleString()}</Typography>
+                                <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>{kpi.value.toLocaleString()}</Typography>
                             </Box>
                         </Grid>
                     ))}

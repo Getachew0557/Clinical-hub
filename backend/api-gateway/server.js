@@ -17,7 +17,7 @@ const services = {
   '/api/emr': process.env.EMR_SERVICE_URL || 'http://localhost:5004',
   '/api/billing': process.env.BILLING_SERVICE_URL || 'http://localhost:5005',
   '/api/inventory': process.env.INVENTORY_SERVICE_URL || 'http://localhost:5006',
-  '/api/reports': process.env.REPORT_SERVICE_URL || 'http://localhost:5011',
+  '/api/reports': process.env.REPORT_SERVICE_URL || 'http://localhost:5007',
   '/api/notifications': process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5008',
   '/api/ai': process.env.AI_SERVICE_URL || 'http://localhost:5009',
   '/api/doctors': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010'

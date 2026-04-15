@@ -69,6 +69,8 @@ export default function AppointmentListPage() {
     }, [urlStatus]);
 
     const fetchStatusCounts = async () => {
+        // Status counts endpoint only available for staff roles — skip for Patient
+        if (isPatient) return;
         try {
             const data = await appointmentService.getStatusCounts();
             setStatusCounts(data);

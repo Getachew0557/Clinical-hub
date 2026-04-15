@@ -11,46 +11,23 @@ import {
 import { Typography } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
 import useVideoCall from './useVideoCall';
-import { isParticipant, isVideoEligible } from './videoUtils';
+import { isVideoEligible } from './videoUtils';
 
-// ─── Connection Status Badge ──────────────────────────────────────────────────
-function StatusBadge({ status, t }) {
-    const config = {
-        idle: { color: 'bg-slate-500', label: t('videoConsult.connecting') },
-        connecting: { color: 'bg-amber-500 animate-pulse', label: t('videoConsult.connecting') },
-        connected: { color: 'bg-emerald-500', label: t('videoConsult.connected') },
-        reconnecting: { color: 'bg-yellow-500 animate-pulse', label: t('videoConsult.reconnecting') },
-        failed: { color: 'bg-red-500', label: t('videoConsult.disconnected') },
-    };
-    const cfg = config[status] || config.connecting;
-    return (
-        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-            <div className={`w-2 h-2 rounded-full ${cfg.color}`} />
-            <span className="text-white text-xs font-semibold">{cfg.label}</span>
-        </div>
-    );
-}
-
-// ─── Control Button ───────────────────────────────────────────────────────────
 function ControlBtn({ onClick, active, danger, children, title }) {
     return (
-        <button
-            onClick={onClick}
-            title={title}
+        <button onClick={onClick} title={title}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${
                 danger
                     ? 'bg-red-600 hover:bg-red-700 text-white'
                     : active
                         ? 'bg-white text-slate-900 hover:bg-slate-100'
                         : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
-            }`}
-        >
+            }`}>
             {children}
         </button>
     );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function VideoConsultationPage() {
     const { roomId } = useParams();
     const navigate = useNavigate();
@@ -58,14 +35,14 @@ export default function VideoConsultationPage() {
     const { t } = useTranslation();
 
     const [appointment, setAppointment] = useState(null);
-    const [accessError, setAccessError] = useState(null); // 'denied' | 'not-found' | 'not-eligible'
+    const [accessError, setAccessError] = useState(null);
     const [loadingAppt, setLoadingAppt] = useState(true);
     const [chatInput, setChatInput] = useState('');
     const chatEndRef = useRef(null);
 
     const {
         localStream, remoteStream, connectionStatus,
-        isMuted, isCameraOff, 
+        isMuted, isCameraOff,
         isRemoteMuted, isRemoteCameraOff,
         isChatOpen, setIsChatOpen,
         messages, unreadCount, setUnreadCount,
@@ -74,28 +51,17 @@ export default function VideoConsultationPage() {
         socketConnected,
     } = useVideoCall(accessError === null && !loadingAppt ? roomId : null);
 
-    const remoteVideoRef = useRef(null);
-
-    // Redirect if not authenticated
     useEffect(() => {
         if (!user) navigate('/login');
     }, [user, navigate]);
 
     const [statusUpdated, setStatusUpdated] = useState(false);
 
-    // Auto-update status to 'In Progress' if Doctor joins
     useEffect(() => {
         if (user?.role === 'Doctor' && appointment?.status === 'Confirmed' && !statusUpdated) {
-            const updateStatus = async () => {
-                try {
-                    await appointmentService.updateStatus(roomId, 'In Progress');
-                    setStatusUpdated(true);
-                    console.log('Appointment status auto-updated to In Progress');
-                } catch (err) {
-                    console.error('Failed to auto-update appointment status:', err);
-                }
-            };
-            updateStatus();
+            appointmentService.updateStatus(roomId, 'In Progress')
+                .then(() => setStatusUpdated(true))
+                .catch(err => console.error('Failed to auto-update status:', err));
         }
     }, [user, appointment, roomId, statusUpdated]);
 
@@ -106,14 +72,17 @@ export default function VideoConsultationPage() {
                 setLoadingAppt(true);
                 const data = await appointmentService.getAppointmentById(roomId);
                 const appt = data.appointment || data;
-                if (!isParticipant(appt, user.id)) {
+                // Accept both doctorId and patientId — also check nested patientDetails
+                const ids = [appt.doctorId, appt.patientId, appt.patientDetails?.userId, appt.patientDetails?.id].filter(Boolean);
+                const allowed = ids.some(id => String(id) === String(user.id));
+                if (!allowed) {
                     setAccessError('denied');
                 } else if (!isVideoEligible(appt.status)) {
                     setAccessError('not-eligible');
                 } else {
                     setAppointment(appt);
                 }
-            } catch (err) {
+            } catch {
                 setAccessError('not-found');
             } finally {
                 setLoadingAppt(false);
@@ -122,39 +91,38 @@ export default function VideoConsultationPage() {
         verify();
     }, [roomId, user]);
 
-    // Attach streams to video elements
-    // Use callback refs so srcObject is set immediately when element mounts/remounts
+    // Local video — callback ref sets srcObject immediately on mount
     const localVideoRef = useCallback((node) => {
-        if (node && localStream) {
-            node.srcObject = localStream;
-        }
+        if (node && localStream) node.srcObject = localStream;
     }, [localStream]);
 
+    // Remote video — keep a stable DOM ref + update srcObject via effect
+    const remoteVideoNodeRef = useRef(null);
+    const remoteVideoRef = useCallback((node) => {
+        remoteVideoNodeRef.current = node;
+        if (node && remoteStream) node.srcObject = remoteStream;
+    }, [remoteStream]);
+
     useEffect(() => {
-        if (remoteVideoRef.current && remoteStream) {
-            remoteVideoRef.current.srcObject = remoteStream;
+        if (remoteVideoNodeRef.current && remoteStream) {
+            remoteVideoNodeRef.current.srcObject = remoteStream;
         }
     }, [remoteStream]);
 
-    // Auto-scroll chat
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Clear unread when chat opens
     useEffect(() => {
         if (isChatOpen) setUnreadCount(0);
     }, [isChatOpen, setUnreadCount]);
 
-    const handleEndCall = () => {
-        endCall();
-        navigate('/appointments');
-    };
+    const handleEndCall = () => { endCall(); navigate('/appointments'); };
 
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!chatInput.trim() || chatInput.length > 1000) return;
-        sendMessage(chatInput.trim(), user?.fullName || t('videoConsult.you'));
+        sendMessage(chatInput.trim(), user?.fullName || 'You');
         setChatInput('');
     };
 
@@ -162,35 +130,21 @@ export default function VideoConsultationPage() {
         ? (user?.role === 'Doctor' ? appointment.patientName : appointment.doctorName) || '...'
         : '...';
 
-    // ── Loading ──
-    if (loadingAppt) {
-        return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-                <Loader2 className="w-12 h-12 text-teal-400 animate-spin" />
-            </div>
-        );
-    }
+    if (loadingAppt) return (
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+            <Loader2 className="w-12 h-12 text-teal-400 animate-spin" />
+        </div>
+    );
 
-    // ── Access Error ──
     if (accessError) {
-        const messages_map = {
-            denied: t('videoConsult.accessDenied'),
-            'not-found': t('videoConsult.notFound'),
-            'not-eligible': t('videoConsult.notEligible'),
-        };
+        const msg = { denied: 'Access Denied', 'not-found': 'Not Found', 'not-eligible': 'Session Not Active' }[accessError];
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
                 <div className="max-w-md w-full bg-slate-800 rounded-3xl p-10 text-center">
-                    <div className="w-16 h-16 bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <AlertCircle className="w-8 h-8 text-red-400" />
-                    </div>
-                    <Typography variant="h5" color="text.primary" sx={{ mb: 3 }}>
-                        {messages_map[accessError]}
-                    </Typography>
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className="mt-6 px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all"
-                    >
+                    <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                    <Typography variant="h5" color="text.primary" sx={{ mb: 3 }}>{msg}</Typography>
+                    <button onClick={() => navigate('/dashboard')}
+                        className="px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700">
                         Go to Dashboard
                     </button>
                 </div>
@@ -198,202 +152,161 @@ export default function VideoConsultationPage() {
         );
     }
 
-    // ── Room Full ──
-    if (roomFull) {
-        return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-slate-800 rounded-3xl p-10 text-center">
-                    <Typography variant="h5" color="text.primary" sx={{ mb: 3 }}>
-                        {t('videoConsult.roomFull')}
-                    </Typography>
-                    <button onClick={() => navigate('/appointments')} className="mt-6 px-8 py-3 bg-teal-600 text-white rounded-xl font-bold">
-                        Back to Appointments
-                    </button>
-                </div>
+    if (roomFull) return (
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+            <div className="max-w-md w-full bg-slate-800 rounded-3xl p-10 text-center">
+                <Typography variant="h5" color="text.primary" sx={{ mb: 3 }}>Room is Full</Typography>
+                <button onClick={() => navigate('/appointments')} className="px-8 py-3 bg-teal-600 text-white rounded-xl font-bold">
+                    Back to Appointments
+                </button>
             </div>
-        );
-    }
+        </div>
+    );
 
-    // ── Main Layout ──
     return (
-        <div className="min-h-screen bg-slate-900 flex overflow-hidden">
-            {/* ── Main Video Area ── */}
-            <div className="flex-1 relative flex flex-col">
-                {/* Main Video (Remote) */}
-                <div className="flex-1 relative bg-slate-900 overflow-hidden">
-                    {remoteStream && !isRemoteCameraOff ? (
-                        <video
-                            ref={remoteVideoRef}
-                            autoPlay
-                            playsInline
-                            className="w-full h-full object-contain"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800">
-                            <div className="w-28 h-28 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-500 mb-6 ring-8 ring-slate-800 ring-offset-4 ring-offset-slate-900 animate-pulse">
-                                {peerLeft ? <Users size={56} /> : (isRemoteCameraOff ? <CameraOff size={56} /> : <Loader2 size={56} className="animate-spin text-teal-500/50" />)}
-                            </div>
-                            <div className="text-center max-w-sm px-6">
-                                <Typography variant="subtitle1" color="text.primary" sx={{ mb: 2 }}>
-                                    {peerLeft ? 'Participant Left' : (isRemoteCameraOff ? 'Camera is Off' : 'Waiting for Approval')}
-                                </Typography>
-                                <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                                    {peerLeft 
-                                        ? 'The other person has ended the call.' 
-                                        : isRemoteCameraOff 
-                                            ? 'The participant has turned off their video.'
-                                            : user?.role === 'Doctor' 
-                                                ? 'The patient has been notified. They will appear here once they join the link.'
-                                                : 'The doctor will be with you shortly. Please stay on this page to maintain your connection.'
-                                    }
-                                </p>
-                            </div>
-                        </div>
-                    )}
+        <div className="fixed inset-0 bg-slate-900 overflow-hidden">
+            {/* ── Remote video — fills entire screen ── */}
+            <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                    remoteStream && !isRemoteCameraOff ? 'opacity-100' : 'opacity-0'
+                }`}
+            />
 
-                    {/* Remote Muted Badge */}
-                    {remoteStream && isRemoteMuted && !peerLeft && (
-                        <div className="absolute top-6 right-6 bg-red-500/90 text-white px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs font-black shadow-lg backdrop-blur-sm animate-in fade-in zoom-in duration-300">
-                            <MicOff size={14} />
-                            Muted
-                        </div>
-                    )}
+            {/* ── Placeholder when no remote video ── */}
+            {(!remoteStream || isRemoteCameraOff) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-800 z-10">
+                    <div className="w-28 h-28 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-500 mb-6 animate-pulse">
+                        {peerLeft ? <Users size={56} /> : isRemoteCameraOff ? <CameraOff size={56} /> : <Loader2 size={56} className="animate-spin text-teal-500/50" />}
+                    </div>
+                    <Typography variant="subtitle1" color="text.primary" sx={{ mb: 1 }}>
+                        {peerLeft ? 'Participant Left' : isRemoteCameraOff ? 'Camera is Off' : 'Waiting for connection...'}
+                    </Typography>
+                    <p className="text-slate-400 text-sm text-center max-w-xs">
+                        {peerLeft ? 'The other person has ended the call.'
+                            : isRemoteCameraOff ? 'The participant turned off their camera.'
+                            : user?.role === 'Doctor' ? 'Waiting for the patient to join.'
+                            : 'The doctor will be with you shortly.'}
+                    </p>
+                </div>
+            )}
 
-                    {/* Remote name overlay */}
-                    {remoteStream && (
-                        <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-xl">
-                            <span className="text-white text-sm font-semibold">{remoteName}</span>
-                        </div>
-                    )}
-
-                    {/* Peer left banner */}
-                    <AnimatePresence>
-                        {peerLeft && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-xl"
-                            >
-                                {t('videoConsult.peerLeft')}
-                            </motion.div>
+            {/* ── Local video PiP — bottom right ── */}
+            <div className="absolute bottom-24 right-4 w-40 h-28 rounded-2xl overflow-hidden border-2 border-teal-500 shadow-2xl bg-slate-700 z-50">
+                {localStream && !isCameraOff && !permissionError ? (
+                    <video ref={localVideoRef} autoPlay playsInline muted
+                        className="w-full h-full object-cover scale-x-[-1]" />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-2 text-center">
+                        <CameraOff className={`w-6 h-6 mb-1 ${permissionError ? 'text-amber-500' : 'text-slate-500'}`} />
+                        {permissionError && (
+                            <button onClick={retryMedia} className="text-[8px] font-bold text-teal-400 uppercase">
+                                Retry Camera
+                            </button>
                         )}
-                    </AnimatePresence>
-                </div>
-
-                {/* Local Video (PiP) */}
-                <div className="absolute bottom-24 right-4 w-40 h-28 rounded-2xl overflow-hidden border-2 border-teal-500 shadow-2xl bg-slate-700 z-50">
-                    {localStream && !isCameraOff && !permissionError ? (
-                        <video
-                            ref={localVideoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover scale-x-[-1]"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-2 text-center">
-                            {permissionError ? (
-                                <>
-                                    <CameraOff className="text-amber-500 w-6 h-6 mb-1" />
-                                    <button onClick={retryMedia} className="text-[8px] font-bold text-teal-400 uppercase tracking-tighter">
-                                        Retry Camera
-                                    </button>
-                                </>
-                            ) : (
-                                <CameraOff className="text-slate-500 w-6 h-6" />
-                            )}
-                        </div>
-                    )}
-                    <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded-lg">
-                        <span className="text-white text-[9px] font-bold tracking-tight">{t('videoConsult.you')}</span>
                     </div>
-                </div>
-
-                {/* Top Bar */}
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-30">
-                    <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl backdrop-blur-md border animate-in slide-in-from-top duration-500 ${
-                        connectionStatus === 'connected' 
-                            ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' 
-                            : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                    }`}>
-                        <div className={`w-2 h-2 rounded-full ${
-                            connectionStatus === 'connected' ? 'bg-teal-400 shadow-[0_0_12px_rgba(45,212,191,0.5)]' : 'bg-amber-400 animate-pulse'
-                        }`} />
-                        {connectionStatus === 'connected' ? 'Clinical Session Live' : (socketConnected ? 'Establish Handshake...' : 'Searching for Signal...')}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {/* Chat toggle */}
-                        <button
-                            onClick={() => setIsChatOpen(!isChatOpen)}
-                            className="relative bg-black/40 backdrop-blur-sm text-white p-2.5 rounded-full hover:bg-black/60 transition-all"
-                        >
-                            <MessageSquare size={20} />
-                            {unreadCount > 0 && !isChatOpen && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-black text-white flex items-center justify-center">
-                                    {unreadCount}
-                                </span>
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Controls Bar */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
-                    <ControlBtn
-                        onClick={toggleMute}
-                        active={!isMuted}
-                        title={isMuted ? t('videoConsult.unmute') : t('videoConsult.mute')}
-                    >
-                        {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
-                    </ControlBtn>
-
-                    <ControlBtn
-                        onClick={toggleCamera}
-                        active={!isCameraOff}
-                        title={isCameraOff ? t('videoConsult.cameraOn') : t('videoConsult.cameraOff')}
-                    >
-                        {isCameraOff ? <VideoOff size={22} /> : <Video size={22} />}
-                    </ControlBtn>
-
-                    <ControlBtn onClick={handleEndCall} danger title={t('videoConsult.endCall')}>
-                        <PhoneOff size={22} />
-                    </ControlBtn>
+                )}
+                <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded-lg">
+                    <span className="text-white text-[9px] font-bold">You</span>
                 </div>
             </div>
 
-            {/* ── Chat Sidebar ── */}
+            {/* ── Remote status badges — top left ── */}
+            <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
+                {remoteStream && isRemoteMuted && !peerLeft && (
+                    <div className="bg-red-500/90 text-white px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-xs font-black backdrop-blur-sm">
+                        <MicOff size={13} /> Muted
+                    </div>
+                )}
+                {remoteStream && isRemoteCameraOff && !peerLeft && (
+                    <div className="bg-slate-600/90 text-white px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-xs font-black backdrop-blur-sm">
+                        <CameraOff size={13} /> Cam Off
+                    </div>
+                )}
+            </div>
+
+            {/* ── Remote name — bottom left ── */}
+            {remoteStream && (
+                <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-xl flex items-center gap-2 z-20">
+                    <span className="text-white text-sm font-semibold">{remoteName}</span>
+                    {isRemoteMuted && <MicOff size={12} className="text-red-400" />}
+                    {isRemoteCameraOff && <CameraOff size={12} className="text-slate-400" />}
+                </div>
+            )}
+
+            {/* ── Peer left banner ── */}
+            <AnimatePresence>
+                {peerLeft && (
+                    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+                        className="absolute top-16 left-1/2 -translate-x-1/2 bg-amber-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-xl z-30">
+                        The other participant has left the call.
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Connection status — top center ── */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+                <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest backdrop-blur-md border ${
+                    connectionStatus === 'connected'
+                        ? 'bg-teal-500/20 text-teal-400 border-teal-500/30'
+                        : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                }`}>
+                    <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-teal-400' : 'bg-amber-400 animate-pulse'}`} />
+                    {connectionStatus === 'connected' ? 'Clinical Session Live' : socketConnected ? 'Connecting...' : 'Searching for Signal...'}
+                </div>
+            </div>
+
+            {/* ── Chat toggle — top right ── */}
+            <div className="absolute top-4 right-4 z-30">
+                <button onClick={() => setIsChatOpen(!isChatOpen)}
+                    className="relative bg-black/40 backdrop-blur-sm text-white p-2.5 rounded-full hover:bg-black/60 transition-all">
+                    <MessageSquare size={20} />
+                    {unreadCount > 0 && !isChatOpen && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-black text-white flex items-center justify-center">
+                            {unreadCount}
+                        </span>
+                    )}
+                </button>
+            </div>
+
+            {/* ── Controls — bottom center, always visible ── */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50">
+                <ControlBtn onClick={toggleMute} active={!isMuted} title={isMuted ? 'Unmute' : 'Mute'}>
+                    {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
+                </ControlBtn>
+                <ControlBtn onClick={toggleCamera} active={!isCameraOff} title={isCameraOff ? 'Camera On' : 'Camera Off'}>
+                    {isCameraOff ? <VideoOff size={22} /> : <Video size={22} />}
+                </ControlBtn>
+                <ControlBtn onClick={handleEndCall} danger title="End Call">
+                    <PhoneOff size={22} />
+                </ControlBtn>
+            </div>
+
+            {/* ── Chat sidebar — fixed overlay ── */}
             <AnimatePresence>
                 {isChatOpen && (
                     <motion.div
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: 320, opacity: 1 }}
-                        exit={{ width: 0, opacity: 0 }}
+                        initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
                         transition={{ duration: 0.25 }}
-                        className="bg-slate-800 border-l border-slate-700 flex flex-col overflow-hidden"
-                        style={{ minWidth: 0 }}
-                    >
-                        {/* Chat Header */}
+                        className="fixed top-0 right-0 h-full w-80 bg-slate-800 border-l border-slate-700 flex flex-col z-[100] shadow-2xl">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-                            <span className="text-white font-bold text-sm">{t('videoConsult.chat')}</span>
+                            <span className="text-white font-bold text-sm">Chat</span>
                             <button onClick={() => setIsChatOpen(false)} className="text-slate-400 hover:text-white">
                                 <X size={18} />
                             </button>
                         </div>
-
-                        {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {messages.map((msg) => {
-                                const isOwn = msg.senderName === (user?.fullName || t('videoConsult.you'));
+                                const isOwn = msg.senderName === (user?.fullName || 'You');
                                 return (
                                     <div key={msg.id} className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                                         <span className="text-slate-400 text-[10px] mb-1">
                                             {msg.senderName} · {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm ${
-                                            isOwn
-                                                ? 'bg-teal-600 text-white rounded-br-sm'
-                                                : 'bg-slate-700 text-white rounded-bl-sm'
+                                            isOwn ? 'bg-teal-600 text-white rounded-br-sm' : 'bg-slate-700 text-white rounded-bl-sm'
                                         }`}>
                                             {msg.message}
                                         </div>
@@ -402,28 +315,15 @@ export default function VideoConsultationPage() {
                             })}
                             <div ref={chatEndRef} />
                         </div>
-
-                        {/* Chat Input */}
                         <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-700 flex gap-2">
-                            <input
-                                type="text"
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                placeholder={t('videoConsult.typeMessage')}
-                                maxLength={1000}
-                                className="flex-1 bg-slate-700 text-white text-sm px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-slate-400"
-                            />
-                            <button
-                                type="submit"
-                                disabled={!chatInput.trim()}
-                                className="p-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-40 transition-all"
-                            >
+                            <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+                                placeholder="Type a message..." maxLength={1000}
+                                className="flex-1 bg-slate-700 text-white text-sm px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder-slate-400" />
+                            <button type="submit" disabled={!chatInput.trim()}
+                                className="p-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-40">
                                 <Send size={16} />
                             </button>
                         </form>
-                        {chatInput.length > 900 && (
-                            <p className="text-xs text-amber-400 px-3 pb-2">{1000 - chatInput.length} chars remaining</p>
-                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

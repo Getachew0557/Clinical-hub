@@ -24,6 +24,7 @@ export default function useVideoCall(roomId) {
     const socketRef = useRef(null);
     const pcRef = useRef(null);
     const localStreamRef = useRef(null);
+    const remoteStreamRef = useRef(null); // keep stable ref for the video element
 
     // ─── Get media (audio + video) ─────────────────────────────────────────
     const getMedia = useCallback(async () => {
@@ -50,11 +51,23 @@ export default function useVideoCall(roomId) {
             stream.getTracks().forEach((track) => pc.addTrack(track, stream));
         }
 
+        // Create a stable remote MediaStream and keep a ref to it
         const remote = new MediaStream();
+        remoteStreamRef.current = remote;
         setRemoteStream(remote);
+
         pc.ontrack = (event) => {
-            console.log('[Video] Received remote track');
-            event.streams[0].getTracks().forEach((track) => remote.addTrack(track));
+            console.log('[Video] Received remote track:', event.track.kind);
+            // Use event.streams[0] which is the complete stream from the remote peer
+            if (event.streams && event.streams[0]) {
+                remoteStreamRef.current = event.streams[0];
+                // Force React re-render with the actual stream from the peer
+                setRemoteStream(event.streams[0]);
+            } else {
+                // Fallback: manually add track
+                remoteStreamRef.current.addTrack(event.track);
+                setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
+            }
         };
 
         pc.onicecandidate = (event) => {
@@ -218,48 +231,43 @@ export default function useVideoCall(roomId) {
     }, [roomId]);
 
     // ─── Toggle Camera ─────────────────────────────────────────────────────
-    // IMPORTANT: We must STOP the track to turn off the camera light,
-    // then call getUserMedia again to get a new track when re-enabling.
-    // We also replace the track in the RTCPeerConnection so the remote sees it.
+    // Use a ref to avoid stale closure — isCameraOff state is stale inside useCallback
+    const isCameraOffRef = useRef(false);
+    useEffect(() => { isCameraOffRef.current = isCameraOff; }, [isCameraOff]);
+
     const toggleCamera = useCallback(async () => {
         if (!localStreamRef.current) return;
 
-        const currentCameraOff = isCameraOff;
-
-        if (!currentCameraOff) {
-            // ── Turning camera OFF ──
+        if (!isCameraOffRef.current) {
+            // ── Turning camera OFF — stop track to turn off hardware light ──
             const videoTracks = localStreamRef.current.getVideoTracks();
             videoTracks.forEach(t => {
-                t.stop(); // stops the hardware — camera light turns off
+                t.stop();
                 localStreamRef.current.removeTrack(t);
             });
+            isCameraOffRef.current = true;
             setIsCameraOff(true);
-            // Force re-render so the local video element shows the "camera off" placeholder
             setLocalStream(new MediaStream(localStreamRef.current.getAudioTracks()));
             socketRef.current?.emit('media-state-changed', { roomId, isCameraOff: true });
         } else {
-            // ── Turning camera ON ──
+            // ── Turning camera ON — get fresh track ──
             try {
                 const newVideoStream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const newVideoTrack = newVideoStream.getVideoTracks()[0];
-
-                // Add new track to the local stream ref
                 localStreamRef.current.addTrack(newVideoTrack);
 
-                // Replace the track in the RTCPeerConnection so remote sees the new video
                 if (pcRef.current) {
                     const senders = pcRef.current.getSenders();
                     const videoSender = senders.find(s => s.track?.kind === 'video');
                     if (videoSender) {
                         await videoSender.replaceTrack(newVideoTrack);
                     } else {
-                        // No existing sender — add a new one
                         pcRef.current.addTrack(newVideoTrack, localStreamRef.current);
                     }
                 }
 
+                isCameraOffRef.current = false;
                 setIsCameraOff(false);
-                // Create a new MediaStream reference so React re-renders the video element
                 setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
                 socketRef.current?.emit('media-state-changed', { roomId, isCameraOff: false });
             } catch (err) {
@@ -267,7 +275,7 @@ export default function useVideoCall(roomId) {
                 setPermissionError(true);
             }
         }
-    }, [roomId, isCameraOff]);
+    }, [roomId]);
 
     // ─── End Call ──────────────────────────────────────────────────────────
     const endCall = useCallback(() => {
