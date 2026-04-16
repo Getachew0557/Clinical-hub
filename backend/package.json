@@ -8,7 +8,7 @@
     "start": "concurrently -n GATEWAY,AUTH,PATIENT,APPT,EMR,BILLING,DOCTOR,NOTIF,INV,REPORT,AI -c cyan,magenta,blue,green,yellow,red,white,gray,blackBright,blueBright,greenBright \"npm start --prefix api-gateway\" \"npm start --prefix auth-service\" \"npm start --prefix patient-service\" \"npm start --prefix appointment-service\" \"npm start --prefix emr-service\" \"npm start --prefix billing-service\" \"npm start --prefix doctor-service\" \"npm start --prefix notification-service\" \"npm start --prefix inventory-service\" \"npm start --prefix report-service\" \"npm start --prefix ai-service\"",
     "install:all": "npm install --prefix api-gateway && npm install --prefix auth-service && npm install --prefix patient-service && npm install --prefix appointment-service && npm install --prefix emr-service && npm install --prefix billing-service && npm install --prefix doctor-service && npm install --prefix notification-service && npm install --prefix inventory-service && npm install --prefix report-service && npm install --prefix ai-service"
   },
-  "devDependencies": {
+  "dependencies": {
     "concurrently": "^9.2.1"
   }
 }
