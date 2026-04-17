@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '../api/axiosInstance.js';
 
 const API_URL = import.meta.env.VITE_API_AUTH_URL;
 
