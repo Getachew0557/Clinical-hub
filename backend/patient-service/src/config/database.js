@@ -6,7 +6,7 @@ dotenv.config();
 
 const { DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT, DB_SSL } = process.env;
 
-const sslConfig = DB_SSL === 'true' ? { ssl: { rejectUnauthorized: true } } : {};
+const sslConfig = DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
 
 export const ensureDatabaseExists = async () => {
     if (DB_SSL === 'true') {
@@ -36,7 +36,7 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
     dialect: 'mysql',
     logging: false,
     dialectOptions: { ...sslConfig },
-    pool: { max: 5, min: 0, acquire: 30000, idle: 10000 }
+    pool: { max: 3, min: 0, acquire: 30000, idle: 10000 }
 });
 
 export default sequelize;
