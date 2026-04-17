@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -22,7 +22,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Sync Database & Start Server
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.AUTH_PORT || 5001;
 
 const startServer = async () => {
   try {
@@ -30,7 +30,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    // Sync models — add new columns without re-creating existing indexes
+    // Sync models â€” add new columns without re-creating existing indexes
     await sequelize.sync({ alter: true });
     console.log('Database models synced.');
 
@@ -47,3 +47,4 @@ const startServer = async () => {
 };
 
 startServer();
+

@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -35,7 +35,7 @@ app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PATIENT_PORT || 5002;
 
 const startServer = async () => {
   try {
@@ -43,7 +43,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    // Sync models — add new columns without re-creating existing indexes
+    // Sync models â€” add new columns without re-creating existing indexes
     await sequelize.sync({ alter: true });
     console.log('Database models synced.');
 
@@ -61,3 +61,4 @@ const startServer = async () => {
 };
 
 startServer();
+

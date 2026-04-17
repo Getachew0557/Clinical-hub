@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config();
 
 import http from 'http';
@@ -16,7 +16,7 @@ import './src/models/Notification.js';
 const app = express();
 const httpServer = http.createServer(app);
 
-// ─── Socket.IO Video Signaling ─────────────────────────────────────────────
+// â”€â”€â”€ Socket.IO Video Signaling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const io = new SocketIOServer(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
 });
@@ -32,7 +32,7 @@ videoNamespace.on('connection', (socket) => {
 
     if (roomSize >= 2) {
       socket.emit('room-full');
-      console.log(`[Video] Room ${roomId} is full — rejected ${socket.id}`);
+      console.log(`[Video] Room ${roomId} is full â€” rejected ${socket.id}`);
       return;
     }
 
@@ -93,7 +93,7 @@ app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
-const PORT = process.env.PORT || 5008;
+const PORT = process.env.NOTIF_PORT || 5008;
 
 const startServer = async () => {
   try {
@@ -118,3 +118,4 @@ const startServer = async () => {
 };
 
 startServer();
+

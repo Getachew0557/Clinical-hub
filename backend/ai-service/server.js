@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -28,8 +28,9 @@ app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
-const PORT = process.env.PORT || 5009;
+const PORT = process.env.AI_PORT || 5009;
 
 app.listen(PORT, () => {
   console.log(`ai-service running on port ${PORT}`);
 });
+

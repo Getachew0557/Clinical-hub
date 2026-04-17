@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -25,7 +25,7 @@ app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
-const PORT = process.env.PORT || 5007;
+const PORT = process.env.REPORT_PORT || 5007;
 
 const startServer = async () => {
   try {
@@ -46,3 +46,4 @@ const startServer = async () => {
 };
 
 startServer();
+

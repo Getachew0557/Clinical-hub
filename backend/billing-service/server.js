@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -17,7 +17,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ service: 'billing-service', status: 'healthy' });
 });
 
-const PORT = process.env.PORT || 5005;
+const PORT = process.env.BILLING_PORT || 5005;
 
 const startServer = async () => {
   try {
@@ -38,4 +38,5 @@ const startServer = async () => {
 };
 
 startServer();
+
 
