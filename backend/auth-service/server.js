@@ -45,9 +45,26 @@ const connectDB = async () => {
   await ensureDatabaseExists();
   await sequelize.authenticate();
   console.log('Database connected successfully.');
-  // sync() creates tables if they don't exist, never drops existing ones
+  // Create tables if missing, never drop existing
   await sequelize.sync();
   console.log('Database models synced.');
+
+  // Safe column additions for production DB
+  const qi = sequelize.getQueryInterface();
+  const cols = await qi.describeTable('Users').catch(() => ({}));
+  if (!cols.profilePhoto) {
+    await sequelize.query("ALTER TABLE `Users` ADD COLUMN `profilePhoto` VARCHAR(255) NULL;").catch(() => {});
+    console.log('Added column: profilePhoto');
+  }
+  if (!cols.resetPasswordToken) {
+    await sequelize.query("ALTER TABLE `Users` ADD COLUMN `resetPasswordToken` VARCHAR(255) NULL;").catch(() => {});
+    console.log('Added column: resetPasswordToken');
+  }
+  if (!cols.resetPasswordExpires) {
+    await sequelize.query("ALTER TABLE `Users` ADD COLUMN `resetPasswordExpires` DATETIME NULL;").catch(() => {});
+    console.log('Added column: resetPasswordExpires');
+  }
+
   connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
   console.log('auth-service fully ready.');
 };
