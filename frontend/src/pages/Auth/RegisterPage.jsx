@@ -3,18 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { register, reset } from "../../store/slices/authSlice";
 import {
-    Button,
-    TextField,
-    Typography,
-    Card,
-    CardContent,
-    Box,
-    Alert,
-    CircularProgress,
-    MenuItem,
-    Grid
-} from "@mui/material";
-import { Stethoscope } from "lucide-react";
+    Eye, EyeOff, Stethoscope, AlertCircle,
+    Loader2, Mail, Lock, User, Phone, CheckCircle2
+} from "lucide-react";
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -25,212 +16,275 @@ export default function RegisterPage() {
         password: "",
         confirmPassword: ""
     });
-
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [localError, setLocalError] = useState("");
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
-    const { isLoading, isError, isSuccess, message, user } = useSelector(
-        (state) => state.auth
-    );
+    const { isLoading, isError, isSuccess, message, user } = useSelector(s => s.auth);
 
     useEffect(() => {
-        if (isSuccess || user) {
-            navigate("/dashboard");
-        }
-        // Reset auth state on unmount or if error/success changes
-        if (isError || isSuccess) {
-            dispatch(reset());
-        }
+        if (isSuccess || user) navigate("/dashboard");
+        if (isError || isSuccess) dispatch(reset());
     }, [isSuccess, user, navigate, isError, dispatch]);
 
     const onChange = (e) => {
-        setFormData((prev) => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setLocalError("");
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         setLocalError("");
-
         if (formData.password !== formData.confirmPassword) {
             setLocalError("Passwords do not match");
             return;
         }
-
-        // Map to backend fields
-        const registrationData = {
-            fullName: `${formData.firstName} ${formData.lastName}`,
+        if (formData.password.length < 8) {
+            setLocalError("Password must be at least 8 characters");
+            return;
+        }
+        dispatch(register({
+            fullName: `${formData.firstName} ${formData.lastName}`.trim(),
             email: formData.email,
             password: formData.password,
-            role: 'Patient'
-        };
-
-        dispatch(register(registrationData));
+            role: "Patient"
+        }));
     };
 
+    const passwordMatch = formData.confirmPassword && formData.password === formData.confirmPassword;
+
     return (
-        <div className="flex min-h-[80vh] items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                {/* Logo Section */}
-                <div className="mb-8 flex flex-col items-center gap-3">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
-                        <Stethoscope size={32} />
+        <div className="min-h-screen flex">
+            {/* Left panel — branding */}
+            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-900 flex-col items-center justify-center p-12 relative overflow-hidden">
+                <div className="absolute top-[-80px] left-[-80px] w-80 h-80 rounded-full bg-white/5" />
+                <div className="absolute bottom-[-60px] right-[-60px] w-64 h-64 rounded-full bg-white/5" />
+                <div className="absolute top-1/2 right-[-40px] w-48 h-48 rounded-full bg-white/5" />
+
+                <div className="relative z-10 text-center max-w-sm">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/15 backdrop-blur mx-auto mb-6 shadow-2xl">
+                        <Stethoscope size={40} className="text-white" />
                     </div>
-                    <div className="text-center">
-                        <Typography variant="h5" color="text.primary">
-                            Create Account
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                            Register for Clinical Hub Clinic System
-                        </Typography>
+                    <h1 className="text-4xl font-bold text-white mb-2">Biruh Tena</h1>
+                    <p className="text-teal-200 text-lg font-ethiopic mb-6">ብሩህ ጤና</p>
+                    <p className="text-teal-100/80 text-sm leading-relaxed">
+                        Join thousands of patients who trust Biruh Tena for their healthcare management needs.
+                    </p>
+
+                    <div className="mt-10 space-y-3 text-left">
+                        {[
+                            "Book appointments online",
+                            "Access your medical records",
+                            "Receive appointment reminders",
+                            "Consult with doctors virtually",
+                        ].map(item => (
+                            <div key={item} className="flex items-center gap-3 text-teal-100 text-sm">
+                                <CheckCircle2 size={16} className="text-teal-300 shrink-0" />
+                                {item}
+                            </div>
+                        ))}
                     </div>
                 </div>
+            </div>
 
-                <Card className="shadow-xl rounded-2xl border-0">
-                    <CardContent className="p-8">
-                        <div className="text-center mb-6">
-                            <Typography variant="subtitle1" color="text.primary" sx={{ mb: 0.5 }}>
-                                Register
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Fill in your details to get started
-                            </Typography>
+            {/* Right panel — form */}
+            <div className="flex-1 flex items-center justify-center p-6 bg-slate-50 overflow-y-auto">
+                <div className="w-full max-w-md py-6">
+
+                    {/* Mobile brand */}
+                    <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 shadow-lg">
+                            <Stethoscope size={24} className="text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-900">Biruh Tena</h1>
+                            <p className="text-xs text-teal-600 font-ethiopic">ብሩህ ጤና</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-100 p-8">
+                        <div className="mb-7">
+                            <h2 className="text-2xl font-bold text-slate-900">Create account</h2>
+                            <p className="text-sm text-slate-500 mt-1">Fill in your details to get started</p>
                         </div>
 
                         {(isError || localError) && (
-                            <Alert severity="error" className="mb-6 rounded-xl text-sm">
-                                {localError || message || "Registration failed"}
-                            </Alert>
+                            <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
+                                <AlertCircle size={16} className="shrink-0" />
+                                {localError || message || "Registration failed. Please try again."}
+                            </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                            <Grid container spacing={2}>
-                                <Grid item xs={6}>
-                                    <Box>
-                                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
-                                            First Name
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* Name row */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                        First Name
+                                    </label>
+                                    <div className="relative">
+                                        <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
                                             name="firstName"
-                                            placeholder="John"
+                                            required
+                                            autoComplete="given-name"
                                             value={formData.firstName}
                                             onChange={onChange}
-                                            required
-                                            variant="outlined"
+                                            placeholder="John"
+                                            className="w-full pl-9 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent focus:bg-white transition-all"
                                         />
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Box>
-                                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
-                                            Last Name
-                                        </Typography>
-                                        <TextField
-                                            fullWidth
-                                            name="lastName"
-                                            placeholder="Doe"
-                                            value={formData.lastName}
-                                            onChange={onChange}
-                                            required
-                                            variant="outlined"
-                                        />
-                                    </Box>
-                                </Grid>
-                            </Grid>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                        Last Name
+                                    </label>
+                                    <input
+                                        name="lastName"
+                                        required
+                                        autoComplete="family-name"
+                                        value={formData.lastName}
+                                        onChange={onChange}
+                                        placeholder="Doe"
+                                        className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent focus:bg-white transition-all"
+                                    />
+                                </div>
+                            </div>
 
-                            <Box>
-                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
-                                    Email
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="email"
-                                    type="email"
-                                    placeholder="you@example.com"
-                                    value={formData.email}
-                                    onChange={onChange}
-                                    required
-                                    variant="outlined"
-                                />
-                            </Box>
+                            {/* Email */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                    Email Address
+                                </label>
+                                <div className="relative">
+                                    <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        name="email"
+                                        type="email"
+                                        required
+                                        autoComplete="email"
+                                        value={formData.email}
+                                        onChange={onChange}
+                                        placeholder="you@example.com"
+                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent focus:bg-white transition-all"
+                                    />
+                                </div>
+                            </div>
 
-                            <Box>
-                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
-                                    Phone
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="phone"
-                                    type="tel"
-                                    placeholder="+1 555-0100"
-                                    value={formData.phone}
-                                    onChange={onChange}
-                                    required
-                                    variant="outlined"
-                                />
-                            </Box>
+                            {/* Phone */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                    Phone Number
+                                </label>
+                                <div className="relative">
+                                    <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        name="phone"
+                                        type="tel"
+                                        autoComplete="tel"
+                                        value={formData.phone}
+                                        onChange={onChange}
+                                        placeholder="+251 911 000 000"
+                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent focus:bg-white transition-all"
+                                    />
+                                </div>
+                            </div>
 
-
-                            <Box>
-                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                            {/* Password */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
                                     Password
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="password"
-                                    type="password"
-                                    placeholder="Min 8 characters"
-                                    value={formData.password}
-                                    onChange={onChange}
-                                    required
-                                    variant="outlined"
-                                />
-                            </Box>
+                                </label>
+                                <div className="relative">
+                                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        name="password"
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        autoComplete="new-password"
+                                        value={formData.password}
+                                        onChange={onChange}
+                                        placeholder="Min 8 characters"
+                                        className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent focus:bg-white transition-all"
+                                    />
+                                    <button type="button" onClick={() => setShowPassword(p => !p)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                    </button>
+                                </div>
+                            </div>
 
-                            <Box>
-                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                            {/* Confirm Password */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
                                     Confirm Password
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    name="confirmPassword"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={formData.confirmPassword}
-                                    onChange={onChange}
-                                    required
-                                    variant="outlined"
-                                />
-                            </Box>
+                                </label>
+                                <div className="relative">
+                                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        name="confirmPassword"
+                                        type={showConfirm ? "text" : "password"}
+                                        required
+                                        autoComplete="new-password"
+                                        value={formData.confirmPassword}
+                                        onChange={onChange}
+                                        placeholder="••••••••"
+                                        className={`w-full pl-10 pr-11 py-3 bg-slate-50 border rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all ${
+                                            formData.confirmPassword
+                                                ? passwordMatch
+                                                    ? "border-teal-300 focus:ring-teal-400"
+                                                    : "border-red-300 focus:ring-red-400"
+                                                : "border-slate-200 focus:ring-teal-400"
+                                        }`}
+                                    />
+                                    <button type="button" onClick={() => setShowConfirm(p => !p)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                        {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
+                                    </button>
+                                    {passwordMatch && (
+                                        <CheckCircle2 size={15} className="absolute right-10 top-1/2 -translate-y-1/2 text-teal-500" />
+                                    )}
+                                </div>
+                            </div>
 
-                            <Button
+                            {/* Submit */}
+                            <button
                                 type="submit"
-                                variant="contained"
-                                fullWidth
                                 disabled={isLoading}
-                                className="mt-2 py-3 text-lg font-bold bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all normal-case"
+                                className="w-full py-3.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-teal-600/25 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
                             >
                                 {isLoading ? (
-                                    <CircularProgress size={24} color="inherit" />
-                                ) : (
-                                    "Create Account"
-                                )}
-                            </Button>
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Loader2 size={16} className="animate-spin" />
+                                        Creating account...
+                                    </span>
+                                ) : "Create Account"}
+                            </button>
                         </form>
 
-                        <Typography variant="body2" sx={{ mt: 4, textAlign: 'center', color: 'text.secondary' }}>
-                            Already have an account?{" "}
-                            <Link to="/login" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                                Sign In
-                            </Link>
-                        </Typography>
-                    </CardContent>
-                </Card>
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-100" />
+                            </div>
+                            <div className="relative flex justify-center">
+                                <span className="bg-white px-3 text-xs text-slate-400">Already have an account?</span>
+                            </div>
+                        </div>
+
+                        <Link
+                            to="/login"
+                            className="block w-full py-3 text-center text-sm font-semibold text-teal-600 border-2 border-teal-100 hover:border-teal-300 hover:bg-teal-50 rounded-xl transition-all"
+                        >
+                            Sign in instead
+                        </Link>
+                    </div>
+
+                    <p className="text-center text-xs text-slate-400 mt-6">
+                        © {new Date().getFullYear()} Biruh Tena Clinical System
+                    </p>
+                </div>
             </div>
         </div>
     );
