@@ -7,58 +7,80 @@ import cors from 'cors';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const app = express();
-app.use(cors());
 
-// Proxy configuration
+// Allow all origins (Vercel frontend + any client)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Proxy configuration — merged service routing
 const services = {
-  '/api/auth': process.env.AUTH_SERVICE_URL || 'http://localhost:5001',
-  '/api/patients': process.env.PATIENT_SERVICE_URL || 'http://localhost:5002',
-  '/api/appointments': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
-  '/api/emr': process.env.PATIENT_SERVICE_URL || 'http://localhost:5002', // Merged into Patient
-  '/api/billing': process.env.PATIENT_SERVICE_URL || 'http://localhost:5002', // Merged into Patient
-  '/api/inventory': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010', // Merged into Doctor
-  '/api/reports': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010', // Merged into Doctor
-  '/api/notifications': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003', // Merged into Appointment
-  '/api/ai': process.env.AI_SERVICE_URL || 'http://localhost:5009',
-  '/api/doctors': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010'
+  '/api/auth':          process.env.AUTH_SERVICE_URL        || 'http://localhost:5001',
+  '/api/patients':      process.env.PATIENT_SERVICE_URL     || 'http://localhost:5002',
+  '/api/appointments':  process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
+  '/api/emr':           process.env.PATIENT_SERVICE_URL     || 'http://localhost:5002',
+  '/api/billing':       process.env.PATIENT_SERVICE_URL     || 'http://localhost:5002',
+  '/api/inventory':     process.env.DOCTOR_SERVICE_URL      || 'http://localhost:5010',
+  '/api/reports':       process.env.DOCTOR_SERVICE_URL      || 'http://localhost:5010',
+  '/api/notifications': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
+  '/api/ai':            process.env.AI_SERVICE_URL          || 'http://localhost:5009',
+  '/api/doctors':       process.env.DOCTOR_SERVICE_URL      || 'http://localhost:5010',
 };
 
-// Setup HTTP proxies
+// Setup HTTP proxies with longer timeout for cold starts
 Object.entries(services).forEach(([path, target]) => {
   app.use(path, createProxyMiddleware({
     target,
     changeOrigin: true,
     pathRewrite: (pathStr, req) => req.originalUrl,
+    proxyTimeout: 30000,   // 30s — services may be slow on cold start
+    timeout: 30000,
     onProxyReq: (proxyReq, req) => {
-      console.log(`[Proxy] ${req.method} ${req.url} -> ${target}${proxyReq.path}`);
+      console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${target}`);
     },
     onError: (err, req, res) => {
-      console.error(`[Proxy Error] ${err.message}`);
-      res.status(502).json({ error: 'Bad Gateway', message: 'Service unavailable' });
+      console.error(`[Proxy Error] ${req.originalUrl}: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(503).json({
+          error: 'Service Unavailable',
+          message: 'The service is starting up, please retry in a moment.',
+          path: req.originalUrl
+        });
+      }
     }
   }));
 });
 
-// Dedicated Socket.IO / WebSocket proxy — points to appointment-service (merged with notification)
+// Socket.IO proxy for video signaling (appointment-service)
 const socketProxy = createProxyMiddleware({
   target: process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
   ws: true,
   changeOrigin: true,
+  proxyTimeout: 30000,
   logLevel: 'warn',
 });
 
 app.use('/socket.io', socketProxy);
 
+// Health check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ service: 'api-gateway', status: 'healthy' });
+  res.status(200).json({
+    service: 'api-gateway',
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    services: Object.keys(services)
+  });
+});
+
+// 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found', path: req.originalUrl });
 });
 
 const PORT = process.env.PORT || 5050;
-
-// Use http.createServer so the 'upgrade' event fires for WebSocket proxying
 const server = http.createServer(app);
-
-// Wire WebSocket upgrades through the socket proxy
 server.on('upgrade', socketProxy.upgrade);
 
 server.listen(PORT, () => {
