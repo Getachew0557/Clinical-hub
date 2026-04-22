@@ -20,11 +20,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const gateway = { name: 'api-gateway',        mem: 60,  color: '\x1b[36m' };
 
 const services = [
-  { name: 'auth-service',        mem: 60,  color: '\x1b[35m', delay: 3000  },
-  { name: 'patient-service',     mem: 80,  color: '\x1b[34m', delay: 8000  },
-  { name: 'appointment-service', mem: 80,  color: '\x1b[32m', delay: 14000 },
-  { name: 'doctor-service',      mem: 80,  color: '\x1b[37m', delay: 20000 },
-  { name: 'ai-service',          mem: 80,  color: '\x1b[92m', delay: 26000 },
+  { name: 'auth-service',        mem: 60,  color: '\x1b[35m', delay: 5000  },
+  { name: 'patient-service',     mem: 80,  color: '\x1b[34m', delay: 15000 },
+  { name: 'appointment-service', mem: 80,  color: '\x1b[32m', delay: 25000 },
+  { name: 'doctor-service',      mem: 80,  color: '\x1b[37m', delay: 35000 },
+  { name: 'ai-service',          mem: 80,  color: '\x1b[92m', delay: 45000 },
 ];
 
 const RESET = '\x1b[0m';

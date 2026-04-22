@@ -1,32 +1,41 @@
-import sequelize from './src/config/database.js';
-import User from './src/models/User.js';
+/**
+ * Production seed script — creates Admin user if not exists.
+ * Run: node seed.js
+ */
 import dotenv from 'dotenv';
-
 dotenv.config();
+
+import sequelize, { ensureDatabaseExists } from './src/config/database.js';
+import User from './src/models/User.js';
+
+const ADMIN = {
+    fullName: 'Admin',
+    email:    'admin@ras.dental',
+    password: 'Admin@1234',
+    role:     'Admin'
+};
 
 const seedAdmin = async () => {
     try {
+        await ensureDatabaseExists();
         await sequelize.authenticate();
-        console.log('Database connected.');
+        console.log('✅ Database connected.');
 
-        // Check if admin already exists
-        const adminEmail = 'admin@ras.dental';
-        const existingAdmin = await User.findOne({ where: { email: adminEmail } });
+        await sequelize.sync({ alter: true });
+        console.log('✅ Models synced.');
 
-        if (existingAdmin) {
-            console.log('Admin user already exists.');
+        const existing = await User.findOne({ where: { email: ADMIN.email } });
+
+        if (existing) {
+            console.log(`ℹ️  Admin already exists: ${ADMIN.email}`);
         } else {
-            await User.create({
-                fullName: 'System Administrator',
-                email: adminEmail,
-                password: 'adminPassword123',
-                role: 'Admin'
-            });
-            console.log('Admin user created successfully.');
+            await User.create(ADMIN);
+            console.log(`✅ Admin created: ${ADMIN.email} / ${ADMIN.password}`);
         }
+
         process.exit(0);
     } catch (error) {
-        console.error('Error seeding admin:', error);
+        console.error('❌ Seed error:', error.message);
         process.exit(1);
     }
 };
