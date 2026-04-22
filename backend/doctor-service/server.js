@@ -4,62 +4,79 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
-
-// Routes
-import doctorRoutes from './src/routes/doctorRoutes.js';
-import inventoryRoutes from './src/routes/inventoryRoutes.js';
-import reportRoutes from './src/routes/reportRoutes.js';
-
-// Models
 import DoctorProfile from './src/models/DoctorProfile.js';
-import './src/models/InventoryItem.js';
-import './src/models/StockTransaction.js';
-import './src/models/Report.js';
+import doctorRoutes from './src/routes/doctorRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure uploads directory exists
-fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
-
 const app = express();
 
+// ─── Middlewares ───────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded profile photos statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/doctors', doctorRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/reports', reportRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.status(200).json({ service: 'doctor-service', status: 'healthy' });
 });
 
+// ─── 404 Handler ──────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
+// ─── Startup ──────────────────────────────────────────────────────────────
 const PORT = process.env.DOCTOR_PORT || 5010;
 
-const connectDB = async () => {
-  await ensureDatabaseExists();
-  await sequelize.authenticate();
-  console.log('Database connected successfully.');
-  await sequelize.sync();
-  console.log('Database models synced.');
-  console.log('doctor-service fully ready.');
+const startServer = async () => {
+  try {
+    await ensureDatabaseExists();
+    await sequelize.authenticate();
+    console.log('Database connected successfully.');
+
+    await sequelize.sync();
+    console.log('Database models synced.');
+
+    // ── Add new columns if they don't exist (safe migration) ──────────────
+    const qi = sequelize.getQueryInterface();
+    const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
+
+    const newColumns = {
+        videoFee:           'DECIMAL(10,2) NULL',
+        serviceTypes:       'JSON NULL',
+        slotDuration:       'INT NOT NULL DEFAULT 30',
+        breakStart:         'TIME NULL',
+        breakEnd:           'TIME NULL',
+        languages:          'JSON NULL',
+        education:          'JSON NULL',
+        workExperience:     'JSON NULL',
+        awards:             'JSON NULL',
+        maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
+    };
+
+    for (const [col, definition] of Object.entries(newColumns)) {
+        if (!tableDesc[col]) {
+            await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
+            console.log(`Added column: ${col}`);
+        }
+    }
+
+    app.listen(PORT, () => {
+      console.log(`doctor-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Unable to start doctor-service:', error);
+    process.exit(1);
+  }
 };
 
-app.listen(PORT, () => {
-  console.log(`doctor-service (+ inventory + reports) running on port ${PORT}`);
-  connectDB().catch(err => {
-    console.error('DB failed, retrying in 15s:', err.message);
-    setTimeout(() => connectDB().catch(console.error), 15000);
-  });
-});
+startServer();
