@@ -3,13 +3,15 @@
  * Gateway starts immediately, others start with staggered delays.
  *
  * Memory budget (512MB total):
- *   api-gateway:        60MB
+ *   api-gateway:        50MB
  *   auth-service:       60MB
  *   patient-service:    80MB  (+ emr + billing)
  *   appointment-service:80MB  (+ notifications + socket.io)
  *   doctor-service:     80MB  (+ inventory + reports)
- *   ai-service:         80MB
- *   OS overhead:        ~72MB
+ *   OS + node overhead: ~150MB
+ *   Total: ~500MB
+ *
+ *   ai-service excluded from production (too heavy for free tier)
  */
 import { spawn } from 'child_process';
 import { join, dirname } from 'path';
@@ -17,14 +19,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const gateway = { name: 'api-gateway',        mem: 60,  color: '\x1b[36m' };
+const gateway = { name: 'api-gateway',        mem: 50,  color: '\x1b[36m' };
 
 const services = [
-  { name: 'auth-service',        mem: 60,  color: '\x1b[35m', delay: 2000  },
-  { name: 'patient-service',     mem: 80,  color: '\x1b[34m', delay: 12000 },
-  { name: 'appointment-service', mem: 80,  color: '\x1b[32m', delay: 22000 },
-  { name: 'doctor-service',      mem: 80,  color: '\x1b[37m', delay: 32000 },
-  { name: 'ai-service',          mem: 80,  color: '\x1b[92m', delay: 42000 },
+  { name: 'auth-service',        mem: 60,  color: '\x1b[35m', delay: 3000  },
+  { name: 'patient-service',     mem: 80,  color: '\x1b[34m', delay: 8000  },
+  { name: 'appointment-service', mem: 80,  color: '\x1b[32m', delay: 13000 },
+  { name: 'doctor-service',      mem: 80,  color: '\x1b[37m', delay: 18000 },
 ];
 
 const RESET = '\x1b[0m';
