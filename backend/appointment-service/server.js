@@ -66,6 +66,11 @@ videoNamespace.on('connection', (socket) => {
 app.use(cors());
 app.use(express.json());
 
+// Self-reference for notification URL (merged service)
+if (!process.env.NOTIFICATION_SERVICE_URL) {
+  process.env.NOTIFICATION_SERVICE_URL = `http://localhost:${process.env.APPT_PORT || 5003}/api/notifications`;
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/notifications', notificationRoutes);

@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import reportService from '../api/report.service';
 import appointmentService from '../api/appointment.service';
+import patientService from '../api/patient.service';
 
 const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
 
@@ -66,17 +67,20 @@ export default function DashboardPage() {
         try {
             setLoading(true);
             const today = new Date().toISOString().split('T')[0];
-            const [aptStats, invSummary, patDemo, finance, myApts, detailedApts] = await Promise.all([
+            const [aptStats, invSummary, patientsData, finance, myApts, detailedApts] = await Promise.all([
                 reportService.getAppointmentStats({ date: today }).catch(() => ({ total: 0 })),
                 reportService.getInventorySummary().catch(() => ({ lowStockItems: 0 })),
-                reportService.getPatientDemographics().catch(() => ({ totalPatients: 0 })),
+                // Direct patient count — more reliable than report service
+                patientService.getAllPatients().catch(() => ({ patients: [], count: 0 })),
                 reportService.getFinanceSummary().catch(() => ({ totalRevenue: 0, pendingCount: 0 })),
                 appointmentService.getMyAppointments().catch(() => ({ appointments: [] })),
                 reportService.getDetailedAppointments().catch(() => [])
             ]);
 
+            const totalPatients = patientsData?.count ?? (patientsData?.patients?.length ?? 0);
+
             const allStats = {
-                totalPatients: { title: t('dashboard.totalPatients'), value: patDemo.totalPatients || 0, change: '+12%', icon: Users, color: '#0d9488', bg: '#ccfbf1' },
+                totalPatients: { title: t('dashboard.totalPatients'), value: totalPatients, change: '+12%', icon: Users, color: '#0d9488', bg: '#ccfbf1' },
                 todayApts: { title: t('dashboard.todayAppointments'), value: aptStats.total || 0, change: t('dashboard.updated'), icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
                 revenue: { title: t('dashboard.totalRevenue'), value: `${(finance.totalRevenue || 0).toLocaleString()}`, change: t('dashboard.actual'), icon: Receipt, color: '#7c3aed', bg: '#f5f3ff' },
                 lowStock: { title: t('dashboard.lowStockItems'), value: invSummary.lowStockItems || 0, change: t('dashboard.checkInventory'), icon: AlertTriangle, color: '#d97706', bg: '#fffbeb' },

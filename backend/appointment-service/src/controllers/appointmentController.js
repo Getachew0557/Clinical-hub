@@ -349,17 +349,25 @@ export const getMyAppointments = async (req, res) => {
             return res.status(200).json({ count: appointments.length, appointments: enriched });
         }
 
-        // ─── For Patient role, enrich with Doctor name ───
+        // ─── For Patient role, enrich with Doctor name AND own name ───
         if (req.user.role === 'Patient') {
             const authHeader = { headers: { Authorization: req.headers.authorization } };
             const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+            const patientUrl = process.env.PATIENT_SERVICE_URL;
             try {
-                const doctorsRes = await axios.get(`${doctorUrl}/public`, {}).catch(() => ({ data: { doctors: [] } }));
+                const [doctorsRes, patientRes] = await Promise.all([
+                    axios.get(`${doctorUrl}/public`, {}).catch(() => ({ data: { doctors: [] } })),
+                    axios.get(`${patientUrl}/${req.user.id}`, authHeader).catch(() => ({ data: null }))
+                ]);
                 const doctorsList = doctorsRes.data.doctors || [];
+                const patientProfile = patientRes.data;
+                const patientName = patientProfile?.fullName || null;
+
                 const enriched = appointments.map(apt => {
                     const doctor = doctorsList.find(d => d.userId === apt.doctorId || d.id === apt.doctorId);
                     return {
                         ...apt.toJSON(),
+                        patientName: patientName,
                         doctorName: doctor ? doctor.fullName : 'Doctor',
                         doctorSpecialization: doctor ? doctor.specialization : null,
                     };

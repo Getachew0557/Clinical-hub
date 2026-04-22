@@ -118,12 +118,6 @@ export default function TopBar({ onMenuClick }) {
                     </Avatar>
                     <div className="hidden md:flex flex-col items-start leading-tight">
                         <span className="text-sm font-semibold text-slate-800">{user?.fullName || 'User'}</span>
-                        <span
-                            className="text-xs font-bold px-1.5 rounded-full text-white uppercase tracking-tighter"
-                            style={{ backgroundColor: roleColor }}
-                        >
-                            {user?.role}
-                        </span>
                     </div>
                     <ChevronDown className="h-4 w-4 text-slate-400 hidden md:block" />
                 </button>

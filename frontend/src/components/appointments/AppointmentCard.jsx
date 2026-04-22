@@ -47,7 +47,12 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
   const [busy, setBusy] = useState(false);
 
   const { id, patientName, patientId, phone, doctorName,
-          appointmentDate, appointmentTime, reason, status } = appointment;
+          appointmentDate, appointmentTime, reason, status,
+          doctorSpecialization } = appointment;
+
+  // For Patient role, patientName is their own name — use it directly
+  // For staff, it comes enriched from backend
+  const displayName = patientName || (role === 'Patient' ? null : 'Unknown Patient');
 
   const actions  = getActions(role, status);
   const showJoin = shouldShowJoinButton(status, isVideo);
@@ -73,7 +78,7 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
           <div className="flex items-center gap-1.5 min-w-0">
             {isVideo && <Video size={13} className="text-indigo-500 shrink-0" />}
             <span className="font-semibold text-slate-800 text-sm truncate">
-              {patientName || 'Unknown Patient'}
+              {displayName || <span className="text-slate-400 italic">Loading...</span>}
             </span>
           </div>
           {/* Short ID + phone on one line */}
@@ -91,7 +96,14 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
 
       {/* ── Meta rows ── */}
       <div className="px-4 pb-3 space-y-1.5">
-        {(role === 'Admin' || role === 'Receptionist') && doctorName && (
+        {/* Show doctor name for patient, show doctor for staff */}
+        {role === 'Patient' && doctorName && (
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Stethoscope size={12} className="shrink-0 text-teal-500" />
+            <span className="text-xs truncate">{doctorName}{doctorSpecialization ? ` · ${doctorSpecialization}` : ''}</span>
+          </div>
+        )}
+        {(role === 'Admin' || role === 'Receptionist' || role === 'Doctor') && doctorName && (
           <div className="flex items-center gap-1.5 text-slate-500">
             <Stethoscope size={12} className="shrink-0 text-teal-500" />
             <span className="text-xs truncate">{doctorName}</span>
