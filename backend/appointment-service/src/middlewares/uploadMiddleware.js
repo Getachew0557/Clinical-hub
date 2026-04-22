@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
+import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -26,9 +27,7 @@ if (useCloudinary) {
     }
   });
 } else {
-  const multerLib = await import('multer');
-  const path = await import('path');
-  storage = multerLib.default.diskStorage({
+  storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => {
       cb(null, `appt-${Date.now()}${path.extname(file.originalname)}`);
@@ -38,7 +37,7 @@ if (useCloudinary) {
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|pdf/;
     const ext = allowed.test(file.originalname.toLowerCase().split('.').pop());

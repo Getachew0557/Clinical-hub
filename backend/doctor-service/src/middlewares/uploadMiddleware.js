@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
+import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,7 +12,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Use Cloudinary if credentials are set, otherwise fall back to disk
 const useCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
                       process.env.CLOUDINARY_API_KEY &&
                       process.env.CLOUDINARY_API_SECRET;
@@ -27,10 +27,8 @@ if (useCloudinary) {
     }
   });
 } else {
-  // Local disk fallback (dev only)
-  const { diskStorage } = await import('multer');
-  const path = await import('path');
-  storage = diskStorage({
+  // Local disk fallback
+  storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => {
       const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
