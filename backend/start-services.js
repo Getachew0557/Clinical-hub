@@ -16,16 +16,25 @@
 import { spawn } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { mkdirSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Ensure uploads directories exist for all services
+const services_with_uploads = ['doctor-service', 'appointment-service', 'patient-service', 'auth-service'];
+for (const svc of services_with_uploads) {
+  try {
+    mkdirSync(join(__dirname, svc, 'uploads'), { recursive: true });
+  } catch {}
+}
 
 const gateway = { name: 'api-gateway', mem: 50, color: '\x1b[36m' };
 
 const services = [
   { name: 'auth-service',        mem: 100, color: '\x1b[35m', delay: 3000,  port: { AUTH_PORT: '5001' }   },
-  { name: 'patient-service',     mem: 120, color: '\x1b[34m', delay: 6000,  port: { PATIENT_PORT: '5002' } },
-  { name: 'appointment-service', mem: 120, color: '\x1b[32m', delay: 9000,  port: { APPT_PORT: '5003' }   },
-  { name: 'doctor-service',      mem: 120, color: '\x1b[37m', delay: 12000, port: { DOCTOR_PORT: '5010' } },
+  { name: 'patient-service',     mem: 150, color: '\x1b[34m', delay: 6000,  port: { PATIENT_PORT: '5002' } },
+  { name: 'appointment-service', mem: 150, color: '\x1b[32m', delay: 9000,  port: { APPT_PORT: '5003' }   },
+  { name: 'doctor-service',      mem: 150, color: '\x1b[37m', delay: 12000, port: { DOCTOR_PORT: '5010' } },
 ];
 
 const RESET = '\x1b[0m';

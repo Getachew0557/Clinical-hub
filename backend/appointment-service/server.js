@@ -7,6 +7,9 @@ EventEmitter.defaultMaxListeners = 20;
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Server as SocketIOServer } from 'socket.io';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 
@@ -21,6 +24,12 @@ import './src/models/Notification.js';
 // Event Bus
 import { connectEventBus, subscribeToEvent, handleInternalEvent } from './src/utils/eventBus.js';
 import { handleUserRegistered } from './src/utils/eventHandlers.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure uploads directory exists
+fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
 
 const app = express();
 const httpServer = http.createServer(app);
