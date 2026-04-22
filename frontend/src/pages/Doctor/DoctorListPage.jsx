@@ -9,16 +9,19 @@ import {
     Avatar, Chip, IconButton, Menu, MenuItem,
     CircularProgress, Alert, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, Grid,
-    FormControl, InputLabel, Select
+    FormControl, InputLabel, Select, Box
 } from '@mui/material';
 import doctorService from '../../api/doctor.service';
 import authService from '../../api/auth.service';
 import { useSelector } from 'react-redux';
 import { getDoctorPhotoUrl } from '../../utils/cn';
+import useSnack from '../../hooks/useSnack';
+import { Snackbar, Alert as MuiAlert } from '@mui/material';
 
 export default function DoctorListPage() {
     const { user } = useSelector((s) => s.auth);
     const isAdmin = user?.role === 'Admin';
+    const { snack, showSnack, handleSnackClose } = useSnack();
 
     const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -127,7 +130,7 @@ export default function DoctorListPage() {
                 if (profilePhotoFile) fd.append('profilePhoto', profilePhotoFile);
 
                 await doctorService.createDoctor(fd);
-                alert('Doctor account and profile created successfully!');
+                showSnack('Doctor account and profile created successfully!');
             } else {
                 const fd = new FormData();
                 Object.entries(formData).forEach(([k, v]) => {
@@ -137,13 +140,13 @@ export default function DoctorListPage() {
                 });
                 if (profilePhotoFile) fd.append('profilePhoto', profilePhotoFile);
                 await doctorService.updateDoctor(selectedDoctor.id, fd);
-                alert('Doctor profile updated successfully!');
+                showSnack('Doctor profile updated successfully!');
             }
             setProfilePhotoFile(null);
             handleCloseModal();
             fetchDoctors();
         } catch (err) {
-            alert(err.response?.data?.message || 'Operation failed');
+            showSnack(err.response?.data?.message || 'Operation failed', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -169,7 +172,7 @@ export default function DoctorListPage() {
             ));
             handleMenuClose();
         } catch (err) {
-            alert('Failed to update status');
+            showSnack('Failed to update status', 'error');
         }
     };
 
@@ -180,7 +183,7 @@ export default function DoctorListPage() {
             setDoctors(prev => prev.filter(d => d.id !== selectedDoctor.id));
             handleMenuClose();
         } catch (err) {
-            alert('Failed to delete doctor');
+            showSnack('Failed to delete doctor', 'error');
         }
     };
 
@@ -190,12 +193,13 @@ export default function DoctorListPage() {
     );
 
     return (
-        <div className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+            <div className="flex flex-col gap-6">
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" color="text.primary">Doctors</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                    <Typography variant="h5" fontWeight={700} color="text.primary">Doctors</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                         Manage your clinic's medical professionals
                     </Typography>
                 </div>
@@ -242,62 +246,98 @@ export default function DoctorListPage() {
             ) : error ? (
                 <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredDoctors.map((doctor) => (
                         <Card
                             key={doctor.id}
                             elevation={0}
                             sx={{
-                                border: '1px solid #e2e8f0',
+                                background: 'rgba(255, 255, 255, 0.7)',
+                                backdropFilter: 'blur(12px)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
                                 borderRadius: 5,
-                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                overflow: 'hidden',
+                                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                position: 'relative',
                                 '&:hover': {
-                                    transform: 'translateY(-4px)',
-                                    boxShadow: '0 12px 20px -8px rgba(0,0,0,0.08)'
+                                    transform: 'translateY(-8px)',
+                                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                                    borderColor: 'primary.main',
                                 }
                             }}
                         >
-                            <CardContent className="p-5">
-                                <div className="flex justify-between items-start mb-4">
-                                    <Avatar
-                                        src={getDoctorPhotoUrl(doctor.profilePhoto)}
-                                        sx={{ width: 64, height: 64, borderRadius: 4, bgcolor: '#eff6ff', color: '#2563eb', fontWeight: 800 }}
-                                    >
-                                        {doctor.fullName?.split(' ').map(n => n[0]).join('')}
-                                    </Avatar>
+                            <CardContent className="p-0">
+                                <div className="p-6 flex justify-between items-start">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative">
+                                            <Avatar
+                                                src={getDoctorPhotoUrl(doctor.profilePhoto)}
+                                                sx={{ 
+                                                    width: 72, 
+                                                    height: 72, 
+                                                    borderRadius: 4, 
+                                                    bgcolor: '#f0fdf4', 
+                                                    color: '#16a34a', 
+                                                    fontWeight: 900,
+                                                    fontSize: '1.5rem',
+                                                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+                                                }}
+                                            >
+                                                {doctor.fullName?.split(' ').map(n => n[0]).join('')}
+                                            </Avatar>
+                                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${doctor.isActive ? 'bg-green-500' : 'bg-slate-300'}`} />
+                                        </div>
+                                        <div>
+                                            <Typography variant="subtitle2" fontWeight={600} color="text.primary" sx={{ lineHeight: 1.3 }}>
+                                                {doctor.fullName}
+                                            </Typography>
+                                            <div className="flex items-center gap-1.5 text-teal-600 mt-0.5">
+                                                <Briefcase size={12} />
+                                                <Typography variant="caption" fontWeight={600}>
+                                                    {doctor.specialization}
+                                                </Typography>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="flex flex-col items-end gap-2">
-                                        <Chip
-                                            label={doctor.isActive ? 'Active' : 'Inactive'}
-                                            size="small"
-                                            color={doctor.isActive ? 'success' : 'default'}
-                                            sx={{ fontWeight: 600, fontSize: '0.65rem' }}
-                                        />
-                                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, doctor)}>
+                                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${doctor.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            {doctor.isActive ? 'Active' : 'Inactive'}
+                                        </div>
+                                        <IconButton 
+                                            size="small" 
+                                            onClick={(e) => handleMenuOpen(e, doctor)}
+                                            sx={{ bgcolor: 'white/50', '&:hover': { bgcolor: 'white' }, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+                                        >
                                             <MoreHorizontal size={18} />
                                         </IconButton>
                                     </div>
                                 </div>
 
-                                <div className="mb-4">
-                                    <Typography variant="h6" fontWeight={700} className="truncate">
-                                        {doctor.fullName}
-                                    </Typography>
-                                    <div className="flex items-center gap-1.5 text-blue-600 mt-0.5">
-                                        <Briefcase size={14} />
-                                        <Typography variant="caption" fontWeight={600}>
-                                            {doctor.specialization}
-                                        </Typography>
+                                <div className="px-6 pb-6 space-y-3">
+                                    <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                                        <div className="flex items-center gap-3">
+                                            <Mail size={13} className="text-slate-400 shrink-0" />
+                                            <Typography variant="body2" className="truncate">{doctor.email}</Typography>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Phone size={13} className="text-slate-400 shrink-0" />
+                                            <Typography variant="body2">{doctor.phone || 'No phone'}</Typography>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="flex flex-col gap-2.5 pt-4 border-t border-slate-50">
-                                    <div className="flex items-center gap-2 text-slate-500">
-                                        <Mail size={14} />
-                                        <Typography variant="caption" className="truncate">{doctor.email}</Typography>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-slate-500">
-                                        <Phone size={14} />
-                                        <Typography variant="caption">{doctor.phone || 'No phone'}</Typography>
+                                    <div className="flex items-center justify-between px-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <Award size={14} className="text-amber-500" />
+                                            <Typography variant="caption" color="text.secondary">
+                                                {doctor.experience || '0'}+ yrs exp.
+                                            </Typography>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Clock size={14} className="text-slate-400" />
+                                            <Typography variant="caption" color="text.secondary">
+                                                {doctor.workingHoursStart || '08:00'} – {doctor.workingHoursEnd || '18:00'}
+                                            </Typography>
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -321,7 +361,7 @@ export default function DoctorListPage() {
                 onClose={handleCloseModal}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{ sx: { borderRadius: 5, mt: 10 } }}
+                PaperProps={{ sx: { borderRadius: 3, mt: 4 } }}
             >
                 <form onSubmit={handleSubmit}>
                     <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
@@ -344,186 +384,250 @@ export default function DoctorListPage() {
                         <div className="pt-2">
                             <Grid container spacing={3}>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Full Name"
-                                        name="fullName"
-                                        fullWidth
-                                        required
-                                        value={formData.fullName}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Full Name
+                                        </Typography>
+                                        <TextField
+                                            name="fullName"
+                                            fullWidth
+                                            required
+                                            value={formData.fullName}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Email Address"
-                                        name="email"
-                                        type="email"
-                                        fullWidth
-                                        required
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Email Address
+                                        </Typography>
+                                        <TextField
+                                            name="email"
+                                            type="email"
+                                            fullWidth
+                                            required
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 {formMode === 'add' && (
                                     <Grid item xs={12} md={4}>
-                                        <TextField
-                                            label="Password"
-                                            name="password"
-                                            type="password"
-                                            fullWidth
-                                            required
-                                            placeholder="Set password"
-                                            value={formData.password}
-                                            onChange={handleInputChange}
-                                        />
+                                        <Box>
+                                            <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                                Password
+                                            </Typography>
+                                            <TextField
+                                                name="password"
+                                                type="password"
+                                                fullWidth
+                                                required
+                                                placeholder="Set password"
+                                                value={formData.password}
+                                                onChange={handleInputChange}
+                                            />
+                                        </Box>
                                     </Grid>
                                 )}
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Phone Number"
-                                        name="phone"
-                                        fullWidth
-                                        value={formData.phone}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Phone Number
+                                        </Typography>
+                                        <TextField
+                                            name="phone"
+                                            fullWidth
+                                            value={formData.phone}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Specialization"
-                                        name="specialization"
-                                        fullWidth
-                                        required
-                                        placeholder="e.g. Orthodontist"
-                                        value={formData.specialization}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Specialization
+                                        </Typography>
+                                        <TextField
+                                            name="specialization"
+                                            fullWidth
+                                            required
+                                            placeholder="e.g. Orthodontist"
+                                            value={formData.specialization}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="License Number"
-                                        name="licenseNumber"
-                                        fullWidth
-                                        required
-                                        value={formData.licenseNumber}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            License Number
+                                        </Typography>
+                                        <TextField
+                                            name="licenseNumber"
+                                            fullWidth
+                                            required
+                                            value={formData.licenseNumber}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Experience (Years)"
-                                        name="experience"
-                                        type="number"
-                                        fullWidth
-                                        value={formData.experience}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Experience (Years)
+                                        </Typography>
+                                        <TextField
+                                            name="experience"
+                                            type="number"
+                                            fullWidth
+                                            value={formData.experience}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Qualification"
-                                        name="qualification"
-                                        fullWidth
-                                        value={formData.qualification}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Qualification
+                                        </Typography>
+                                        <TextField
+                                            name="qualification"
+                                            fullWidth
+                                            value={formData.qualification}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Consultation Fee (ETB)"
-                                        name="consultationFee"
-                                        type="number"
-                                        fullWidth
-                                        helperText="Used for clinic visits"
-                                        value={formData.consultationFee}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Consultation Fee (ETB)
+                                        </Typography>
+                                        <TextField
+                                            name="consultationFee"
+                                            type="number"
+                                            fullWidth
+                                            helperText="Used for clinic visits"
+                                            value={formData.consultationFee}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Video Consultation Fee (ETB)"
-                                        name="videoFee"
-                                        type="number"
-                                        fullWidth
-                                        placeholder="Leave blank to use same as clinic fee"
-                                        value={formData.videoFee}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Video Consultation Fee (ETB)
+                                        </Typography>
+                                        <TextField
+                                            name="videoFee"
+                                            type="number"
+                                            fullWidth
+                                            placeholder="Leave blank to use same as clinic fee"
+                                            value={formData.videoFee}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Max Patients / Hour"
-                                        name="maxPatientsPerHour"
-                                        type="number"
-                                        fullWidth
-                                        value={formData.maxPatientsPerHour}
-                                        onChange={handleInputChange}
-                                        helperText="Default: 10 (= 5 per 30-min slot)"
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Max Patients / Hour
+                                        </Typography>
+                                        <TextField
+                                            name="maxPatientsPerHour"
+                                            type="number"
+                                            fullWidth
+                                            value={formData.maxPatientsPerHour}
+                                            onChange={handleInputChange}
+                                            helperText="Default: 10 (= 5 per 30-min slot)"
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Slot Duration (minutes)"
-                                        name="slotDuration"
-                                        type="number"
-                                        fullWidth
-                                        value={formData.slotDuration}
-                                        onChange={handleInputChange}
-                                        helperText="Default: 30 minutes"
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Slot Duration (minutes)
+                                        </Typography>
+                                        <TextField
+                                            name="slotDuration"
+                                            type="number"
+                                            fullWidth
+                                            value={formData.slotDuration}
+                                            onChange={handleInputChange}
+                                            helperText="Default: 30 minutes"
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={4}>
-                                    <TextField
-                                        label="Languages Spoken"
-                                        name="languages"
-                                        fullWidth
-                                        placeholder="e.g. Amharic, English, Tigrinya"
-                                        value={formData.languages}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Languages Spoken
+                                        </Typography>
+                                        <TextField
+                                            name="languages"
+                                            fullWidth
+                                            placeholder="e.g. Amharic, English, Tigrinya"
+                                            value={formData.languages}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={3}>
-                                    <TextField
-                                        label="Work Start Time"
-                                        name="workingHoursStart"
-                                        type="time"
-                                        fullWidth
-                                        InputLabelProps={{ shrink: true }}
-                                        value={formData.workingHoursStart}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Work Start Time
+                                        </Typography>
+                                        <TextField
+                                            name="workingHoursStart"
+                                            type="time"
+                                            fullWidth
+                                            value={formData.workingHoursStart}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={3}>
-                                    <TextField
-                                        label="Work End Time"
-                                        name="workingHoursEnd"
-                                        type="time"
-                                        fullWidth
-                                        InputLabelProps={{ shrink: true }}
-                                        value={formData.workingHoursEnd}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Work End Time
+                                        </Typography>
+                                        <TextField
+                                            name="workingHoursEnd"
+                                            type="time"
+                                            fullWidth
+                                            value={formData.workingHoursEnd}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={3}>
-                                    <TextField
-                                        label="Break Start"
-                                        name="breakStart"
-                                        type="time"
-                                        fullWidth
-                                        InputLabelProps={{ shrink: true }}
-                                        value={formData.breakStart}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Break Start
+                                        </Typography>
+                                        <TextField
+                                            name="breakStart"
+                                            type="time"
+                                            fullWidth
+                                            value={formData.breakStart}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12} md={3}>
-                                    <TextField
-                                        label="Break End"
-                                        name="breakEnd"
-                                        type="time"
-                                        fullWidth
-                                        InputLabelProps={{ shrink: true }}
-                                        value={formData.breakEnd}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Break End
+                                        </Typography>
+                                        <TextField
+                                            name="breakEnd"
+                                            type="time"
+                                            fullWidth
+                                            value={formData.breakEnd}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
@@ -620,15 +724,20 @@ export default function DoctorListPage() {
                                     </div>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField
-                                        label="Brief Bio"
-                                        name="bio"
-                                        fullWidth
-                                        multiline
-                                        rows={3}
-                                        value={formData.bio}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Brief Bio
+                                        </Typography>
+                                        <TextField
+                                            name="bio"
+                                            fullWidth
+                                            multiline
+                                            rows={3}
+                                            placeholder="Write a brief introduction..."
+                                            value={formData.bio}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                             </Grid>
                         </div>
@@ -679,6 +788,7 @@ export default function DoctorListPage() {
                 )}
             </Menu>
         </div>
+    </Box>
     );
 }
 

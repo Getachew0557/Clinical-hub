@@ -86,38 +86,47 @@ export default function LoginPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                            <TextField
-                                fullWidth
-                                label={t('auth.login.email')}
-                                type="email"
-                                placeholder="name@clinic.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                variant="outlined"
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    {t('auth.login.email')}
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    type="email"
+                                    placeholder="name@clinic.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    variant="outlined"
+                                />
+                            </Box>
 
-                            <TextField
-                                fullWidth
-                                label={t('auth.login.password')}
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                variant="outlined"
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                edge="end"
-                                            >
-                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    {t('auth.login.password')}
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    variant="outlined"
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    edge="end"
+                                                >
+                                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Box>
 
                             <div className="flex justify-end -mt-2">
                                 <Link

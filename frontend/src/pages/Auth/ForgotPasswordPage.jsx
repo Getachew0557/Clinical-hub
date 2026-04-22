@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, TextField, Typography, Card, CardContent, Alert, CircularProgress } from "@mui/material";
+import { Button, TextField, Typography, Card, CardContent, Alert, CircularProgress, Box } from "@mui/material";
 import { Stethoscope, ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
 import authService from "../../api/auth.service";
 
@@ -63,10 +63,20 @@ export default function ForgotPasswordPage() {
                         ) : (
                             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                                 {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
-                                <TextField fullWidth label="Email Address" type="email"
-                                    placeholder="you@example.com"
-                                    value={email} onChange={(e) => setEmail(e.target.value)}
-                                    required variant="outlined" />
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        Email Address
+                                    </Typography>
+                                    <TextField 
+                                        fullWidth 
+                                        type="email"
+                                        placeholder="you@example.com"
+                                        value={email} 
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required 
+                                        variant="outlined" 
+                                    />
+                                </Box>
                                 <Button type="submit" variant="contained" fullWidth disabled={loading}
                                     sx={{ borderRadius: 3, py: 1.5, textTransform: 'none', fontWeight: 700 }}>
                                     {loading ? <CircularProgress size={22} color="inherit" /> : "Send Reset Link"}

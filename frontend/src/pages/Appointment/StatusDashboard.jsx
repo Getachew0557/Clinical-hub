@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Alert, Button, Typography } from '@mui/material';
+import { Alert, Button, Typography, Box } from '@mui/material';
 import { CalendarPlus } from 'lucide-react';
 import useStatusDashboard from '../../hooks/useStatusDashboard';
 import StatusBucket from '../../components/appointments/StatusBucket';
@@ -40,7 +40,8 @@ export default function StatusDashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+      <div className="flex flex-col gap-4 h-full">
       {/* Header */}
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
@@ -117,5 +118,6 @@ export default function StatusDashboard() {
         />
       )}
     </div>
+  </Box>
   );
 }

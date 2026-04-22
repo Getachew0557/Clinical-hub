@@ -12,16 +12,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const gateway = { name: 'api-gateway', color: '\x1b[36m' };
 
 // Other services start after gateway is up, with small delays
+// patient-service   → includes: emr + billing
+// appointment-service → includes: notifications + video signaling
+// doctor-service    → includes: inventory + reports
 const services = [
   { name: 'auth-service',        color: '\x1b[35m', delay: 2000  },
   { name: 'patient-service',     color: '\x1b[34m', delay: 4000  },
   { name: 'appointment-service', color: '\x1b[32m', delay: 6000  },
   { name: 'doctor-service',      color: '\x1b[37m', delay: 8000  },
-  { name: 'notification-service',color: '\x1b[90m', delay: 10000 },
-  { name: 'billing-service',     color: '\x1b[31m', delay: 12000 },
-  { name: 'emr-service',         color: '\x1b[33m', delay: 14000 },
-  { name: 'inventory-service',   color: '\x1b[94m', delay: 16000 },
-  { name: 'report-service',      color: '\x1b[92m', delay: 18000 },
+  { name: 'ai-service',          color: '\x1b[92m', delay: 10000 },
 ];
 
 const RESET = '\x1b[0m';

@@ -275,7 +275,8 @@ export default function PatientEMRPage() {
     if (loading) return <Box className="flex h-screen items-center justify-center"><CircularProgress /></Box>;
 
     return (
-        <Box className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 12 }}>
+            <Box className="flex flex-col gap-6">
             <style>
                 {`
                 @media print {
@@ -341,7 +342,7 @@ export default function PatientEMRPage() {
                                 placeholder="Search patients by name or ID..."
                                 variant="standard"
                                 fullWidth
-                                InputProps={{ disableUnderline: true, sx: { fontSize: '0.875rem' } }}
+                                InputProps={{ disableUnderline: true }}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -478,13 +479,13 @@ export default function PatientEMRPage() {
                                                         <Typography variant="h6" className="mt-1" fontWeight={800} sx={{ color: '#1e293b' }}>{record.diagnosis}</Typography>
                                                     </Box>
                                                     <Box>
-                                                        <Typography variant="caption" fontWeight={700} className="text-emerald-500 uppercase tracking-wider">Treatment Provided</Typography>
-                                                        <Typography variant="body2" className="mt-1">{record.treatment}</Typography>
+                                                        <Typography variant="caption" fontWeight={800} className="text-emerald-500 uppercase tracking-wider">Treatment Provided</Typography>
+                                                        <Typography variant="body2" className="mt-1" fontWeight={500}>{record.treatment}</Typography>
                                                     </Box>
                                                     <Box className="flex justify-between items-end">
                                                         {record.notes && (
                                                             <Box sx={{ flex: 1 }}>
-                                                                <Typography variant="caption" fontWeight={700} className="text-slate-400 uppercase tracking-wider">Clinical Notes</Typography>
+                                                                <Typography variant="caption" fontWeight={800} className="text-slate-400 uppercase tracking-wider">Clinical Notes</Typography>
                                                                 <Typography variant="body2" className="mt-1 text-slate-600 italic">"{record.notes}"</Typography>
                                                             </Box>
                                                         )}
@@ -513,32 +514,47 @@ export default function PatientEMRPage() {
                         <DialogTitle fontWeight={800}>{editingRecord ? 'Edit Entry' : 'New Medical Entry'}</DialogTitle>
                         <DialogContent>
                             <Box className="flex flex-col gap-4 mt-2">
-                                <TextField
-                                    label="Diagnosis"
-                                    fullWidth
-                                    variant="outlined"
-                                    required
-                                    value={formData.diagnosis}
-                                    onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-                                />
-                                <TextField
-                                    label="Treatment Provided"
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    variant="outlined"
-                                    value={formData.treatment}
-                                    onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
-                                />
-                                <TextField
-                                    label="Clinical Notes"
-                                    fullWidth
-                                    multiline
-                                    rows={4}
-                                    variant="outlined"
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                />
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Diagnosis / Chief Complaint
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        required
+                                        placeholder="e.g. Chronic Periodontitis"
+                                        value={formData.diagnosis}
+                                        onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+                                    />
+                                </Box>
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Treatment Provided
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        multiline
+                                        rows={3}
+                                        variant="outlined"
+                                        placeholder="Describe the treatment..."
+                                        value={formData.treatment}
+                                        onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                                    />
+                                </Box>
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Clinical Notes
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        multiline
+                                        rows={4}
+                                        variant="outlined"
+                                        placeholder="Internal clinical observations..."
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                    />
+                                </Box>
 
                                 {/* Gemini AI Tools */}
                                 <Box sx={{ mt: 1, p: 2, borderRadius: 4, bgcolor: '#f0f9ff', border: '1px dashed #3b82f6' }}>
@@ -574,7 +590,7 @@ export default function PatientEMRPage() {
                                             <Typography variant="caption" fontWeight={800} color="primary" sx={{ display: 'block', mb: 1, textTransform: 'uppercase' }}>
                                                 {aiResult.type === 'analysis' ? 'AI Assessment' : 'AI Treatment Suggestion'}
                                             </Typography>
-                                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', color: '#334155' }}>
+                                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', color: '#334155' }}>
                                                 {aiResult.text}
                                             </Typography>
                                             <Box className="flex justify-end mt-2">
@@ -586,7 +602,7 @@ export default function PatientEMRPage() {
                                                         setFormData(prev => ({ ...prev, [key]: prev[key] + '\n\n' + aiResult.text }));
                                                         setAiResult(null);
                                                     }}
-                                                    sx={{ borderRadius: 2, fontSize: '0.7rem' }}
+                                                    sx={{ borderRadius: 2 }}
                                                 >
                                                     Apply to {aiResult.type === 'analysis' ? 'Notes' : 'Treatment'}
                                                 </Button>
@@ -607,5 +623,6 @@ export default function PatientEMRPage() {
                 </>
             )}
         </Box>
+    </Box>
     );
 }

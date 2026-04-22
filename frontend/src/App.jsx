@@ -46,83 +46,160 @@ const theme = createTheme({
     text: { primary: '#0f172a', secondary: '#64748b' },
   },
   typography: {
-    fontFamily: '"Inter", "system-ui", "-apple-system", "sans-serif"',
+    fontFamily: '"Outfit", system-ui, -apple-system, sans-serif',
     htmlFontSize: 16,
-    fontSize: 14,
-    // Page titles — used as the main heading of each page
-    h1: { fontWeight: 800, fontSize: '1.75rem', lineHeight: 1.2 },   // 28px
-    h2: { fontWeight: 800, fontSize: '1.5rem',  lineHeight: 1.25 },  // 24px
-    h3: { fontWeight: 800, fontSize: '1.25rem', lineHeight: 1.3 },   // 20px
-    h4: { fontWeight: 800, fontSize: '1.25rem', lineHeight: 1.3 },   // 20px — was 1.75rem (too large)
-    h5: { fontWeight: 700, fontSize: '1.125rem', lineHeight: 1.35 }, // 18px — was 1.5rem (too large)
-    h6: { fontWeight: 700, fontSize: '1rem',    lineHeight: 1.4 },   // 16px
-    // Card/section headings
+    fontSize: 15,
+    // ── Headings: bold, decreasing size ──
+    h1: { fontWeight: 700, fontSize: '1.75rem',  lineHeight: 1.2  }, // 28px
+    h2: { fontWeight: 700, fontSize: '1.5rem',   lineHeight: 1.25 }, // 24px
+    h3: { fontWeight: 700, fontSize: '1.25rem',  lineHeight: 1.3  }, // 20px
+    h4: { fontWeight: 700, fontSize: '1.125rem', lineHeight: 1.3  }, // 18px
+    h5: { fontWeight: 600, fontSize: '1rem',     lineHeight: 1.35 }, // 16px
+    h6: { fontWeight: 600, fontSize: '0.9375rem',lineHeight: 1.4  }, // 15px
+    // ── Labels / subtitles: medium weight ──
     subtitle1: { fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.5 }, // 15px
     subtitle2: { fontWeight: 600, fontSize: '0.875rem',  lineHeight: 1.5 }, // 14px
-    // Body text — consistent 14px everywhere
-    body1: { fontWeight: 400, fontSize: '0.875rem', lineHeight: 1.6 },
-    body2: { fontWeight: 400, fontSize: '0.875rem', lineHeight: 1.6 },
-    // Labels, hints, metadata
-    caption: { fontWeight: 400, fontSize: '0.75rem', lineHeight: 1.5 },  // 12px
-    overline: { fontWeight: 700, fontSize: '0.6875rem', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1.5 },
-    button: { textTransform: 'none', fontWeight: 600, fontSize: '0.875rem' },
+    // ── Body / data: regular weight ──
+    body1: { fontWeight: 400, fontSize: '0.9375rem', lineHeight: 1.6 }, // 15px
+    body2: { fontWeight: 400, fontSize: '0.875rem',  lineHeight: 1.6 }, // 14px
+    // ── Small text ──
+    caption:  { fontWeight: 400, fontSize: '0.8125rem', lineHeight: 1.5 }, // 13px
+    overline: { fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1.5 }, // 12px
+    // ── Buttons: medium weight, no caps ──
+    button: { textTransform: 'none', fontWeight: 600, fontSize: '0.9375rem' },
   },
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 8 },
   components: {
+    // ── Buttons: one consistent size system ──
     MuiButton: {
+      defaultProps: { disableElevation: true },
       styleOverrides: {
         root: {
-          padding: '8px 20px',
+          // Default (medium) size
+          height: '40px',
+          padding: '0 20px',
+          fontSize: '0.9375rem',
+          fontWeight: 600,
+          lineHeight: 1,
+          borderRadius: '10px',
           boxShadow: 'none',
-          fontSize: '0.875rem',
-          '&:hover': { boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' },
+          '&:hover': { boxShadow: 'none' },
         },
-        sizeSmall: { padding: '5px 14px', fontSize: '0.8125rem' },
-        sizeLarge: { padding: '11px 28px', fontSize: '0.9375rem' },
+        sizeSmall: {
+          height: '32px',
+          padding: '0 14px',
+          fontSize: '0.8125rem',
+          borderRadius: '8px',
+        },
+        sizeLarge: {
+          height: '48px',
+          padding: '0 28px',
+          fontSize: '1rem',
+          borderRadius: '12px',
+        },
       },
     },
+    MuiIconButton: {
+      styleOverrides: {
+        root: { borderRadius: '8px' },
+        sizeMedium: { width: '40px', height: '40px' },
+        sizeSmall:  { width: '32px', height: '32px' },
+      },
+    },
+    // ── Typography ──
+    MuiTypography: {
+      styleOverrides: {
+        overline: { display: 'block', marginBottom: '4px', color: '#64748b' },
+      },
+    },
+    // ── Table: header bold, body regular ──
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          fontSize: '0.9375rem',
+          fontWeight: 400,
+          padding: '12px 16px',
+          color: '#0f172a',
+        },
+        head: {
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+          color: '#64748b',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          backgroundColor: '#f8fafc',
+        },
+      },
+    },
+    // ── Chips: consistent small size ──
+    MuiChip: {
+      styleOverrides: {
+        root:      { fontSize: '0.8125rem', fontWeight: 500, height: '26px' },
+        sizeSmall: { fontSize: '0.75rem',   fontWeight: 500, height: '22px' },
+        label:     { paddingLeft: '10px', paddingRight: '10px' },
+      },
+    },
+    // ── Inputs ──
     MuiTextField: {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 12,
+            borderRadius: '10px',
             backgroundColor: '#f8fafc',
-            fontSize: '0.875rem',
+            fontSize: '0.9375rem',
             '& fieldset': { borderColor: '#e2e8f0' },
             '&:hover fieldset': { borderColor: '#cbd5e1' },
           },
-          '& .MuiInputLabel-root': { fontSize: '0.875rem' },
+          '& .MuiInputLabel-root': { fontSize: '0.9375rem' },
+          '& .MuiInputBase-input': { fontWeight: 400 },
         },
       },
     },
-    MuiCard: {
-      styleOverrides: { root: { borderRadius: 20 } },
-    },
-    MuiChip: {
+    MuiSelect: {
       styleOverrides: {
-        root: { fontSize: '0.75rem', fontWeight: 600 },
-        sizeSmall: { fontSize: '0.6875rem' },
+        select: { fontSize: '0.9375rem', fontWeight: 400 },
       },
     },
-    MuiTableCell: {
-      styleOverrides: {
-        root: { fontSize: '0.875rem', padding: '10px 16px' },
-        head: { fontSize: '0.8125rem', fontWeight: 700 },
-      },
-    },
+    // ── Tabs ──
     MuiTab: {
       styleOverrides: {
-        root: { fontSize: '0.875rem', fontWeight: 600, textTransform: 'none', minHeight: 44 },
+        root: {
+          fontSize: '0.9375rem',
+          fontWeight: 500,
+          textTransform: 'none',
+          minHeight: '44px',
+          '&.Mui-selected': { fontWeight: 700 },
+        },
       },
     },
+    // ── Menu items ──
     MuiMenuItem: {
-      styleOverrides: { root: { fontSize: '0.875rem' } },
+      styleOverrides: {
+        root: { fontSize: '0.9375rem', fontWeight: 400, minHeight: '40px' },
+      },
     },
+    // ── Alerts ──
     MuiAlert: {
-      styleOverrides: { message: { fontSize: '0.875rem' } },
+      styleOverrides: {
+        message: { fontSize: '0.9375rem', fontWeight: 400 },
+      },
     },
+    // ── Tooltips ──
     MuiTooltip: {
-      styleOverrides: { tooltip: { fontSize: '0.75rem' } },
+      styleOverrides: {
+        tooltip: { fontSize: '0.8125rem', fontWeight: 400 },
+      },
+    },
+    // ── Cards ──
+    MuiCard: {
+      styleOverrides: { root: { borderRadius: '16px' } },
+    },
+    // ── List items ──
+    MuiListItemText: {
+      styleOverrides: {
+        primary:   { fontSize: '0.9375rem', fontWeight: 400 },
+        secondary: { fontSize: '0.8125rem', fontWeight: 400 },
+      },
     },
   },
 });

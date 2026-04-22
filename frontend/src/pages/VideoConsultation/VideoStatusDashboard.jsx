@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Alert, Button, Typography } from '@mui/material';
+import { Alert, Button, Typography, Box } from '@mui/material';
 import { Video } from 'lucide-react';
 import useStatusDashboard from '../../hooks/useStatusDashboard';
 import StatusBucket from '../../components/appointments/StatusBucket';
@@ -34,7 +34,8 @@ export default function VideoStatusDashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+      <div className="flex flex-col gap-4 h-full">
       {/* Header */}
       <div className="flex items-center gap-3 flex-shrink-0">
         <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
@@ -91,6 +92,7 @@ export default function VideoStatusDashboard() {
           })
         )}
       </div>
-    </div>
+      </div>
+    </Box>
   );
 }

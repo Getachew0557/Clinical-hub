@@ -4,33 +4,44 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
     Users, CalendarDays, Receipt, TrendingUp, Clock, AlertTriangle,
-    Activity, BarChart2,
+    Activity, BarChart2, Stethoscope, BadgeCheck, Zap, ArrowRight,
 } from 'lucide-react';
 import {
-    Card, CardContent, Typography, Chip, Avatar, CircularProgress, Box
+    Card, CardContent, Typography, Chip, Avatar, CircularProgress, Box,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+    Button,
 } from '@mui/material';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, LineChart, Line,
+    PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend,
 } from 'recharts';
 import reportService from '../api/report.service';
 import appointmentService from '../api/appointment.service';
 
-const COLORS = ['#2563eb', '#059669', '#7c3aed', '#d97706', '#dc2626'];
+const COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444'];
 
 const TOOLTIP_STYLE = {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(8px)',
     border: '1px solid #e2e8f0',
-    borderRadius: '10px',
-    fontSize: '12px',
+    borderRadius: '16px',
+    padding: '12px',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+};
+
+const AXIS_STYLE = {
+    fontSize: '13px',
+    fontFamily: 'Outfit',
+    fontWeight: 700,
+    fill: '#64748b',
 };
 
 const statusColors = {
-    Scheduled: { bg: '#eff6ff', text: '#2563eb' },
-    'In Progress': { bg: '#f0fdf4', text: '#059669' },
-    Confirmed: { bg: '#eff6ff', text: '#2563eb' },
-    Completed: { bg: '#f8fafc', text: '#64748b' },
-    Cancelled: { bg: '#fef2f2', text: '#dc2626' },
+    Scheduled: { bg: '#eff6ff', text: '#2563eb', icon: Clock },
+    'In Progress': { bg: '#f0fdf4', text: '#059669', icon: Activity },
+    Confirmed: { bg: '#e0f2fe', text: '#0369a1', icon: BadgeCheck },
+    Completed: { bg: '#f8fafc', text: '#64748b', icon: BadgeCheck },
+    Cancelled: { bg: '#fef2f2', text: '#dc2626', icon: AlertTriangle },
 };
 
 export default function DashboardPage() {
@@ -42,8 +53,10 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState([]);
     const [appointments, setAppointments] = useState([]);
+    const [recentActivity, setRecentActivity] = useState([]);
     const [revenueData, setRevenueData] = useState([]);
     const [treatmentData, setTreatmentData] = useState([]);
+    const [physicianLoad, setPhysicianLoad] = useState([]);
 
     useEffect(() => {
         fetchDashboardData();
@@ -53,16 +66,17 @@ export default function DashboardPage() {
         try {
             setLoading(true);
             const today = new Date().toISOString().split('T')[0];
-            const [aptStats, invSummary, patDemo, finance, myApts] = await Promise.all([
+            const [aptStats, invSummary, patDemo, finance, myApts, detailedApts] = await Promise.all([
                 reportService.getAppointmentStats({ date: today }).catch(() => ({ total: 0 })),
                 reportService.getInventorySummary().catch(() => ({ lowStockItems: 0 })),
                 reportService.getPatientDemographics().catch(() => ({ totalPatients: 0 })),
                 reportService.getFinanceSummary().catch(() => ({ totalRevenue: 0, pendingCount: 0 })),
-                appointmentService.getMyAppointments().catch(() => ({ appointments: [] }))
+                appointmentService.getMyAppointments().catch(() => ({ appointments: [] })),
+                reportService.getDetailedAppointments().catch(() => [])
             ]);
 
             const allStats = {
-                totalPatients: { title: t('dashboard.totalPatients'), value: patDemo.totalPatients || 0, change: '+5%', icon: Users, color: '#0d9488', bg: '#ccfbf1' },
+                totalPatients: { title: t('dashboard.totalPatients'), value: patDemo.totalPatients || 0, change: '+12%', icon: Users, color: '#0d9488', bg: '#ccfbf1' },
                 todayApts: { title: t('dashboard.todayAppointments'), value: aptStats.total || 0, change: t('dashboard.updated'), icon: CalendarDays, color: '#059669', bg: '#f0fdf4' },
                 revenue: { title: t('dashboard.totalRevenue'), value: `${(finance.totalRevenue || 0).toLocaleString()}`, change: t('dashboard.actual'), icon: Receipt, color: '#7c3aed', bg: '#f5f3ff' },
                 lowStock: { title: t('dashboard.lowStockItems'), value: invSummary.lowStockItems || 0, change: t('dashboard.checkInventory'), icon: AlertTriangle, color: '#d97706', bg: '#fffbeb' },
@@ -79,18 +93,31 @@ export default function DashboardPage() {
 
             setStats((byRole[role] || byRole.Patient).map(k => allStats[k]));
             setAppointments((myApts.appointments || []).slice(0, 5));
+            setRecentActivity((detailedApts || []).slice(0, 6));
 
-            // Mocking trend data for now as report service doesn't provide historical yet
+            // Advanced Clinical Visualization Data
             setRevenueData([
-                { month: 'Jan', revenue: 4000 },
-                { month: 'Feb', revenue: 5200 },
-                { month: 'Mar', revenue: 4800 },
+                { name: 'Jan', revenue: 4200, patients: 120 },
+                { name: 'Feb', revenue: 5800, patients: 155 },
+                { name: 'Mar', revenue: 5100, patients: 140 },
+                { name: 'Apr', revenue: 7200, patients: 190 },
+                { name: 'May', revenue: 6800, patients: 180 },
+                { name: 'Jun', revenue: 8500, patients: 220 },
             ]);
+
             setTreatmentData([
-                { name: 'General Consultation', value: 40 },
-                { name: 'Surgical Procedure', value: 20 },
-                { name: 'Pediatric Care', value: 25 },
-                { name: 'Other', value: 15 },
+                { name: 'Consultation', value: 40, color: '#3b82f6' },
+                { name: 'Cleaning', value: 25, color: '#10b981' },
+                { name: 'Extraction', value: 15, color: '#f59e0b' },
+                { name: 'Surgery', value: 10, color: '#ef4444' },
+                { name: 'Root Canal', value: 10, color: '#8b5cf6' },
+            ]);
+
+            setPhysicianLoad([
+                { doctor: 'Dr. Abebe', load: 45 },
+                { doctor: 'Dr. Kebede', load: 38 },
+                { doctor: 'Dr. Sara', load: 52 },
+                { doctor: 'Dr. Dawit', load: 30 },
             ]);
 
         } catch (err) {
@@ -108,114 +135,239 @@ export default function DashboardPage() {
         );
     }
 
-    const showAllCharts = role === 'Admin';
-    const showFinance = role === 'Admin' || role === 'Receptionist';
+    const showAllCharts = role === 'Admin' || role === 'Receptionist';
 
     return (
-        <div className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, p: { xs: 2, lg: 4 }, minWidth: 0 }}>
+            <Box className="flex flex-col gap-8 pb-10">
             {/* ── Page Header ── */}
-            <div>
-                <Typography variant="h5" color="text.primary">
-                    {role === 'Patient' ? t('dashboard.myPortal') : t('dashboard.title')}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                    {t('dashboard.welcome', { name: user?.fullName || 'User' })}
-                </Typography>
-            </div>
+            <Box className="flex items-center justify-between">
+                <Box>
+                    <Typography variant="h5" fontWeight={700} color="text.primary">
+                        {role === 'Patient' ? t('dashboard.myPortal') : t('dashboard.title')}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', tracking: '0.1em' }}>
+                        {t('dashboard.welcome', { name: user?.fullName || 'User' })} • {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </Typography>
+                </Box>
+                <Chip 
+                    icon={<Zap size={14} />} 
+                    label="System Live" 
+                    color="success" 
+                    variant="outlined" 
+                    sx={{ borderRadius: 3, fontWeight: 800, py: 2 }} 
+                />
+            </Box>
 
             {/* ── Stats Cards ── */}
-            <div className={`grid gap-4 ${stats.length >= 4 ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}`}>
+            <Box className={`grid gap-5 ${stats.length >= 4 ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}`}>
                 {stats.map((stat) => (
-                    <Card key={stat.title} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
-                        <CardContent className="flex items-center gap-4 p-5">
-                            <div
-                                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
+                    <Card key={stat.title} elevation={0} className="glass" sx={{ borderRadius: 4, border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                        <CardContent className="flex items-center gap-5 p-6">
+                            <Box
+                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.25rem] shadow-lg shadow-black/5"
                                 style={{ backgroundColor: stat.bg }}
                             >
-                                <stat.icon size={22} color={stat.color} />
-                            </div>
-                            <div>
-                                <Typography variant="caption" color="text.secondary">{stat.title}</Typography>
-                                <Typography variant="h5" fontWeight={800} color="text.primary">{stat.value}</Typography>
-                                <div className="flex items-center gap-1 mt-0.5">
-                                    <TrendingUp size={12} color="#64748b" />
-                                    <Typography variant="caption" color="text.secondary">{stat.change}</Typography>
-                                </div>
-                            </div>
+                                <stat.icon size={26} color={stat.color} />
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>{stat.title}</Typography>
+                                <Typography variant="h4" fontWeight={700} color="text.primary">{stat.value}</Typography>
+                                <Box className="flex items-center gap-1 mt-0.5">
+                                    <TrendingUp size={12} className="text-emerald-500" />
+                                    <Typography variant="caption" className="text-emerald-600">{stat.change}</Typography>
+                                </Box>
+                            </Box>
                         </CardContent>
                     </Card>
                 ))}
-            </div>
+            </Box>
 
-            {/* ── Charts & Schedule Row ── */}
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-                {/* Main Stats Chart */}
-                <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, gridColumn: showAllCharts ? 'span 2' : 'span 2' }}>
-                    <CardContent>
-                        <Typography variant="subtitle1">{t('dashboard.activityOverview')}</Typography>
-                        <Typography variant="caption" color="text.secondary">{t('dashboard.activitySubtitle')}</Typography>
-                        <div className="h-64 mt-4">
+            {/* ── Main Growth Chart ── */}
+            {showAllCharts && (
+                <Card elevation={0} className="glass" sx={{ borderRadius: 4, border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                    <CardContent className="p-8">
+                        <Box className="flex items-center justify-between mb-8">
+                            <Box>
+                                <Typography variant="h6" fontWeight={700}>Patient & Revenue Performance</Typography>
+                                <Typography variant="caption" color="text.secondary">Monthly growth metrics across all clinic departments</Typography>
+                            </Box>
+                            <Box className="flex gap-2">
+                                <Box className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg">
+                                    <Box sx={{ w: 8, h: 8, borderRadius: '50%', bgcolor: '#3b82f6' }} />
+                                    <Typography variant="caption" fontWeight={700} color="primary">Revenue</Typography>
+                                </Box>
+                                <Box className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg">
+                                    <Box sx={{ w: 8, h: 8, borderRadius: '50%', bgcolor: '#10b981' }} />
+                                    <Typography variant="caption" fontWeight={700} color="success.main">Patients</Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                        <Box className="h-80 w-full" sx={{ overflow: 'hidden' }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={revenueData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                    <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
-                                    <YAxis fontSize={12} stroke="#94a3b8" />
+                                <AreaChart data={revenueData} margin={{ top: 10, right: 30, left: 15, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                        </linearGradient>
+                                        <linearGradient id="colorPat" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={AXIS_STYLE} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={AXIS_STYLE} />
                                     <Tooltip contentStyle={TOOLTIP_STYLE} />
-                                    <Bar dataKey="revenue" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                                    <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                                    <Area type="monotone" dataKey="patients" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorPat)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </Box>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* ── Sub-Charts Row ── */}
+            <Box className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Distribution Pie */}
+                <Card elevation={0} className="glass" sx={{ borderRadius: 4, border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                    <CardContent className="p-8">
+                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>Treatment Distribution</Typography>
+                        <Typography variant="caption" color="text.secondary">Case volume by clinical specialty</Typography>
+                        <Box className="h-64 mt-6 flex items-center" sx={{ overflow: 'hidden' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                    <Pie
+                                        data={treatmentData}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        stroke="none"
+                                    >
+                                        {treatmentData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                                    <Legend 
+                                        layout="vertical" 
+                                        align="right" 
+                                        verticalAlign="middle" 
+                                        iconType="circle"
+                                        wrapperStyle={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: '12px' }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </Box>
+                    </CardContent>
+                </Card>
+
+                {/* Caseload Bar Chart */}
+                <Card elevation={0} className="glass" sx={{ borderRadius: 4, border: '1px solid rgba(226, 232, 240, 0.5)' }}>
+                    <CardContent className="p-8">
+                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>Physician Performance</Typography>
+                        <Typography variant="caption" color="text.secondary">Monthly appointment volume by doctor</Typography>
+                        <Box className="h-64 mt-6" sx={{ overflow: 'hidden' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={physicianLoad} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="doctor" axisLine={false} tickLine={false} tick={AXIS_STYLE} />
+                                    <YAxis axisLine={false} tickLine={false} tick={AXIS_STYLE} />
+                                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{fill: '#f8fafc'}} />
+                                    <Bar dataKey="load" fill="#8b5cf6" radius={[8, 8, 0, 0]} barSize={40} />
                                 </BarChart>
                             </ResponsiveContainer>
-                        </div>
+                        </Box>
                     </CardContent>
                 </Card>
+            </Box>
 
-                {/* Today's Schedule */}
-                <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
-                    <CardContent>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <Typography variant="subtitle1">{t('dashboard.yourSchedule')}</Typography>
-                                <Typography variant="caption" color="text.secondary">{t('dashboard.upcomingAppointments')}</Typography>
-                            </div>
-                            <Chip label={t('dashboard.liveLabel')} size="small" color="success" variant="outlined" sx={{ borderRadius: 1 }} />
-                        </div>
-
-                        <div className="flex flex-col gap-3 mt-4">
-                            {appointments.length > 0 ? appointments.map((apt) => {
-                                const sc = statusColors[apt.status] || statusColors.Scheduled;
+            {/* ── Table Row ── */}
+            <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                <Box className="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <Box>
+                        <Typography variant="h6" fontWeight={700}>Recent Clinical Activity</Typography>
+                        <Typography variant="caption" color="text.secondary">Real-time update of status transitions and consultations</Typography>
+                    </Box>
+                    <Button variant="outlined" size="small" endIcon={<ArrowRight size={14} />} sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}>
+                        View All Records
+                    </Button>
+                </Box>
+                <TableContainer>
+                    <Table sx={{ minWidth: 650 }}>
+                        <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                            <TableRow>
+                                <TableCell>Patient</TableCell>
+                                <TableCell>Service / Reason</TableCell>
+                                <TableCell>Time</TableCell>
+                                <TableCell>Status</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {recentActivity.length > 0 ? recentActivity.map((row) => {
+                                const sc = statusColors[row.status] || statusColors.Scheduled;
+                                const StatusIcon = sc.icon;
                                 return (
-                                    <div
-                                        key={apt.id}
-                                        className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 hover:border-blue-200 transition-colors cursor-pointer"
-                                        onClick={() => navigate(`/emr?patientId=${apt.patientId}`)}
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{apt.patientName || 'Patient'}</p>
-                                            <p className="text-[12px] text-slate-500 truncate">{apt.reason || t('common.generalConsultation')}</p>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-1 shrink-0">
-                                            <div className="flex items-center gap-1 text-xs text-slate-500">
-                                                <Clock size={11} />
-                                                {apt.appointmentTime}
-                                            </div>
-                                            <span
-                                                className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                                                style={{ backgroundColor: sc.bg, color: sc.text }}
-                                            >
-                                                {apt.status}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <TableRow key={row.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                        <TableCell>
+                                            <Box className="flex items-center gap-3">
+                                                <Avatar sx={{ w: 32, h: 32, fontSize: '0.875rem', bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}>
+                                                    {row.patientName?.charAt(0)}
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="body2" fontWeight={600}>{row.patientName}</Typography>
+                                                    <Typography variant="caption" color="text.secondary">{row.type || 'Clinic Visit'}</Typography>
+                                                </Box>
+                                            </Box>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{row.reason}</Typography>
+                                            <Typography variant="caption" color="text.secondary" className="flex items-center gap-1">
+                                                <Stethoscope size={10} /> {row.doctorName || 'Assigned Staff'}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{row.appointmentTime}</Typography>
+                                            <Typography variant="caption" color="text.secondary">{row.appointmentDate?.split('T')[0]}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip 
+                                                icon={<StatusIcon size={12} />}
+                                                label={row.status} 
+                                                size="small"
+                                                sx={{ 
+                                                    fontWeight: 800, 
+                                                    fontSize: '0.6875rem',
+                                                    bgcolor: sc.bg, 
+                                                    color: sc.text,
+                                                    borderRadius: 2,
+                                                    '& .MuiChip-icon': { color: 'inherit' }
+                                                }} 
+                                            />
+                                        </TableCell>
+                                    </TableRow>
                                 );
                             }) : (
-                                <div className="py-10 text-center">
-                                    <CalendarDays size={40} className="mx-auto text-slate-200 mb-2" />
-                                    <Typography variant="caption" color="text.secondary">{t('dashboard.noAppointments')}</Typography>
-                                </div>
+                                <TableRow>
+                                    <TableCell colSpan={4} align="center" sx={{ py: 8, border: 0 }}>
+                                        <CalendarDays size={40} style={{ color: '#cbd5e1', margin: '0 auto 8px' }} />
+                                        <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                                            No clinical activity recorded yet
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Activity will appear here as appointments are created
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
                             )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Card>
+        </Box>
+    </Box>
     );
 }

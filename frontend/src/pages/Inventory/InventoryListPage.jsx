@@ -96,11 +96,12 @@ export default function InventoryListPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+            <div className="flex flex-col gap-6">
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" color="text.primary">
+                    <Typography variant="h5" fontWeight={700} color="text.primary">
                         Inventory Management
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
@@ -165,78 +166,106 @@ export default function InventoryListPage() {
                                     key={item.id}
                                     elevation={0}
                                     sx={{
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: 4,
-                                        '&:hover': { border: '1px solid #94a3b8', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
-                                        transition: 'all 0.2s'
+                                        background: 'rgba(255, 255, 255, 0.7)',
+                                        backdropFilter: 'blur(12px)',
+                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                        borderRadius: 5,
+                                        overflow: 'hidden',
+                                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        '&:hover': {
+                                            transform: 'translateY(-8px)',
+                                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                                            borderColor: 'primary.main',
+                                        }
                                     }}
                                 >
-                                    <CardContent className="p-5">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-600">
-                                                    <Package size={24} />
+                                    <CardContent className="p-0">
+                                        <div className="p-6 flex justify-between items-start">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 shadow-sm">
+                                                    <Package size={28} />
                                                 </div>
                                                 <div>
-                                                    <Typography variant="subtitle1" color="text.primary" className="leading-tight">
+                                                    <Typography variant="subtitle2" fontWeight={600} color="text.primary" sx={{ lineHeight: 1.3 }}>
                                                         {item.name}
                                                     </Typography>
-                                                    <Typography variant="caption" color="text.secondary">
+                                                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                                         {item.category}
                                                     </Typography>
                                                 </div>
                                             </div>
-                                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
-                                                <MoreHorizontal size={20} />
+                                            <IconButton 
+                                                size="small" 
+                                                onClick={(e) => handleMenuOpen(e, item)}
+                                                sx={{ bgcolor: 'white/50', '&:hover': { bgcolor: 'white' }, mr: -1, mt: -1 }}
+                                            >
+                                                <MoreHorizontal size={18} />
                                             </IconButton>
                                         </div>
 
-                                        <div className="flex items-center justify-between mb-3 px-1">
-                                            <div>
-                                                <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ display: 'inline-block', mr: 1 }}>
-                                                    {item.quantity}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary" sx={{ display: 'inline-block' }}>
-                                                    {item.unit}
-                                                </Typography>
+                                        <div className="px-6 pb-6 space-y-5">
+                                            <div className="flex items-end justify-between">
+                                                <div className="flex flex-col">
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 0.5 }}>
+                                                        Stock Level
+                                                    </Typography>
+                                                    <div className="flex items-baseline gap-1.5">
+                                                        <Typography variant="h5" fontWeight={700} color="text.primary">
+                                                            {item.quantity}
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {item.unit}
+                                                        </Typography>
+                                                    </div>
+                                                </div>
+                                                <Chip
+                                                    label={status.label}
+                                                    size="small"
+                                                    color={status.color}
+                                                    icon={<status.icon size={14} />}
+                                                    sx={{ fontWeight: 800, borderRadius: 2, px: 1 }}
+                                                />
                                             </div>
-                                            <Chip
-                                                label={status.label}
-                                                size="small"
-                                                color={status.color}
-                                                icon={<status.icon size={14} />}
-                                                sx={{ fontWeight: 700, borderRadius: 2 }}
-                                            />
+
+                                            <Box sx={{ width: '100%' }}>
+                                                <div className="flex justify-between mb-2">
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Inventory Health</Typography>
+                                                    <Typography variant="caption" fontWeight={600} color={`${status.color}.main`}>{Math.round(percentWarning)}%</Typography>
+                                                </div>
+                                                <LinearProgress
+                                                    variant="determinate"
+                                                    value={percentWarning}
+                                                    color={status.color}
+                                                    sx={{ height: 10, borderRadius: 5, backgroundColor: '#f1f5f9', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}
+                                                />
+                                                <div className="flex justify-between mt-2 text-slate-500">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <AlertTriangle size={12} className="text-amber-500" />
+                                                        <Typography variant="caption">Reorder: {item.reorderLevel}</Typography>
+                                                    </div>
+                                                    {item.pricePerUnit && (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
+                                                            <Typography variant="caption">ETB {item.pricePerUnit}/{item.unit}</Typography>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </Box>
                                         </div>
 
-                                        <Box sx={{ width: '100%', mb: 3 }}>
-                                            <LinearProgress
-                                                variant="determinate"
-                                                value={percentWarning}
-                                                color={status.color}
-                                                sx={{ height: 6, borderRadius: 3, backgroundColor: '#f1f5f9' }}
-                                            />
-                                            <div className="flex justify-between mt-1.5">
-                                                <Typography variant="caption" color="text.secondary">Reorder Level: {item.reorderLevel}</Typography>
-                                                {item.pricePerUnit && <Typography variant="caption" color="text.secondary font-medium">${item.pricePerUnit}/{item.unit}</Typography>}
+                                        {['Admin', 'Receptionist'].includes(role) && (
+                                            <div className="px-4 pb-4 pt-2 border-t border-slate-100">
+                                                <Button
+                                                    fullWidth
+                                                    variant="contained"
+                                                    size="medium"
+                                                    onClick={() => { setSelectedItem(item); setStockModalOpen(true); }}
+                                                >
+                                                    Update Stock
+                                                </Button>
                                             </div>
-                                        </Box>
+                                        )}
                                     </CardContent>
-
-                                    {/* Quick Actions Footer */}
-                                    {['Admin', 'Receptionist'].includes(role) && (
-                                        <div className="border-t border-slate-100 p-2 flex bg-slate-50/50">
-                                            <Button
-                                                fullWidth
-                                                size="small"
-                                                color="primary"
-                                                onClick={() => { setSelectedItem(item); setStockModalOpen(true); }}
-                                                sx={{ fontWeight: 600 }}
-                                            >
-                                                Update Stock
-                                            </Button>
-                                        </div>
-                                    )}
                                 </Card>
                             );
                         })
@@ -287,6 +316,7 @@ export default function InventoryListPage() {
                 onSuccess={fetchInventory}
             />
         </div>
+    </Box>
     );
 }
 

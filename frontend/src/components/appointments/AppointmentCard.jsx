@@ -2,157 +2,144 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
 import { shouldShowJoinButton } from '../../utils/appointmentDashboard';
+import { Video, User, Stethoscope, Clock, FileText } from 'lucide-react';
 
-/**
- * Inline action buttons per role × status matrix (from design doc):
- *
- * Doctor + Confirmed     → "Start Consultation"  (→ In Progress)
- * Doctor + In Progress   → "Mark as Completed"   (→ Completed)
- * Admin/Recept + Pending → "Confirm", "Cancel"
- * Admin/Recept + Confirmed → "Start", "Cancel"
- * Admin/Recept + In Progress → "Complete", "Cancel"
- */
 function getActions(role, status) {
   const isDoctor = role === 'Doctor';
   const isStaff  = role === 'Admin' || role === 'Receptionist';
 
   if (isDoctor) {
-    if (status === 'Confirmed')   return [{ label: 'Start Consultation', next: 'In Progress', variant: 'primary' }];
-    if (status === 'In Progress') return [{ label: 'Mark as Completed',  next: 'Completed',   variant: 'success' }];
+    if (status === 'Confirmed')   return [{ label: 'Start',    next: 'In Progress', variant: 'primary' }];
+    if (status === 'In Progress') return [{ label: 'Complete', next: 'Completed',   variant: 'success' }];
   }
 
   if (isStaff) {
     if (status === 'Pending')     return [
-      { label: 'Confirm', next: 'Confirmed',   variant: 'primary' },
-      { label: 'Cancel',  next: 'Cancelled',   variant: 'danger'  },
+      { label: 'Confirm',  next: 'Confirmed',   variant: 'primary' },
+      { label: 'Cancel',   next: 'Cancelled',   variant: 'danger'  },
     ];
     if (status === 'Confirmed')   return [
-      { label: 'Start',   next: 'In Progress', variant: 'primary' },
-      { label: 'Cancel',  next: 'Cancelled',   variant: 'danger'  },
+      { label: 'Start',    next: 'In Progress', variant: 'primary' },
+      { label: 'Cancel',   next: 'Cancelled',   variant: 'danger'  },
     ];
     if (status === 'In Progress') return [
-      { label: 'Complete', next: 'Completed',  variant: 'success' },
-      { label: 'Cancel',   next: 'Cancelled',  variant: 'danger'  },
+      { label: 'Complete', next: 'Completed',   variant: 'success' },
+      { label: 'Cancel',   next: 'Cancelled',   variant: 'danger'  },
     ];
   }
 
   return [];
 }
 
-const VARIANT_CLASSES = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-  success: 'bg-green-600 hover:bg-green-700 text-white',
-  danger:  'bg-red-600  hover:bg-red-700  text-white',
+// Truncate UUID to last 6 chars with # prefix
+const shortId = (id) => id ? `#${String(id).slice(-6).toUpperCase()}` : '—';
+
+const BTN = {
+  primary: 'bg-teal-600 hover:bg-teal-700 text-white',
+  success: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+  danger:  'bg-red-500 hover:bg-red-600 text-white',
+  video:   'bg-indigo-600 hover:bg-indigo-700 text-white',
 };
 
 export default function AppointmentCard({ appointment, role, isVideo, onStatusChange }) {
   const navigate = useNavigate();
   const [cardError, setCardError] = useState(null);
+  const [busy, setBusy] = useState(false);
 
-  const {
-    id,
-    patientName,
-    patientId,
-    phone,
-    doctorName,
-    appointmentDate,
-    appointmentTime,
-    reason,
-    status,
-  } = appointment;
+  const { id, patientName, patientId, phone, doctorName,
+          appointmentDate, appointmentTime, reason, status } = appointment;
 
-  const actions = getActions(role, status);
+  const actions  = getActions(role, status);
   const showJoin = shouldShowJoinButton(status, isVideo);
 
   const handleAction = async (nextStatus) => {
     setCardError(null);
+    setBusy(true);
     try {
       await onStatusChange(id, nextStatus);
     } catch (err) {
-      setCardError(err?.response?.data?.message || err.message || 'Status update failed');
+      setCardError(err?.response?.data?.message || err.message || 'Update failed');
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-2">
-      {/* Header row: patient info + video icon + badge */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-1.5">
-            {isVideo && (
-              <svg
-                className="w-4 h-4 text-blue-500 flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-label="Video consultation"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M4 8h8a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4a2 2 0 012-2z"
-                />
-              </svg>
-            )}
-            <span className="font-medium text-gray-900 text-sm">{patientName}</span>
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-teal-300 hover:shadow-md transition-all duration-200">
+
+      {/* ── Top strip: name + badge ── */}
+      <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {isVideo && <Video size={13} className="text-indigo-500 shrink-0" />}
+            <span className="font-semibold text-slate-800 text-sm truncate">
+              {patientName || 'Unknown Patient'}
+            </span>
           </div>
-          {(patientId || phone) && (
-            <p className="text-xs text-gray-500 mt-0.5">
-              {patientId && <span>ID: {patientId}</span>}
-              {patientId && phone && <span className="mx-1">·</span>}
-              {phone && <span>{phone}</span>}
-            </p>
-          )}
+          {/* Short ID + phone on one line */}
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[11px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+              {shortId(patientId || id)}
+            </span>
+            {phone && (
+              <span className="text-[11px] text-slate-400 truncate">{phone}</span>
+            )}
+          </div>
         </div>
         <StatusBadge status={status} />
       </div>
 
-      {/* Doctor name — Admin/Receptionist only */}
-      {(role === 'Admin' || role === 'Receptionist') && doctorName && (
-        <p className="text-xs text-gray-600">
-          <span className="font-medium">Doctor:</span> {doctorName}
-        </p>
-      )}
+      {/* ── Meta rows ── */}
+      <div className="px-4 pb-3 space-y-1.5">
+        {(role === 'Admin' || role === 'Receptionist') && doctorName && (
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <Stethoscope size={12} className="shrink-0 text-teal-500" />
+            <span className="text-xs truncate">{doctorName}</span>
+          </div>
+        )}
 
-      {/* Date / time */}
-      <p className="text-xs text-gray-600">
-        {appointmentDate}
-        {appointmentTime && <span className="ml-2">{appointmentTime}</span>}
-      </p>
+        <div className="flex items-center gap-1.5 text-slate-500">
+          <Clock size={12} className="shrink-0" />
+          <span className="text-xs">
+            {appointmentDate}
+            {appointmentTime && <span className="ml-1.5 text-slate-400">{appointmentTime}</span>}
+          </span>
+        </div>
 
-      {/* Reason */}
-      {reason && (
-        <p className="text-xs text-gray-700 line-clamp-2">{reason}</p>
-      )}
+        {reason && (
+          <div className="flex items-start gap-1.5 text-slate-500">
+            <FileText size={12} className="shrink-0 mt-0.5" />
+            <span className="text-xs line-clamp-2 text-slate-600">{reason}</span>
+          </div>
+        )}
+      </div>
 
-      {/* Action buttons */}
+      {/* ── Action buttons ── */}
       {(actions.length > 0 || showJoin) && (
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="px-3 pb-3 flex gap-2">
           {actions.map((action) => (
             <button
               key={action.next}
+              disabled={busy}
               onClick={() => handleAction(action.next)}
-              className={`text-xs px-3 py-1 rounded font-medium transition-colors ${VARIANT_CLASSES[action.variant]}`}
+              className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg transition-colors disabled:opacity-50 ${BTN[action.variant]}`}
             >
               {action.label}
             </button>
           ))}
-
           {showJoin && (
             <button
               onClick={() => navigate(`/video/${id}`)}
-              className="text-xs px-3 py-1 rounded font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+              className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg transition-colors ${BTN.video}`}
             >
-              Join Video Call
+              Join Call
             </button>
           )}
         </div>
       )}
 
-      {/* Inline error */}
       {cardError && (
-        <p className="text-xs text-red-600 mt-1">{cardError}</p>
+        <p className="px-4 pb-3 text-[11px] text-red-500">{cardError}</p>
       )}
     </div>
   );

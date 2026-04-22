@@ -178,7 +178,7 @@ export default function VideoConsultationsList() {
                                     <Chip
                                         label={sc.label}
                                         size="small"
-                                        sx={{ bgcolor: sc.bg, color: sc.text, fontWeight: 700, fontSize: '0.65rem' }}
+                                        sx={{ bgcolor: sc.bg, color: sc.text, fontWeight: 800 }}
                                     />
                                     <div className="w-8 h-8 bg-teal-50 rounded-xl flex items-center justify-center">
                                         <Video className="text-teal-600 w-4 h-4" />

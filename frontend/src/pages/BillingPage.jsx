@@ -57,13 +57,14 @@ const BillingPage = () => {
     }
 
     return (
-        <Box className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+            <Box className="flex flex-col gap-6">
             {/* ── Header ── */}
             <Box>
-                <Typography variant="h5" color="text.primary">
+                <Typography variant="h5" fontWeight={900} color="text.primary">
                     Medical Billing & Invoices
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
                     Manage your clinical fees, payments, and insurance claims
                 </Typography>
             </Box>
@@ -103,13 +104,13 @@ const BillingPage = () => {
                                                 <Receipt size={24} />
                                             </Box>
                                             <Box>
-                                                <Typography variant="subtitle1" color="text.primary">
+                                                <Typography variant="subtitle1" fontWeight={800} color="text.primary">
                                                     {invoice.description || 'Dental Consultation Service'}
                                                 </Typography>
                                                 <Box className="flex items-center gap-3 mt-1">
                                                     <Box className="flex items-center gap-1 text-slate-400">
                                                         <Clock size={14} />
-                                                        <Typography variant="caption">
+                                                        <Typography variant="overline" sx={{ fontWeight: 800 }}>
                                                             {new Date(invoice.createdAt).toLocaleDateString()}
                                                         </Typography>
                                                     </Box>
@@ -118,7 +119,7 @@ const BillingPage = () => {
                                                         label={invoice.status} 
                                                         size="small"
                                                         color={invoice.status === 'Paid' ? 'success' : 'warning'}
-                                                        variant="soft"
+                                                        variant="outlined"
                                                         sx={{ fontWeight: 700, borderRadius: 2 }}
                                                     />
                                                 </Box>
@@ -159,6 +160,7 @@ const BillingPage = () => {
                 )}
             </Grid>
         </Box>
+    </Box>
     );
 };
 

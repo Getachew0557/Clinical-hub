@@ -115,6 +115,12 @@ export const updateMe = async (req, res) => {
 
         if (fullName) user.fullName = fullName;
         if (email) user.email = email;
+        
+        if (req.file) {
+            user.profilePhoto = req.file.path.replace(/\\/g, '/').split('uploads/').pop();
+            // Just the filename or relative path from uploads
+            user.profilePhoto = `uploads/${user.profilePhoto}`;
+        }
 
         await user.save();
 
@@ -124,7 +130,8 @@ export const updateMe = async (req, res) => {
                 id: user.id,
                 fullName: user.fullName,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                profilePhoto: user.profilePhoto
             }
         });
     } catch (error) {

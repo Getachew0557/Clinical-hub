@@ -110,78 +110,103 @@ export default function RegisterPage() {
                         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                             <Grid container spacing={2}>
                                 <Grid item xs={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="First Name"
-                                        name="firstName"
-                                        placeholder="John"
-                                        value={formData.firstName}
-                                        onChange={onChange}
-                                        required
-                                        variant="outlined"
-                                    />
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                            First Name
+                                        </Typography>
+                                        <TextField
+                                            fullWidth
+                                            name="firstName"
+                                            placeholder="John"
+                                            value={formData.firstName}
+                                            onChange={onChange}
+                                            required
+                                            variant="outlined"
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={6}>
-                                    <TextField
-                                        fullWidth
-                                        label="Last Name"
-                                        name="lastName"
-                                        placeholder="Doe"
-                                        value={formData.lastName}
-                                        onChange={onChange}
-                                        required
-                                        variant="outlined"
-                                    />
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                            Last Name
+                                        </Typography>
+                                        <TextField
+                                            fullWidth
+                                            name="lastName"
+                                            placeholder="Doe"
+                                            value={formData.lastName}
+                                            onChange={onChange}
+                                            required
+                                            variant="outlined"
+                                        />
+                                    </Box>
                                 </Grid>
                             </Grid>
 
-                            <TextField
-                                fullWidth
-                                label="Email"
-                                name="email"
-                                type="email"
-                                placeholder="you@example.com"
-                                value={formData.email}
-                                onChange={onChange}
-                                required
-                                variant="outlined"
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Email
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    name="email"
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    value={formData.email}
+                                    onChange={onChange}
+                                    required
+                                    variant="outlined"
+                                />
+                            </Box>
 
-                            <TextField
-                                fullWidth
-                                label="Phone"
-                                name="phone"
-                                type="tel"
-                                placeholder="+1 555-0100"
-                                value={formData.phone}
-                                onChange={onChange}
-                                required
-                                variant="outlined"
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Phone
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    name="phone"
+                                    type="tel"
+                                    placeholder="+1 555-0100"
+                                    value={formData.phone}
+                                    onChange={onChange}
+                                    required
+                                    variant="outlined"
+                                />
+                            </Box>
 
 
-                            <TextField
-                                fullWidth
-                                label="Password"
-                                name="password"
-                                type="password"
-                                placeholder="Min 8 characters"
-                                value={formData.password}
-                                onChange={onChange}
-                                required
-                                variant="outlined"
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Password
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    name="password"
+                                    type="password"
+                                    placeholder="Min 8 characters"
+                                    value={formData.password}
+                                    onChange={onChange}
+                                    required
+                                    variant="outlined"
+                                />
+                            </Box>
 
-                            <TextField
-                                fullWidth
-                                label="Confirm Password"
-                                name="confirmPassword"
-                                type="password"
-                                value={formData.confirmPassword}
-                                onChange={onChange}
-                                required
-                                variant="outlined"
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Confirm Password
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    name="confirmPassword"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={formData.confirmPassword}
+                                    onChange={onChange}
+                                    required
+                                    variant="outlined"
+                                />
+                            </Box>
 
                             <Button
                                 type="submit"

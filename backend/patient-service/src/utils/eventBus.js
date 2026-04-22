@@ -1,67 +1,49 @@
-import amqp from 'amqplib';
+import axios from 'axios';
 
-let connection = null;
-let channel = null;
-
-const EXCHANGE = 'clinical_hub_events';
+let internalRegistry = {};
 
 /**
- * Connect to RabbitMQ
+ * Connect to Event Bus (Mock)
  */
 export const connectEventBus = async (retries = 5) => {
-    try {
-        const url = process.env.RABBITMQ_URL || 'amqp://localhost';
-        connection = await amqp.connect(url);
-        channel = await connection.createChannel();
-        await channel.assertExchange(EXCHANGE, 'topic', { durable: true });
-        console.log('✅ Connected to RabbitMQ Event Bus');
-    } catch (error) {
-        console.error(`❌ RabbitMQ Connection Error: ${error.message}`);
-        if (retries > 0) {
-            console.log(`⏳ Retrying RabbitMQ connection in 5s... (${retries} retries left)`);
-            setTimeout(() => connectEventBus(retries - 1), 5000);
-        } else {
-            console.warn('⚠️ Could not connect to RabbitMQ after multiple attempts. Some features may be degraded.');
-        }
-    }
+    console.log('✅ Lite HTTP Event Bus Ready');
 };
 
 /**
- * Publish an event to the exchange
+ * Publish an event via direct HTTP calls to subscribers
  */
 export const publishEvent = async (routingKey, data) => {
-    if (!channel) {
-        console.warn('⚠️ Event Bus not ready. Event lost:', routingKey);
-        return;
-    }
-    const message = JSON.stringify(data);
-    channel.publish(EXCHANGE, routingKey, Buffer.from(message));
-    console.log(`📤 [Event Published] ${routingKey}`);
-};
-
-/**
- * Subscribe to an event with a specific queue
- */
-export const subscribeToEvent = async (queueName, routingKey, callback) => {
-    if (!channel) {
-        setTimeout(() => subscribeToEvent(queueName, routingKey, callback), 1000);
-        return;
-    }
-
-    const q = await channel.assertQueue(queueName, { durable: true });
-    await channel.bindQueue(q.queue, EXCHANGE, routingKey);
-
-    channel.consume(q.queue, (msg) => {
-        if (msg !== null) {
-            try {
-                const data = JSON.parse(msg.content.toString());
-                console.log(`📥 [Event Received] ${routingKey}`);
-                callback(data);
-                channel.ack(msg);
-            } catch (err) {
-                console.error('Error processing event:', err.message);
-                channel.nack(msg, false, false);
-            }
+    const subscribers = process.env.INTERNAL_EVENT_SUBSCRIBERS 
+        ? process.env.INTERNAL_EVENT_SUBSCRIBERS.split(',') 
+        : [];
+    
+    console.log(`📤 [Event Published] ${routingKey} to ${subscribers.length} services`);
+    
+    subscribers.forEach(async (url) => {
+        try {
+            await axios.post(url, { routingKey, data });
+        } catch (err) {
+            console.warn(`⚠️ Failed to deliver ${routingKey} to ${url}: ${err.message}`);
         }
     });
 };
+
+/**
+ * Subscribe to an event locally
+ */
+export const subscribeToEvent = async (queueName, routingKey, callback) => {
+    if (!internalRegistry[routingKey]) internalRegistry[routingKey] = [];
+    internalRegistry[routingKey].push(callback);
+    console.log(`📥 [Subscribed] Local handler for ${routingKey}`);
+};
+
+/**
+ * Handle incoming internal events (called by Express route)
+ */
+export const handleInternalEvent = async (payload) => {
+    const { routingKey, data } = payload;
+    if (internalRegistry[routingKey]) {
+        internalRegistry[routingKey].forEach(cb => cb(data));
+    }
+};
+

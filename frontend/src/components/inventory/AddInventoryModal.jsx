@@ -4,7 +4,7 @@ import {
     Typography, Button, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, Grid,
     FormControl, InputLabel, Select, MenuItem,
-    IconButton
+    IconButton, Box
 } from '@mui/material';
 import inventoryService from '../../api/inventory.service';
 
@@ -70,82 +70,109 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
                 <DialogContent sx={{ p: 4 }}>
                     <Grid container spacing={3} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
-                            <TextField
-                                label="Item Name"
-                                name="name"
-                                fullWidth
-                                required
-                                value={formData.name}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Category</InputLabel>
-                                <Select
-                                    name="category"
-                                    value={formData.category}
-                                    label="Category"
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Item Name
+                                </Typography>
+                                <TextField
+                                    name="name"
+                                    fullWidth
+                                    required
+                                    placeholder="Enter item name"
+                                    value={formData.name}
                                     onChange={handleInputChange}
-                                >
-                                    <MenuItem value="Equipment">Equipment</MenuItem>
-                                    <MenuItem value="Supplies">Supplies</MenuItem>
-                                    <MenuItem value="Medication">Medication</MenuItem>
-                                    <MenuItem value="Instruments">Instruments</MenuItem>
-                                    <MenuItem value="Other">Other</MenuItem>
-                                </Select>
-                            </FormControl>
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Unit"
-                                name="unit"
-                                fullWidth
-                                required
-                                placeholder="e.g. Boxes, Packs, Pieces"
-                                value={formData.unit}
-                                onChange={handleInputChange}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Category
+                                </Typography>
+                                <FormControl fullWidth required>
+                                    <Select
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleInputChange}
+                                        displayEmpty
+                                    >
+                                        <MenuItem value="" disabled>Select Category</MenuItem>
+                                        <MenuItem value="Equipment">Equipment</MenuItem>
+                                        <MenuItem value="Supplies">Supplies</MenuItem>
+                                        <MenuItem value="Medication">Medication</MenuItem>
+                                        <MenuItem value="Instruments">Instruments</MenuItem>
+                                        <MenuItem value="Other">Other</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Unit
+                                </Typography>
+                                <TextField
+                                    name="unit"
+                                    fullWidth
+                                    required
+                                    placeholder="e.g. Boxes, Packs, Pieces"
+                                    value={formData.unit}
+                                    onChange={handleInputChange}
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12} md={4}>
-                            <TextField
-                                label="Initial Quantity"
-                                name="quantity"
-                                type="number"
-                                fullWidth
-                                required
-                                inputProps={{ min: 0 }}
-                                value={formData.quantity}
-                                onChange={handleInputChange}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Initial Quantity
+                                </Typography>
+                                <TextField
+                                    name="quantity"
+                                    type="number"
+                                    fullWidth
+                                    required
+                                    inputProps={{ min: 0 }}
+                                    value={formData.quantity}
+                                    onChange={handleInputChange}
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12} md={4}>
-                            <TextField
-                                label="Reorder Level"
-                                name="reorderLevel"
-                                type="number"
-                                fullWidth
-                                required
-                                inputProps={{ min: 0 }}
-                                value={formData.reorderLevel}
-                                onChange={handleInputChange}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Reorder Level
+                                </Typography>
+                                <TextField
+                                    name="reorderLevel"
+                                    type="number"
+                                    fullWidth
+                                    required
+                                    inputProps={{ min: 0 }}
+                                    value={formData.reorderLevel}
+                                    onChange={handleInputChange}
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12} md={4}>
-                            <TextField
-                                label="Price Per Unit ($)"
-                                name="pricePerUnit"
-                                type="number"
-                                fullWidth
-                                inputProps={{ min: 0, step: "0.01" }}
-                                value={formData.pricePerUnit}
-                                onChange={handleInputChange}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Price Per Unit (ETB)
+                                </Typography>
+                                <TextField
+                                    name="pricePerUnit"
+                                    type="number"
+                                    fullWidth
+                                    inputProps={{ min: 0, step: "0.01" }}
+                                    placeholder="0.00"
+                                    value={formData.pricePerUnit}
+                                    onChange={handleInputChange}
+                                />
+                            </Box>
                         </Grid>
                     </Grid>
                 </DialogContent>

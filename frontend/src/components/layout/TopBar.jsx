@@ -14,7 +14,7 @@ import NotificationsMenu from './NotificationsMenu';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 import doctorService from '../../api/doctor.service';
 import patientService from '../../api/patient.service';
-import { getDoctorPhotoUrl } from '../../utils/cn';
+import { getDoctorPhotoUrl, getAuthPhotoUrl } from '../../utils/cn';
 
 export default function TopBar({ onMenuClick }) {
     const { user } = useSelector((s) => s.auth);
@@ -31,6 +31,14 @@ export default function TopBar({ onMenuClick }) {
     // Load profile photo based on role
     useEffect(() => {
         if (!user) return;
+        
+        // Priority 1: Auth service photo (newly implemented for everyone)
+        if (user.profilePhoto) {
+            setProfilePhoto(getAuthPhotoUrl(user.profilePhoto));
+            return;
+        }
+
+        // Priority 2: Role-specific profile photo (legacy/doctors/patients)
         if (user.role === 'Doctor') {
             doctorService.getMyProfile()
                 .then(data => {
@@ -82,7 +90,7 @@ export default function TopBar({ onMenuClick }) {
                     <Search className="h-4 w-4 text-slate-400 shrink-0" />
                     <InputBase
                         placeholder={t('common.searchPlaceholder')}
-                        sx={{ fontSize: '0.875rem', flex: 1, color: '#334155' }}
+                        sx={{ flex: 1, color: '#334155' }}
                         inputProps={{ 'aria-label': 'search' }}
                     />
                 </div>
@@ -104,14 +112,14 @@ export default function TopBar({ onMenuClick }) {
                 >
                     <Avatar
                         src={profilePhoto || undefined}
-                        sx={{ width: 34, height: 34, bgcolor: roleColor, fontSize: '0.8rem', fontWeight: 700 }}
+                        sx={{ width: 34, height: 34, bgcolor: roleColor, fontWeight: 800 }}
                     >
                         {!profilePhoto && initials}
                     </Avatar>
                     <div className="hidden md:flex flex-col items-start leading-tight">
                         <span className="text-sm font-semibold text-slate-800">{user?.fullName || 'User'}</span>
                         <span
-                            className="text-[11px] font-medium px-1.5 rounded-full text-white"
+                            className="text-xs font-bold px-1.5 rounded-full text-white uppercase tracking-tighter"
                             style={{ backgroundColor: roleColor }}
                         >
                             {user?.role}
@@ -135,7 +143,7 @@ export default function TopBar({ onMenuClick }) {
                     <div className="px-4 py-3 flex items-center gap-3">
                         <Avatar
                             src={profilePhoto || undefined}
-                            sx={{ width: 40, height: 40, bgcolor: roleColor, fontSize: '0.9rem', fontWeight: 700 }}
+                            sx={{ width: 40, height: 40, bgcolor: roleColor, fontWeight: 800 }}
                         >
                             {!profilePhoto && initials}
                         </Avatar>

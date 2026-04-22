@@ -57,7 +57,23 @@ export default function NotificationsMenu() {
     };
 
     const handleNotificationClick = (notification) => {
-        const targetLink = notification.link;
+        let targetLink = notification.link;
+
+        // Fallback navigation if link is missing
+        if (!targetLink) {
+            const title = (notification.title || '').toLowerCase();
+            const message = (notification.message || '').toLowerCase();
+
+            if (title.includes('appointment') || message.includes('appointment')) {
+                targetLink = '/appointments';
+            } else if (title.includes('welcome') || title.includes('register')) {
+                targetLink = '/profile';
+            } else if (title.includes('bill') || title.includes('invoice') || message.includes('pay')) {
+                targetLink = '/billing';
+            } else if (title.includes('medical') || title.includes('emr') || title.includes('record')) {
+                targetLink = '/emr';
+            }
+        }
 
         // Navigate immediately for better UX
         if (targetLink) {
@@ -102,10 +118,10 @@ export default function NotificationsMenu() {
                     <Badge badgeContent={unreadCount} color="error"
                         sx={{
                             '& .MuiBadge-badge': {
-                                fontSize: '0.65rem',
                                 height: 16,
                                 minWidth: 16,
-                                px: 0.5
+                                px: 0.5,
+                                fontWeight: 800
                             }
                         }}
                     >
@@ -135,26 +151,42 @@ export default function NotificationsMenu() {
                 }}
             >
                 {/* Header */}
-                <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                    <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+                <Box sx={{ 
+                    p: 2.5, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    bgcolor: 'white', 
+                    borderBottom: '1px solid #f1f5f9' 
+                }}>
+                    <Typography variant="h6" fontWeight={800} color="text.primary" sx={{ fontSize: '1.1rem' }}>
                         Notifications
                     </Typography>
                     {unreadCount > 0 && (
                         <Button
                             size="small"
                             onClick={handleMarkAllRead}
-                            sx={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'none' }}
+                            sx={{ 
+                                fontWeight: 800, 
+                                textTransform: 'none',
+                                borderRadius: 2,
+                                px: 1.5,
+                                fontSize: '0.75rem',
+                                bgcolor: 'blue.50',
+                                color: 'blue.600',
+                                '&:hover': { bgcolor: 'blue.100' }
+                            }}
                         >
-                            Mark all as read
+                            Mark all read
                         </Button>
                     )}
                 </Box>
 
                 {/* List */}
-                <Box sx={{ flex: 1, overflowY: 'auto', maxHeight: 400 }}>
+                <Box sx={{ flex: 1, overflowY: 'auto', maxHeight: 420 }}>
                     {loading && notifications.length === 0 ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                            <CircularProgress size={24} />
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+                            <CircularProgress size={28} thickness={5} />
                         </Box>
                     ) : notifications.length > 0 ? (
                         notifications.map((notification) => (
@@ -162,40 +194,62 @@ export default function NotificationsMenu() {
                                 key={notification.id}
                                 onClick={() => handleNotificationClick(notification)}
                                 sx={{
-                                    p: 2,
+                                    p: 2.5,
                                     display: 'flex',
-                                    gap: 2,
-                                    bgcolor: notification.isRead ? 'transparent' : '#f0fdf4',
+                                    gap: 2.5,
+                                    bgcolor: notification.isRead ? 'transparent' : 'rgba(239, 246, 255, 0.5)',
                                     borderBottom: '1px solid #f1f5f9',
                                     cursor: 'pointer',
-                                    transition: 'background-color 0.2s',
-                                    '&:hover': { bgcolor: '#f8fafc' }
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    position: 'relative',
+                                    '&:hover': { 
+                                        bgcolor: 'white',
+                                        boxShadow: 'inset 4px 0 0 #3b82f6'
+                                    },
+                                    '&:active': { transform: 'scale(0.98)' }
                                 }}
                             >
-                                <Box sx={{ mt: 0.5, flexShrink: 0 }}>
+                                <Box sx={{ 
+                                    flexShrink: 0, 
+                                    width: 44, 
+                                    height: 44, 
+                                    borderRadius: 3.5, 
+                                    bgcolor: '#f8fafc', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    border: '1px solid #f1f5f9'
+                                }}>
                                     {getIcon(notification.type)}
                                 </Box>
                                 <Box sx={{ flex: 1 }}>
-                                    <Typography variant="subtitle2" fontWeight={notification.isRead ? 600 : 700} color="text.primary" sx={{ mb: 0.5, lineHeight: 1.2 }}>
-                                        {notification.title}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, lineHeight: 1.4, fontSize: '0.8rem' }}>
+                                    <div className="flex justify-between items-start mb-0.5">
+                                        <Typography variant="subtitle2" fontWeight={notification.isRead ? 700 : 900} color="text.primary" sx={{ lineHeight: 1.3 }}>
+                                            {notification.title}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 700, fontSize: '0.65rem', whiteSpace: 'nowrap', ml: 1 }}>
+                                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: false })}
+                                        </Typography>
+                                    </div>
+                                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, fontSize: '0.85rem' }}>
                                         {notification.message}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 500 }}>
-                                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                                     </Typography>
                                 </Box>
                                 {!notification.isRead && (
-                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'error.main', mt: 1, flexShrink: 0 }} />
+                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mt: 1, flexShrink: 0, boxShadow: '0 0 0 2px white' }} />
                                 )}
                             </Box>
                         ))
                     ) : (
-                        <Box sx={{ p: 4, textAlign: 'center' }}>
-                            <Bell size={32} className="mx-auto text-slate-300 mb-2" />
-                            <Typography variant="body2" color="text.secondary">
-                                You have no notifications.
+                        <Box sx={{ p: 8, textAlign: 'center' }}>
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                                <Bell size={32} className="text-slate-300" />
+                            </div>
+                            <Typography variant="subtitle2" color="text.primary" fontWeight={800}>
+                                All caught up!
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                No new notifications at the moment.
                             </Typography>
                         </Box>
                     )}

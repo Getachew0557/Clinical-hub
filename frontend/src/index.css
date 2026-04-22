@@ -1,71 +1,125 @@
+/* Fonts loaded via index.html <link> tags */
 @import "tailwindcss";
+
+/* ── Tailwind v4: custom theme tokens ── */
+@theme {
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-ethiopic: 'Noto Serif Ethiopic', serif;
+}
 
 :root {
   /* ── Brand Colors ── */
-  --color-primary: #0d9488;
-  --color-primary-dark: #0f766e;
-  --color-primary-light: #ccfbf1;
-  --color-accent: #f59e0b;
-  --color-accent-dark: #d97706;
-  --color-surface: #f8fafc;
-  --color-card: #ffffff;
-  --color-border: #e2e8f0;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-sidebar-from: #0a2540;
-  --color-sidebar-to: #0d4f4a;
-  --color-emergency: #dc2626;
-  --bg-light: #f8fafc;
+  --color-primary:          #0d9488;
+  --color-primary-dark:     #0f766e;
+  --color-primary-light:    #ccfbf1;
+  --color-accent:           #f59e0b;
+  --color-accent-dark:      #d97706;
+  --color-surface:          #f8fafc;
+  --color-card:             #ffffff;
+  --color-border:           #e2e8f0;
+  --color-text-primary:     #0f172a;
+  --color-text-secondary:   #64748b;
+  --color-sidebar-from:     #0a2540;
+  --color-sidebar-to:       #0d4f4a;
+  --color-emergency:        #dc2626;
+  --bg-light:               #f8fafc;
 
-  /* ── Uniform Typography Scale ── */
-  --text-page-title:     1.125rem; /* 18px — Page titles */
-  --text-section-title:  0.9375rem;/* 15px — Card/section headers */
-  --text-body:           0.875rem; /* 14px — Body text, table rows */
-  --text-caption:        0.75rem;  /* 12px — Labels, metadata, hints */
-  --text-badge:          0.6875rem;/* 11px — Status badges, tags */
-  --font-weight-title:   700;
-  --font-weight-heading: 600;
-  --font-weight-body:    400;
-  --font-weight-medium:  500;
-  --font-weight-semi:    600;
+  /* ── Typography ── */
+  --font-primary:           'Outfit', sans-serif;
+  --font-ethiopic:          'Noto Serif Ethiopic', serif;
+
+  /* ── Type scale ── */
+  --text-page-title:        1.25rem;
+  --text-section-title:     1.0625rem;
+  --text-body:              0.9375rem;
+  --text-caption:           0.8125rem;
+  --text-badge:             0.75rem;
+
+  /* ── Weight scale ── */
+  --font-weight-black:      900;
+  --font-weight-bold:       800;
+  --font-weight-semi:       700;
+  --font-weight-medium:     600;
+  --font-weight-body:       400;
 }
 
-/* ── Global base font ── */
+/* ── Global base ── */
 html {
   font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  @apply m-0 p-0 box-border bg-slate-50 text-slate-900;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 0.875rem; /* 14px base for all content */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: var(--font-primary);
+  font-size: var(--text-body);
   line-height: 1.6;
 }
 
-/* ── Normalize Tailwind text size classes used in pages ──
-   Tailwind's defaults are too large for a dense clinical UI.
-   We remap them to our design scale. */
-.text-xs    { font-size: 0.6875rem !important; } /* 11px */
-.text-sm    { font-size: 0.75rem   !important; } /* 12px */
-.text-base  { font-size: 0.875rem  !important; } /* 14px */
-.text-lg    { font-size: 1rem      !important; } /* 16px */
-.text-xl    { font-size: 1.0625rem !important; } /* 17px */
-.text-2xl   { font-size: 1.125rem  !important; } /* 18px */
-.text-3xl   { font-size: 1.25rem   !important; } /* 20px */
-.text-4xl   { font-size: 1.5rem    !important; } /* 24px — reserved for hero/landing */
-.text-5xl   { font-size: 1.75rem   !important; } /* 28px — landing page only */
+/* ── Uniform font on all elements (overrides MUI Roboto) ── */
+body, body * {
+  font-family: var(--font-primary);
+}
 
-/* ── Paragraph and list defaults ── */
-p { font-size: 0.875rem; line-height: 1.6; }
-li { font-size: 0.875rem; }
-label { font-size: 0.875rem; }
-input, textarea, select { font-size: 0.875rem; }
+/* ── Ethiopic script exception ── */
+.font-ethiopic {
+  font-family: var(--font-ethiopic) !important;
+}
+html.lang-ethiopic,
+html.lang-ethiopic * {
+  font-family: var(--font-ethiopic) !important;
+}
 
-/* ── Table defaults ── */
-th { font-size: 0.8125rem; font-weight: 700; }
-td { font-size: 0.875rem; }
+/* ── Headings ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  line-height: 1.25;
+}
 
+/* ── Body / data text: regular weight ── */
+p, li, td, dd {
+  font-family: var(--font-primary);
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+
+/* ── Labels / form elements: medium weight ── */
+label, th {
+  font-family: var(--font-primary);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+/* ── Inputs: regular weight ── */
+input, textarea, select, button {
+  font-family: var(--font-primary);
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+
+/* ── Table headers: semibold, uppercase ── */
+th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+/* ── Utilities ── */
 @layer utilities {
+  /* Weight helpers — use these instead of arbitrary fontWeight values */
+  .fw-data    { font-weight: 400; } /* table cells, list items, body text */
+  .fw-label   { font-weight: 600; } /* form labels, column headers, captions */
+  .fw-heading { font-weight: 700; } /* card titles, section headers */
+  .fw-strong  { font-weight: 800; } /* page titles, KPI numbers */
+
   .glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
@@ -81,34 +135,20 @@ td { font-size: 0.875rem; }
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
     background-image: linear-gradient(135deg, #0d9488, #10b981);
   }
 
   .font-display {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-weight: 700;
-  }
-
-  .font-ethiopic {
-    font-family: 'Noto Serif Ethiopic', serif;
+    font-family: var(--font-primary);
+    font-weight: 900;
   }
 }
 
-/* Ethiopic script font override — applied to <html> when lang is am or ti */
-html.lang-ethiopic,
-html.lang-ethiopic * {
-  font-family: 'Noto Serif Ethiopic', serif;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
-}
+/* ── Scrollbar ── */
+::-webkit-scrollbar        { width: 8px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }

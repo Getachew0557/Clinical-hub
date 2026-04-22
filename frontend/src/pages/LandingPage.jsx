@@ -257,10 +257,7 @@ export default function LandingPage() {
               <Stethoscope className="text-white w-6 h-6" />
             </div>
             <div className="flex flex-col leading-none">
-              <span
-                className="text-xl text-slate-900"
-                style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
-              >
+              <span className="text-xl font-bold text-slate-900">
                 Biruh Tena
               </span>
               <span className="font-ethiopic text-xs text-teal-600">ብሩህ ጤና</span>
@@ -373,14 +370,7 @@ export default function LandingPage() {
             <span className="inline-block px-4 py-2 rounded-full bg-teal-50 text-teal-700 text-xs font-bold uppercase tracking-widest mb-6 border border-teal-100">
               {t('hero.badge')}
             </span>
-            <h1
-              className="leading-[1.1] mb-6 text-slate-900"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 900,
-                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-              }}
-            >
+            <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] mb-6 text-slate-900">
               Your Health,{' '}
               <br className="hidden sm:block" />
               Our Mission.{' '}
@@ -486,14 +476,7 @@ export default function LandingPage() {
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('services.label')}
             </span>
-            <h2
-              className="text-slate-900 mb-4"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-              }}
-            >
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">
               {t('services.heading')}
             </h2>
             <p className="text-slate-500 text-sm leading-relaxed">
@@ -537,14 +520,7 @@ export default function LandingPage() {
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('doctors.label')}
             </span>
-            <h2
-              className="text-slate-900 mb-4"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-              }}
-            >
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">
               {t('doctors.heading')}
             </h2>
             <p className="text-slate-500 text-sm leading-relaxed">
@@ -633,10 +609,7 @@ export default function LandingPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-50 to-teal-100">
-                        <span
-                          className="text-6xl font-black text-teal-300"
-                          style={{ fontFamily: "'Playfair Display', serif" }}
-                        >
+                        <span className="text-6xl font-black text-teal-300">
                           {doc.fullName?.charAt(0) || 'D'}
                         </span>
                       </div>
@@ -698,14 +671,7 @@ export default function LandingPage() {
       <section className="py-28 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto mb-16">
-            <h2
-              className="text-slate-900"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-              }}
-            >
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900">
               {t('howItWorks.heading')}
             </h2>
           </div>
@@ -756,14 +722,7 @@ export default function LandingPage() {
 
             {/* Content */}
             <div className="flex-1 px-8 py-10 md:py-0">
-              <h2
-                className="text-slate-900 mb-3"
-                style={{
-                  fontFamily: "'Playfair Display', serif",
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-                }}
-              >
+              <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">
                 {t('videoConsult.banner.heading')}
               </h2>
               <p className="text-slate-500 text-base mb-6 font-medium">
@@ -802,14 +761,7 @@ export default function LandingPage() {
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('testimonials.label')}
             </span>
-            <h2
-              className="text-slate-900"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-              }}
-            >
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
               {t('testimonials.heading')}
             </h2>
           </div>
@@ -894,14 +846,7 @@ export default function LandingPage() {
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-4 block">
               Our Technology
             </span>
-            <h2
-              className="text-slate-900 mb-8"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-              }}
-            >
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">
               Precision Meets Compassionate Care.
             </h2>
             <ul className="space-y-6">
@@ -949,14 +894,7 @@ export default function LandingPage() {
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('faq.label')}
             </span>
-            <h2
-              className="text-slate-900"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-              }}
-            >
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900">
               {t('faq.heading')}
             </h2>
           </div>
@@ -1013,10 +951,7 @@ export default function LandingPage() {
             <div className="w-4 h-4 rounded-full bg-white animate-pulse" />
             <div>
               <p className="text-white/80 text-sm font-bold uppercase tracking-widest">{t('emergency.label')}</p>
-              <p
-                className="text-white font-black"
-                style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
-              >
+              <p className="text-2xl md:text-3xl text-white font-black">
                 +251 911 22 33 44
               </p>
             </div>
@@ -1043,10 +978,7 @@ export default function LandingPage() {
                   <Stethoscope className="text-white w-6 h-6" />
                 </div>
                 <div className="flex flex-col leading-none">
-                  <span
-                    className="text-xl text-white"
-                    style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700 }}
-                  >
+                  <span className="text-xl font-bold text-white">
                     Biruh Tena
                   </span>
                   <span className="font-ethiopic text-xs text-teal-400">ብሩህ ጤና</span>

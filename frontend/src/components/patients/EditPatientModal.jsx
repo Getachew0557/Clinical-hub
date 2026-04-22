@@ -132,124 +132,161 @@ export default function EditPatientModal({ open, onClose, onSuccess, patient }) 
                             </Grid>
 
                             <Grid item xs={12}>
-                                <TextField
-                                    label="Full Name"
-                                    name="fullName"
-                                    fullWidth
-                                    required
-                                    value={formData.fullName}
-                                    onChange={handleInputChange}
-                                    disabled={!canEdit}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Email Address"
-                                    name="email"
-                                    type="email"
-                                    fullWidth
-                                    required
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    disabled={!isAdmin} // Only admin can edit email
-                                    helperText={!isAdmin ? "Contact administrator to change email" : ""}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Date of Birth"
-                                    name="dateOfBirth"
-                                    type="date"
-                                    fullWidth
-                                    required
-                                    InputLabelProps={{ shrink: true }}
-                                    value={formData.dateOfBirth}
-                                    onChange={handleInputChange}
-                                    disabled={!canEdit}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth required disabled={!canEdit}>
-                                    <InputLabel>Gender</InputLabel>
-                                    <Select
-                                        name="gender"
-                                        value={formData.gender}
-                                        label="Gender"
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Full Name
+                                    </Typography>
+                                    <TextField
+                                        name="fullName"
+                                        fullWidth
+                                        required
+                                        value={formData.fullName}
                                         onChange={handleInputChange}
-                                    >
-                                        <MenuItem value="Male">Male</MenuItem>
-                                        <MenuItem value="Female">Female</MenuItem>
-                                        <MenuItem value="Other">Other</MenuItem>
-                                    </Select>
-                                </FormControl>
+                                        disabled={!canEdit}
+                                    />
+                                </Box>
                             </Grid>
 
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Phone Number"
-                                    name="phone"
-                                    fullWidth
-                                    required
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                    disabled={!canEdit}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth disabled={!canEdit}>
-                                    <InputLabel>Blood Group</InputLabel>
-                                    <Select
-                                        name="bloodGroup"
-                                        value={formData.bloodGroup}
-                                        label="Blood Group"
+                            <Grid item xs={12}>
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Email Address
+                                    </Typography>
+                                    <TextField
+                                        name="email"
+                                        type="email"
+                                        fullWidth
+                                        required
+                                        value={formData.email}
                                         onChange={handleInputChange}
-                                    >
-                                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
-                                            <MenuItem key={bg} value={bg}>{bg}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                        disabled={!isAdmin} // Only admin can edit email
+                                        helperText={!isAdmin ? "Contact administrator to change email" : ""}
+                                    />
+                                </Box>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Date of Birth
+                                    </Typography>
+                                    <TextField
+                                        name="dateOfBirth"
+                                        type="date"
+                                        fullWidth
+                                        required
+                                        value={formData.dateOfBirth}
+                                        onChange={handleInputChange}
+                                        disabled={!canEdit}
+                                    />
+                                </Box>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Gender
+                                    </Typography>
+                                    <FormControl fullWidth required disabled={!canEdit}>
+                                        <Select
+                                            name="gender"
+                                            value={formData.gender}
+                                            onChange={handleInputChange}
+                                            displayEmpty
+                                        >
+                                            <MenuItem value="" disabled>Select Gender</MenuItem>
+                                            <MenuItem value="Male">Male</MenuItem>
+                                            <MenuItem value="Female">Female</MenuItem>
+                                            <MenuItem value="Other">Other</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Phone Number
+                                    </Typography>
+                                    <TextField
+                                        name="phone"
+                                        fullWidth
+                                        required
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                        disabled={!canEdit}
+                                    />
+                                </Box>
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Blood Group
+                                    </Typography>
+                                    <FormControl fullWidth disabled={!canEdit}>
+                                        <Select
+                                            name="bloodGroup"
+                                            value={formData.bloodGroup}
+                                            onChange={handleInputChange}
+                                            displayEmpty
+                                        >
+                                            <MenuItem value="" disabled>Select Blood Group</MenuItem>
+                                            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                                                <MenuItem key={bg} value={bg}>{bg}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
                             </Grid>
 
                             <Grid item xs={12}>
-                                <TextField
-                                    label="Home Address"
-                                    name="address"
-                                    fullWidth
-                                    multiline
-                                    rows={2}
-                                    value={formData.address}
-                                    onChange={handleInputChange}
-                                    disabled={!canEdit}
-                                />
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Home Address
+                                    </Typography>
+                                    <TextField
+                                        name="address"
+                                        fullWidth
+                                        multiline
+                                        rows={2}
+                                        value={formData.address}
+                                        onChange={handleInputChange}
+                                        disabled={!canEdit}
+                                    />
+                                </Box>
                             </Grid>
 
                             <Grid item xs={12}>
-                                <TextField
-                                    label="Allergies / Medical Conditions"
-                                    name="allergies"
-                                    fullWidth
-                                    multiline
-                                    rows={2}
-                                    value={formData.allergies}
-                                    onChange={handleInputChange}
-                                    disabled={!canEdit}
-                                />
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Allergies / Medical Conditions
+                                    </Typography>
+                                    <TextField
+                                        name="allergies"
+                                        fullWidth
+                                        multiline
+                                        rows={2}
+                                        value={formData.allergies}
+                                        onChange={handleInputChange}
+                                        disabled={!canEdit}
+                                    />
+                                </Box>
                             </Grid>
 
                             <Grid item xs={12}>
-                                <TextField
-                                    label="Emergency Contact (Name & Phone)"
-                                    name="emergencyContact"
-                                    fullWidth
-                                    value={formData.emergencyContact}
-                                    onChange={handleInputChange}
-                                    disabled={!canEdit}
-                                />
+                                <Box>
+                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                        Emergency Contact (Name & Phone)
+                                    </Typography>
+                                    <TextField
+                                        name="emergencyContact"
+                                        fullWidth
+                                        value={formData.emergencyContact}
+                                        onChange={handleInputChange}
+                                        disabled={!canEdit}
+                                    />
+                                </Box>
                             </Grid>
                         </Grid>
                     </div>

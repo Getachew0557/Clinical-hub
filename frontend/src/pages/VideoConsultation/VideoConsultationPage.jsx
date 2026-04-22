@@ -202,21 +202,21 @@ export default function VideoConsultationPage() {
                     <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-2 text-center">
                         <CameraOff className={`w-6 h-6 mb-1 ${permissionError ? 'text-amber-500' : 'text-slate-500'}`} />
                         {permissionError && (
-                            <button onClick={retryMedia} className="text-[8px] font-bold text-teal-400 uppercase">
+                            <button onClick={retryMedia} className="text-xs font-black text-teal-400 uppercase tracking-tighter">
                                 Retry Camera
                             </button>
                         )}
                     </div>
                 )}
-                <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded-lg">
-                    <span className="text-white text-[9px] font-bold">You</span>
+                <div className="absolute bottom-1 left-1 bg-black/60 px-2 py-0.5 rounded-lg border border-white/10">
+                    <span className="text-white text-xs font-black uppercase tracking-tighter">You</span>
                 </div>
             </div>
 
             {/* ── Remote status badges — top left ── */}
             <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
                 {remoteStream && isRemoteMuted && !peerLeft && (
-                    <div className="bg-red-500/90 text-white px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-xs font-black backdrop-blur-sm">
+                    <div className="bg-red-500/90 text-white px-2.5 py-1 rounded-xl flex items-center gap-1.5 text-xs font-black backdrop-blur-sm border border-red-400/20">
                         <MicOff size={13} /> Muted
                     </div>
                 )}
@@ -248,7 +248,7 @@ export default function VideoConsultationPage() {
 
             {/* ── Connection status — top center ── */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
-                <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest backdrop-blur-md border ${
+                <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 text-xs font-black uppercase tracking-widest backdrop-blur-md border ${
                     connectionStatus === 'connected'
                         ? 'bg-teal-500/20 text-teal-400 border-teal-500/30'
                         : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
@@ -264,7 +264,7 @@ export default function VideoConsultationPage() {
                     className="relative bg-black/40 backdrop-blur-sm text-white p-2.5 rounded-full hover:bg-black/60 transition-all">
                     <MessageSquare size={20} />
                     {unreadCount > 0 && !isChatOpen && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-black text-white flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs font-black text-white flex items-center justify-center">
                             {unreadCount}
                         </span>
                     )}
@@ -302,7 +302,7 @@ export default function VideoConsultationPage() {
                                 const isOwn = msg.senderName === (user?.fullName || 'You');
                                 return (
                                     <div key={msg.id} className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                                        <span className="text-slate-400 text-[10px] mb-1">
+                                        <span className="text-slate-400 text-xs font-medium mb-1">
                                             {msg.senderName} · {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm ${

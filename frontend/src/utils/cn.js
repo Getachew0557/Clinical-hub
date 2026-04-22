@@ -18,3 +18,13 @@ export function getDoctorPhotoUrl(profilePhoto) {
     const path = profilePhoto.startsWith('/') ? profilePhoto : `/${profilePhoto}`;
     return `${base}${path}`;
 }
+
+export function getAuthPhotoUrl(profilePhoto) {
+    if (!profilePhoto) return null;
+    if (profilePhoto.startsWith('http://') || profilePhoto.startsWith('https://')) {
+        return profilePhoto;
+    }
+    const base = import.meta.env.VITE_API_AUTH_URL?.replace('/api/auth', '') || 'http://localhost:5001';
+    const path = profilePhoto.startsWith('/') ? profilePhoto : `/${profilePhoto}`;
+    return `${base}${path}`;
+}

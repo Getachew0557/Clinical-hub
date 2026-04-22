@@ -3,18 +3,14 @@ import { useSelector } from 'react-redux';
 import AppointmentCard from './AppointmentCard';
 import { sortAppointments, applyDateFilter } from '../../utils/appointmentDashboard';
 
-/**
- * StatusBucket — one column in the kanban-style status dashboard.
- *
- * Props:
- *   status          {string}    e.g. "Pending"
- *   appointments    {object[]}  appointments already filtered to this status
- *   liveCount       {number}    current live count for the header badge
- *   cumulativeCount {number}    cumulative count for the header
- *   isVideo         {boolean}   whether this is the video dashboard
- *   onStatusChange  {Function}  (id, newStatus) => Promise<void>
- *   onError         {Function}  (message) => void  — optional bucket-level error handler
- */
+const BUCKET_COLORS = {
+  Pending:     { dot: 'bg-amber-400',  badge: 'bg-amber-50 text-amber-700 border-amber-200',  header: 'border-amber-200' },
+  Confirmed:   { dot: 'bg-blue-400',   badge: 'bg-blue-50 text-blue-700 border-blue-200',     header: 'border-blue-200'  },
+  'In Progress':{ dot: 'bg-teal-400',  badge: 'bg-teal-50 text-teal-700 border-teal-200',     header: 'border-teal-200'  },
+  Completed:   { dot: 'bg-green-400',  badge: 'bg-green-50 text-green-700 border-green-200',  header: 'border-green-200' },
+  Cancelled:   { dot: 'bg-slate-300',  badge: 'bg-slate-50 text-slate-500 border-slate-200',  header: 'border-slate-200' },
+};
+
 export default function StatusBucket({
   status,
   appointments = [],
@@ -22,51 +18,58 @@ export default function StatusBucket({
   cumulativeCount = 0,
   isVideo = false,
   onStatusChange,
-  onError,
 }) {
   const { user } = useSelector((state) => state.auth);
   const role = user?.role;
-
   const isStaff = role === 'Admin' || role === 'Receptionist';
 
   const [dateFilter, setDateFilter] = useState('');
 
-  // Apply sort then date filter
   const sorted   = sortAppointments(appointments);
   const filtered = applyDateFilter(sorted, dateFilter);
 
-  const emptyMessage = isVideo ? 'No video consultations' : 'No appointments';
+  const colors = BUCKET_COLORS[status] || BUCKET_COLORS.Pending;
 
   return (
-    <div className="flex flex-col w-72 flex-shrink-0 bg-gray-50 rounded-xl border border-gray-200">
-      {/* Bucket header */}
-      <div className="px-4 py-3 border-b border-gray-200">
+    <div className="flex flex-col w-[280px] flex-shrink-0 bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden">
+
+      {/* ── Column header ── */}
+      <div className={`px-4 py-3 bg-white border-b ${colors.header}`}>
         <div className="flex items-center justify-between gap-2">
-          <span className="font-semibold text-gray-800 text-sm">{status}</span>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-              Now: {liveCount}
+            <span className={`w-2 h-2 rounded-full shrink-0 ${colors.dot}`} />
+            <span className="font-semibold text-slate-700 text-sm">{status}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${colors.badge}`}>
+              {liveCount}
             </span>
-            <span className="text-xs text-gray-500">Total: {cumulativeCount}</span>
+            <span className="text-[11px] text-slate-400">/ {cumulativeCount}</span>
           </div>
         </div>
 
-        {/* Date filter — Admin/Receptionist only */}
+        {/* Date filter */}
         {isStaff && (
           <input
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="mt-2 w-full text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
-            aria-label={`Filter ${status} appointments by date`}
+            className="mt-2.5 w-full text-xs border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+            aria-label={`Filter ${status} by date`}
           />
         )}
       </div>
 
-      {/* Scrollable card list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 max-h-[calc(100vh-220px)]">
+      {/* ── Card list ── */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 max-h-[calc(100vh-230px)]">
         {filtered.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-6">{emptyMessage}</p>
+          <div className="flex flex-col items-center justify-center py-10 text-slate-300 gap-2">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            <span className="text-xs text-slate-400">No {status.toLowerCase()} appointments</span>
+          </div>
         ) : (
           filtered.map((appointment) => (
             <AppointmentCard

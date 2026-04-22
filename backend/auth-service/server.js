@@ -1,11 +1,17 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import authRoutes from './src/routes/authRoutes.js';
-import { connectEventBus } from './src/utils/eventBus.js';
+import { connectEventBus, handleInternalEvent } from './src/utils/eventBus.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -13,8 +19,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+app.use('/uploads', express.static(uploadsDir));
+
 // Routes
 app.use('/api/auth', authRoutes);
+app.post('/api/internal/events', async (req, res) => {
+  await handleInternalEvent(req.body);
+  res.sendStatus(200);
+});
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -30,9 +47,17 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    // Sync models â€” add new columns without re-creating existing indexes
+    // Sync models
     await sequelize.sync({ alter: true });
     console.log('Database models synced.');
+
+    // Safe column migration for profilePhoto
+    const qi = sequelize.getQueryInterface();
+    const tableDesc = await qi.describeTable('Users').catch(() => ({}));
+    if (!tableDesc.profilePhoto) {
+        await sequelize.query('ALTER TABLE `Users` ADD COLUMN `profilePhoto` VARCHAR(255) NULL;');
+        console.log('Added column: profilePhoto');
+    }
 
     // Connect to Event Bus
     await connectEventBus();

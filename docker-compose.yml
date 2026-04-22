@@ -49,7 +49,7 @@ services:
       - VITE_API_DOCTOR_URL=http://localhost:5050/api/doctors
       - VITE_API_GATEWAY_URL=http://localhost:5050/api
       - VITE_DOCTOR_SERVICE_URL=http://localhost:5010
-      - VITE_API_SIGNALING_URL=http://localhost:5008
+      - VITE_API_SIGNALING_URL=http://localhost:5003
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -67,11 +67,11 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:5001
       - PATIENT_SERVICE_URL=http://patient-service:5002
       - APPOINTMENT_SERVICE_URL=http://appointment-service:5003
-      - EMR_SERVICE_URL=http://emr-service:5004
-      - BILLING_SERVICE_URL=http://billing-service:5005
-      - INVENTORY_SERVICE_URL=http://inventory-service:5006
-      - REPORT_SERVICE_URL=http://report-service:5007
-      - NOTIFICATION_SERVICE_URL=http://notification-service:5008
+      - EMR_SERVICE_URL=http://patient-service:5002
+      - BILLING_SERVICE_URL=http://patient-service:5002
+      - INVENTORY_SERVICE_URL=http://doctor-service:5010
+      - REPORT_SERVICE_URL=http://doctor-service:5010
+      - NOTIFICATION_SERVICE_URL=http://appointment-service:5003
       - AI_SERVICE_URL=http://ai-service:5009
       - DOCTOR_SERVICE_URL=http://doctor-service:5010
     depends_on:
@@ -107,6 +107,7 @@ services:
       - ./backend/auth-service:/app
       - /app/node_modules
 
+  # patient-service now includes: EMR + Billing
   patient-service:
     build:
       context: ./backend/patient-service
@@ -114,13 +115,15 @@ services:
     ports:
       - "5002:5002"
     environment:
-      - PORT=5002
+      - PATIENT_PORT=5002
       - NODE_ENV=development
       - DB_HOST=db
       - DB_USER=root
       - DB_PASS=password
       - DB_NAME=dental_clinic
+      - JWT_SECRET=9bf0d8211778c3fd59351f8482db2a68c32cbebd1d1f91817cf4867255c93309
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:5003/api/appointments
     depends_on:
       db:
         condition: service_healthy
@@ -130,6 +133,7 @@ services:
       - ./backend/patient-service:/app
       - /app/node_modules
 
+  # appointment-service now includes: Notifications + Video Signaling (Socket.IO)
   appointment-service:
     build:
       context: ./backend/appointment-service
@@ -137,12 +141,13 @@ services:
     ports:
       - "5003:5003"
     environment:
-      - PORT=5003
+      - APPT_PORT=5003
       - NODE_ENV=development
       - DB_HOST=db
       - DB_USER=root
       - DB_PASS=password
       - DB_NAME=dental_clinic
+      - JWT_SECRET=9bf0d8211778c3fd59351f8482db2a68c32cbebd1d1f91817cf4867255c93309
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     depends_on:
       db:
@@ -153,119 +158,30 @@ services:
       - ./backend/appointment-service:/app
       - /app/node_modules
 
-  emr-service:
+  # doctor-service now includes: Inventory + Reports
+  doctor-service:
     build:
-      context: ./backend/emr-service
+      context: ./backend/doctor-service
       dockerfile: Dockerfile
     ports:
-      - "5004:5004"
+      - "5010:5010"
     environment:
-      - PORT=5004
+      - DOCTOR_PORT=5010
       - NODE_ENV=development
       - DB_HOST=db
       - DB_USER=root
       - DB_PASS=password
       - DB_NAME=dental_clinic
+      - JWT_SECRET=9bf0d8211778c3fd59351f8482db2a68c32cbebd1d1f91817cf4867255c93309
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:5003/api/appointments
+      - PATIENT_SERVICE_URL=http://patient-service:5002/api/patients
+      - BILLING_SERVICE_URL=http://patient-service:5002/api/billing/invoices
     depends_on:
       db:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     volumes:
-      - ./backend/emr-service:/app
-      - /app/node_modules
-
-  billing-service:
-    build:
-      context: ./backend/billing-service
-      dockerfile: Dockerfile
-    ports:
-      - "5005:5005"
-    environment:
-      - PORT=5005
-      - NODE_ENV=development
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASS=password
-      - DB_NAME=dental_clinic
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-    depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    volumes:
-      - ./backend/billing-service:/app
-      - /app/node_modules
-
-  inventory-service:
-    build:
-      context: ./backend/inventory-service
-      dockerfile: Dockerfile
-    ports:
-      - "5006:5006"
-    environment:
-      - PORT=5006
-      - NODE_ENV=development
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASS=password
-      - DB_NAME=dental_clinic
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-    depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    volumes:
-      - ./backend/inventory-service:/app
-      - /app/node_modules
-
-  report-service:
-    build:
-      context: ./backend/report-service
-      dockerfile: Dockerfile
-    ports:
-      - "5007:5007"
-    environment:
-      - PORT=5007
-      - NODE_ENV=development
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASS=password
-      - DB_NAME=dental_clinic
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-    depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    volumes:
-      - ./backend/report-service:/app
-      - /app/node_modules
-
-  notification-service:
-    build:
-      context: ./backend/notification-service
-      dockerfile: Dockerfile
-    ports:
-      - "5008:5008"
-    environment:
-      - PORT=5008
-      - NODE_ENV=development
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASS=password
-      - DB_NAME=dental_clinic
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-    depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    volumes:
-      - ./backend/notification-service:/app
+      - ./backend/doctor-service:/app
       - /app/node_modules
 
   ai-service:
@@ -289,29 +205,6 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/ai-service:/app
-      - /app/node_modules
-
-  doctor-service:
-    build:
-      context: ./backend/doctor-service
-      dockerfile: Dockerfile
-    ports:
-      - "5010:5010"
-    environment:
-      - PORT=5010
-      - NODE_ENV=development
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASS=password
-      - DB_NAME=dental_clinic
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-    depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    volumes:
-      - ./backend/doctor-service:/app
       - /app/node_modules
 
 volumes:

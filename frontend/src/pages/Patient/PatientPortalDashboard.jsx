@@ -89,17 +89,18 @@ export default function PatientPortalDashboard() {
     const dailyTip = HEALTH_TIPS[Math.floor(Date.now() / 86400000) % HEALTH_TIPS.length];
 
     return (
-        <div className="flex flex-col gap-8 pb-12">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 12 }}>
+            <div className="flex flex-col gap-8">
             {/* ── Welcome Header ── */}
             <div className="flex flex-col items-center text-center sm:items-start sm:text-left gap-4">
                 <Box className="flex items-center gap-4">
                     <Avatar 
-                        sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: '1.5rem', fontWeight: 800 }}
+                        sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontWeight: 800 }}
                     >
                         {user?.fullName?.charAt(0)}
                     </Avatar>
                     <div>
-                        <Typography variant="h4" fontWeight={800} color="text.primary">
+                        <Typography variant="h4" fontWeight={900} color="text.primary">
                             Welcome back, {user?.fullName.split(' ')[0]}!
                         </Typography>
                         <Typography variant="body1" color="text.secondary">
@@ -115,7 +116,7 @@ export default function PatientPortalDashboard() {
                     <Card 
                         elevation={0} 
                         sx={{ 
-                            borderRadius: 6, 
+                            borderRadius: 4, 
                             background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', 
                             color: 'white',
                             cursor: 'pointer',
@@ -143,25 +144,25 @@ export default function PatientPortalDashboard() {
                                 <CardContent className="p-5 text-center">
                                     <Receipt size={24} className="mx-auto mb-2 text-orange-500" />
                                     <Typography variant="h5" fontWeight={800}>{summary.pendingBills}</Typography>
-                                    <Typography variant="caption" color="text.secondary">Unpaid Invoices</Typography>
+                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>Unpaid Invoices</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={4}>
-                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
+                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
                                 <CardContent className="p-5 text-center">
                                     <CalendarDays size={24} className="mx-auto mb-2 text-blue-500" />
-                                    <Typography variant="h5" fontWeight={800} sx={{ fontSize: '1.1rem' }}>{summary.nextAppointment}</Typography>
-                                    <Typography variant="caption" color="text.secondary">Next Visit</Typography>
+                                    <Typography variant="h5" fontWeight={800}>{summary.nextAppointment}</Typography>
+                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>Next Visit</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={4}>
-                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
+                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
                                 <CardContent className="p-5 text-center">
                                     <CheckCircle2 size={24} className="mx-auto mb-2 text-green-500" />
-                                    <Typography variant="h5" fontWeight={800} sx={{ fontSize: '1.1rem' }}>{summary.lastCheckup}</Typography>
-                                    <Typography variant="caption" color="text.secondary">Last Treatment</Typography>
+                                    <Typography variant="h5" fontWeight={800}>{summary.lastCheckup}</Typography>
+                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>Last Treatment</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
@@ -174,7 +175,7 @@ export default function PatientPortalDashboard() {
                 {/* Upcoming Appointments */}
                 <Grid item xs={12} md={7}>
                     <Box className="flex items-center justify-between mb-4">
-                        <Typography variant="h6" fontWeight={800}>Upcoming Visits</Typography>
+                        <Typography variant="h6" fontWeight={900}>Upcoming Visits</Typography>
                         <Button size="small" onClick={() => navigate('/appointments')}>View All</Button>
                     </Box>
                     <div className="flex flex-col gap-3">
@@ -189,7 +190,7 @@ export default function PatientPortalDashboard() {
                                             </div>
                                             <div>
                                                 <Typography variant="subtitle2" fontWeight={800}>{apt.doctorName || 'General Practitioner'}</Typography>
-                                                <Typography variant="caption" color="text.secondary">{apt.reason || 'General Consultation'}</Typography>
+                                                <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>{apt.reason || 'General Consultation'}</Typography>
                                                 <div className="text-xs text-slate-400 mt-0.5">{apt.appointmentDate} · {apt.appointmentTime?.slice(0,5)}</div>
                                             </div>
                                         </div>
@@ -197,18 +198,18 @@ export default function PatientPortalDashboard() {
                                             <Chip 
                                                 label={apt.status} 
                                                 size="small" 
-                                                sx={{ fontSize: '10px', height: 20, bgcolor: sc.bg, color: sc.text, fontWeight: 700 }} 
+                                                sx={{ height: 20, bgcolor: sc.bg, color: sc.text }} 
                                             />
                                             {(apt.status === 'Confirmed' || apt.status === 'In Progress') && (
                                                 <button
                                                     onClick={() => navigate(`/video/${apt.id}`)}
-                                                    className="flex items-center gap-1 px-2.5 py-1 bg-teal-600 text-white rounded-lg text-[10px] font-bold hover:bg-teal-700 transition-all"
+                                                    className="flex items-center gap-1 px-2.5 py-1 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700 transition-all"
                                                 >
                                                     <Video size={11} /> Join Video
                                                 </button>
                                             )}
                                             {apt.status === 'Pending' && (
-                                                <span className="text-[10px] text-amber-600 font-semibold">Awaiting approval</span>
+                                                <span className="text-xs text-amber-600 font-bold">Awaiting approval</span>
                                             )}
                                         </div>
                                     </CardContent>
@@ -227,7 +228,7 @@ export default function PatientPortalDashboard() {
                 {/* Records & Tips */}
                 <Grid item xs={12} md={5}>
                     <Typography variant="h6" fontWeight={800} className="mb-4">Medical Summary</Typography>
-                    <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5, mb: 3 }}>
+                    <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, mb: 3 }}>
                         <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-4">
                                 <FileText className="text-blue-600" />
@@ -243,7 +244,7 @@ export default function PatientPortalDashboard() {
                     </Card>
 
                     {/* Health Tip */}
-                    <Card elevation={0} sx={{ bgcolor: '#fffbeb', borderRadius: 5, border: '1px solid #fef3c7' }}>
+                    <Card elevation={0} sx={{ bgcolor: '#fffbeb', borderRadius: 4, border: '1px solid #fef3c7' }}>
                         <CardContent className="p-6">
                             <div className="flex items-center gap-2 mb-2 text-amber-700">
                                 <Star size={18} fill="currentColor" />
@@ -256,6 +257,7 @@ export default function PatientPortalDashboard() {
                     </Card>
                 </Grid>
             </Grid>
-        </div>
+            </div>
+        </Box>
     );
 }

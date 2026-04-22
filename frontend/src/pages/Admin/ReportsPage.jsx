@@ -205,18 +205,19 @@ export default function ReportsPage() {
     }
 
     return (
-        <Box className="flex flex-col gap-6 p-2">
+        <Box sx={{ flexGrow: 1, p: { xs: 2, lg: 3 }, minWidth: 0 }}>
+            <Box className="flex flex-col gap-6">
             {/* Header */}
             <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <Box>
-                    <Typography variant="h5" color="text.primary">Administrative Insights</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                    <Typography variant="h5" fontWeight={900} color="text.primary">Administrative Insights</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
                         Comprehensive operational analysis & financial overview
                     </Typography>
                 </Box>
                 <Box className="flex gap-2">
                     <Button
-                        variant="soft"
+                        variant="outlined"
                         startIcon={<Save size={18} />}
                         onClick={handleSaveReport}
                         disabled={saving}
@@ -292,13 +293,13 @@ export default function ReportsPage() {
             </Box>
 
             {/* Exportable Report Container */}
-            <Box id="full-clinical-report" sx={{ bgcolor: 'white', borderRadius: 6, p: 4, border: '1px solid #f1f5f9' }}>
+            <Box id="full-clinical-report" sx={{ bgcolor: 'white', borderRadius: 4, p: 4, border: '1px solid #f1f5f9' }}>
                 <Box className="mb-10 flex justify-between items-end border-b pb-8 border-slate-100">
                     <Box>
-                        <Typography variant="h5" sx={{ letterSpacing: '-0.02em', color: '#0f172a' }}>
+                        <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: '#0f172a' }}>
                             Health System Performance Dashboard
                         </Typography>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.8, fontWeight: 500 }}>
                             Reference: {new Date().getFullYear()}-{Math.random().toString(36).substr(2, 6).toUpperCase()} • Generated on {new Date().toLocaleString()}
                         </Typography>
                     </Box>
@@ -319,7 +320,7 @@ export default function ReportsPage() {
                             <Box sx={{ p: 4, borderRadius: 5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', height: '100%' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, color: kpi.color }}>
                                     {kpi.icon}
-                                    <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', opacity: 0.7 }}>{kpi.label}</Typography>
+                                    <Typography variant="overline" sx={{ fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>{kpi.label}</Typography>
                                 </Box>
                                 <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>{kpi.value.toLocaleString()}</Typography>
                             </Box>
@@ -338,10 +339,10 @@ export default function ReportsPage() {
                                 </Typography>
                                 <Box sx={{ height: 400 }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={financialData} margin={{ left: -20 }}>
+                                        <LineChart data={financialData} margin={{ left: 10, right: 10 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 13 }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 13 }} />
+                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} />
                                             <Tooltip contentStyle={{ borderRadius: 16, border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }} />
                                             <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: 20 }} />
                                             <Line type="monotone" dataKey="revenue" name="Total Revenue ($)" stroke="#2563eb" strokeWidth={5} dot={{ r: 6, fill: '#2563eb' }} activeDot={{ r: 8 }} />
@@ -360,14 +361,14 @@ export default function ReportsPage() {
                                 </Typography>
                                 <Box sx={{ height: 320 }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={stats.appointments.monthlyTrend} margin={{ left: -20 }}>
+                                        <AreaChart data={stats.appointments.monthlyTrend} margin={{ left: 10, right: 10 }}>
                                             <defs>
                                                 <linearGradient id="gradVisits" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2} />
                                                     <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 13 }} />
+                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} />
                                             <YAxis hide />
                                             <Tooltip />
                                             <Area type="monotone" dataKey="count" name="Patient Volume" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#gradVisits)" />
@@ -380,7 +381,7 @@ export default function ReportsPage() {
                         <Grid item xs={12} lg={4}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 {/* Distribution Charts */}
-                                <Box sx={{ p: 4, borderRadius: 6, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                <Box sx={{ p: 4, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
                                     <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, opacity: 0.6, letterSpacing: '0.1em' }}>Demographic Distribution</Typography>
                                     <Box sx={{ height: 260 }}>
                                         <ResponsiveContainer width="100%" height="100%">
@@ -402,13 +403,13 @@ export default function ReportsPage() {
                                     </Box>
                                 </Box>
 
-                                <Box sx={{ p: 4, borderRadius: 6, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                <Box sx={{ p: 4, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
                                     <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, opacity: 0.6, letterSpacing: '0.1em' }}>Success Rate Matrix</Typography>
                                     <Box sx={{ height: 220 }}>
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={statusData} layout="vertical" margin={{ left: -10 }}>
+                                            <BarChart data={statusData} layout="vertical" margin={{ left: 10, right: 20 }}>
                                                 <XAxis type="number" hide />
-                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={90} tick={{ fontSize: 12, fontWeight: 600 }} />
+                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={90} tick={{ fontSize: 12, fontWeight: 700 }} />
                                                 <Tooltip />
                                                 <Bar dataKey="value" name="Occurrences" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={24} />
                                             </BarChart>
@@ -416,7 +417,7 @@ export default function ReportsPage() {
                                     </Box>
                                 </Box>
 
-                                <Box sx={{ p: 4, borderRadius: 6, bgcolor: '#fff7ed', border: '1px solid #ffedd5' }}>
+                                <Box sx={{ p: 4, borderRadius: 3, bgcolor: '#fff7ed', border: '1px solid #ffedd5' }}>
                                     <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, opacity: 0.6, letterSpacing: '0.1em', color: '#9a3412' }}>Supply Chain Allocation</Typography>
                                     <Box sx={{ height: 180 }}>
                                         <ResponsiveContainer width="100%" height="100%">
@@ -438,12 +439,12 @@ export default function ReportsPage() {
                                 <Table>
                                     <TableHead sx={{ bgcolor: '#f8fafc' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 800 }}>Patient ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Full Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Age/Gender</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Contact</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Registration</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Patient ID</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Full Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Age/Gender</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Contact</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Registration</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Status</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -480,12 +481,12 @@ export default function ReportsPage() {
                                 <Table>
                                     <TableHead sx={{ bgcolor: '#f8fafc' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 800 }}>Item ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Medication / Supply</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Category</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Quantity</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Expiry Date</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Stock Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Item ID</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Medication / Supply</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Category</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Quantity</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Expiry Date</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Stock Status</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -527,12 +528,12 @@ export default function ReportsPage() {
                                 <Table>
                                     <TableHead sx={{ bgcolor: '#f8fafc' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 800 }}>Invoice ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Patient Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Date</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Amount</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Payment Method</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Invoice ID</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Patient Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Date</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Amount</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Payment Method</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Status</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -597,12 +598,12 @@ export default function ReportsPage() {
                                     <Table>
                                         <TableHead sx={{ bgcolor: '#f8fafc' }}>
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 800 }}>Ref ID</TableCell>
-                                                <TableCell sx={{ fontWeight: 800 }}>Clinical Case (Patient)</TableCell>
-                                                <TableCell sx={{ fontWeight: 800 }}>Assigned Physician</TableCell>
-                                                <TableCell sx={{ fontWeight: 800 }}>DateTime</TableCell>
-                                                <TableCell sx={{ fontWeight: 800 }}>EMR Status</TableCell>
-                                                <TableCell sx={{ fontWeight: 800 }}>Operation</TableCell>
+                                                <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Ref ID</TableCell>
+                                                <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Clinical Case (Patient)</TableCell>
+                                                <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Assigned Physician</TableCell>
+                                                <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>DateTime</TableCell>
+                                                <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>EMR Status</TableCell>
+                                                <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Operation</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -626,7 +627,6 @@ export default function ReportsPage() {
                                                             <Chip
                                                                 label={row.emrStatus}
                                                                 size="small"
-                                                                variant="soft"
                                                                 color={row.emrStatus === 'Finalized' ? 'success' : row.emrStatus === 'Drafted' ? 'warning' : 'default'}
                                                                 sx={{ fontWeight: 700 }}
                                                             />
@@ -638,7 +638,7 @@ export default function ReportsPage() {
                                                                 value={row.status}
                                                                 onChange={(e) => handleUpdateStatus(row.id, e.target.value)}
                                                                 SelectProps={{ native: true }}
-                                                                sx={{ '& .MuiInputBase-root': { borderRadius: 2, fontSize: 12, fontWeight: 700 } }}
+                                                                sx={{ '& .MuiInputBase-root': { borderRadius: 2, fontWeight: 700 } }}
                                                             >
                                                                 <option value="Pending">Pending</option>
                                                                 <option value="Confirmed">Confirmed</option>
@@ -668,12 +668,12 @@ export default function ReportsPage() {
                                 <Table>
                                     <TableHead sx={{ bgcolor: '#f8fafc' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 800 }}>Physician ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Doctor Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Specialty</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Department</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Total Surgeries</TableCell>
-                                            <TableCell sx={{ fontWeight: 800 }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Physician ID</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Doctor Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Specialty</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Department</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Total Surgeries</TableCell>
+                                            <TableCell sx={{ fontWeight: 900, py: 3, px: 3 }}>Status</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -731,6 +731,7 @@ export default function ReportsPage() {
                         &copy; {new Date().getFullYear()} Clinical Intelligence Systems • Professional Edition v4.2.0
                     </Typography>
                 </Box>
+            </Box>
             </Box>
         </Box>
     );

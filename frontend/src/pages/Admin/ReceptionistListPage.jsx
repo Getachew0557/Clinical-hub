@@ -8,7 +8,7 @@ import {
     Typography, Button, Card, CardContent, InputBase,
     Avatar, Chip, IconButton, Menu, MenuItem,
     CircularProgress, Alert, Dialog, DialogTitle,
-    DialogContent, DialogActions, TextField, Grid
+    DialogContent, DialogActions, TextField, Grid, Box
 } from '@mui/material';
 import authService from '../../api/auth.service';
 
@@ -97,11 +97,12 @@ export default function ReceptionistListPage() {
     );
 
     return (
-        <div className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+            <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" color="text.primary">Receptionists</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                    <Typography variant="h5" fontWeight={900} color="text.primary">Receptionists</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
                         Manage clinic front-desk and administrative staff
                     </Typography>
                 </div>
@@ -153,7 +154,7 @@ export default function ReceptionistListPage() {
                                     <Avatar sx={{ bgcolor: '#f1f5f9', color: '#64748b', fontWeight: 800 }}>
                                         {rec.fullName.charAt(0)}
                                     </Avatar>
-                                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, rec)}>
+                                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, rec)} sx={{ mr: -1, mt: -1 }}>
                                         <MoreHorizontal size={18} />
                                     </IconButton>
                                 </div>
@@ -167,7 +168,7 @@ export default function ReceptionistListPage() {
                                         label="Receptionist"
                                         size="small"
                                         icon={<ShieldCheck size={14} />}
-                                        sx={{ bgcolor: '#f0fdf4', color: '#166534', fontWeight: 600, border: '1px solid #dcfce7' }}
+                                        sx={{ bgcolor: '#f0fdf4', color: '#166534', fontWeight: 800, border: '1px solid #dcfce7' }}
                                     />
                                 </div>
                             </CardContent>
@@ -182,7 +183,7 @@ export default function ReceptionistListPage() {
                 onClose={handleCloseModal}
                 maxWidth="sm"
                 fullWidth
-                PaperProps={{ sx: { borderRadius: 5, mt: 10 } }}
+                PaperProps={{ sx: { borderRadius: 3, mt: 4 } }}
             >
                 <form onSubmit={handleSubmit}>
                     <DialogTitle sx={{ p: 3, borderBottom: '1px solid #f1f5f9' }}>
@@ -192,36 +193,51 @@ export default function ReceptionistListPage() {
                         <div className="pt-2">
                             <Grid container spacing={3}>
                                 <Grid item xs={12}>
-                                    <TextField
-                                        label="Full Name"
-                                        name="fullName"
-                                        fullWidth
-                                        required
-                                        value={formData.fullName}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Full Name
+                                        </Typography>
+                                        <TextField
+                                            name="fullName"
+                                            fullWidth
+                                            required
+                                            placeholder="Enter receptionist full name"
+                                            value={formData.fullName}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField
-                                        label="Email Address"
-                                        name="email"
-                                        type="email"
-                                        fullWidth
-                                        required
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Email Address
+                                        </Typography>
+                                        <TextField
+                                            name="email"
+                                            type="email"
+                                            fullWidth
+                                            required
+                                            placeholder="receptionist@clinic.com"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField
-                                        label="Temporary Password"
-                                        name="password"
-                                        type="password"
-                                        fullWidth
-                                        required
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                    />
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
+                                            Temporary Password
+                                        </Typography>
+                                        <TextField
+                                            name="password"
+                                            type="password"
+                                            fullWidth
+                                            required
+                                            placeholder="Set temporary password"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                        />
+                                    </Box>
                                 </Grid>
                             </Grid>
                         </div>
@@ -241,9 +257,10 @@ export default function ReceptionistListPage() {
             </Dialog>
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem onClick={handleMenuClose} sx={{ fontSize: '0.875rem' }}>Deactivate Account</MenuItem>
-                <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main', fontSize: '0.875rem' }}>Delete Account</MenuItem>
+                <MenuItem onClick={handleMenuClose}>Deactivate Account</MenuItem>
+                <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>Delete Account</MenuItem>
             </Menu>
         </div>
+    </Box>
     );
 }

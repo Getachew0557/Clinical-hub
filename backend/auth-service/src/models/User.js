@@ -35,6 +35,10 @@ const User = sequelize.define('User', {
     resetPasswordExpires: {
         type: DataTypes.DATE,
         allowNull: true
+    },
+    profilePhoto: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     hooks: {

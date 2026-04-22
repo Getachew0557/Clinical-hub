@@ -179,7 +179,7 @@ function TimelineItem({ title, subtitle, year, icon: Icon }) {
                 <p className="font-extrabold text-slate-900 text-sm mb-0.5">{title}</p>
                 <p className="text-slate-500 text-sm font-medium">{subtitle}</p>
                 {year && (
-                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-teal-50 text-teal-700 rounded-lg text-[10px] font-bold mt-2 border border-teal-200/50 uppercase tracking-wider">
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-teal-50 text-teal-700 rounded-lg text-xs font-black mt-2 border border-teal-200/50 uppercase tracking-tighter">
                         <Clock size={10} /> {year}
                     </div>
                 )}
@@ -501,9 +501,9 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
                                                 : 'bg-white border-slate-200 text-slate-600 hover:border-teal-300'
                                         }`}
                                     >
-                                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{d.label}</span>
+                                        <span className="text-xs font-black uppercase tracking-tighter opacity-80">{d.label}</span>
                                         <span className="text-lg font-black leading-tight">{d.day}</span>
-                                        <span className="text-[10px] opacity-70">{d.month}</span>
+                                        <span className="text-xs font-bold opacity-70">{d.month}</span>
                                     </button>
                                 ))}
                             </div>
@@ -533,8 +533,8 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
                                                             : 'bg-white text-slate-800 border-slate-100 hover:border-teal-400 hover:text-teal-600 hover:bg-teal-50/30'
                                                 }`}
                                             >
-                                                <span className="text-[13px]">{slot.time}</span>
-                                                <span className={`text-[10px] uppercase tracking-tighter mt-1 ${
+                                                <span className="text-sm">{slot.time}</span>
+                                                <span className={`text-xs font-black uppercase tracking-tighter mt-1 ${
                                                     isSelected ? 'text-white/80' : remainingColor(slot)
                                                 }`}>
                                                     {remainingLabel(slot)}
@@ -547,7 +547,7 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
                                 <div className="text-center py-10 bg-white/50 border-2 border-dashed border-slate-100 rounded-2xl mb-6">
                                     <Clock size={32} className="mx-auto text-slate-300 mb-2" strokeWidth={1.5} />
                                     <p className="text-slate-400 text-sm font-bold">No slots available</p>
-                                    <p className="text-slate-400 text-[10px]">Try selecting another date</p>
+                                    <p className="text-slate-400 text-xs font-semibold">Try selecting another date</p>
                                 </div>
                             )}
 
@@ -749,8 +749,7 @@ export default function DoctorProfilePage() {
                                             <img src={getDoctorPhotoUrl(doctor.profilePhoto)} alt={doctor.fullName} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <span className="text-4xl font-black text-teal-300"
-                                                    style={{ fontFamily: "'Playfair Display', serif" }}>
+                                                <span className="text-4xl font-extrabold text-teal-300">
                                                     {doctor?.fullName?.charAt(0) || 'D'}
                                                 </span>
                                             </div>

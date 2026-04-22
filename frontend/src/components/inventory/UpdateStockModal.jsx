@@ -99,44 +99,57 @@ export default function UpdateStockModal({ open, onClose, onSuccess, item }) {
 
                     <Grid container spacing={3} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Operation</InputLabel>
-                                <Select
-                                    name="type"
-                                    value={formData.type}
-                                    label="Operation"
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Operation
+                                </Typography>
+                                <FormControl fullWidth required>
+                                    <Select
+                                        name="type"
+                                        value={formData.type}
+                                        onChange={handleInputChange}
+                                        displayEmpty
+                                    >
+                                        <MenuItem value="In">Add Stock (+)</MenuItem>
+                                        <MenuItem value="Out">Remove Stock (-)</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Box>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Quantity
+                                </Typography>
+                                <TextField
+                                    name="quantity"
+                                    type="number"
+                                    fullWidth
+                                    required
+                                    inputProps={{ min: 1 }}
+                                    placeholder="Enter amount"
+                                    value={formData.quantity}
                                     onChange={handleInputChange}
-                                >
-                                    <MenuItem value="In">Add Stock (+)</MenuItem>
-                                    <MenuItem value="Out">Remove Stock (-)</MenuItem>
-                                </Select>
-                            </FormControl>
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12}>
-                            <TextField
-                                label="Quantity"
-                                name="quantity"
-                                type="number"
-                                fullWidth
-                                required
-                                inputProps={{ min: 1 }}
-                                value={formData.quantity}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Reason / Notes (Optional)"
-                                name="notes"
-                                fullWidth
-                                multiline
-                                rows={2}
-                                placeholder={formData.type === 'Out' ? "e.g. Used for procedure, Expired" : "e.g. New delivery received"}
-                                value={formData.notes}
-                                onChange={handleInputChange}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Reason / Notes (Optional)
+                                </Typography>
+                                <TextField
+                                    name="notes"
+                                    fullWidth
+                                    multiline
+                                    rows={2}
+                                    placeholder={formData.type === 'Out' ? "e.g. Used for procedure, Expired" : "e.g. New delivery received"}
+                                    value={formData.notes}
+                                    onChange={handleInputChange}
+                                />
+                            </Box>
                         </Grid>
                     </Grid>
                 </DialogContent>

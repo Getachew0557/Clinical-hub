@@ -158,14 +158,15 @@ export default function PatientListPage() {
     );
 
     return (
-        <div className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+            <div className="flex flex-col gap-6">
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" color="text.primary">
+                    <Typography variant="h5" fontWeight={700} color="text.primary">
                         {role === 'Patient' ? 'My Medical Profile' : 'Patient Management'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                         {isStaff ? 'List of all registered clinic patients' : isDoctor ? 'Patients currently under your care' : 'View and update your personal health record'}
                     </Typography>
                 </div>
@@ -213,90 +214,110 @@ export default function PatientListPage() {
                                 key={pt.id}
                                 elevation={0}
                                 sx={{
-                                    border: '1px solid #e2e8f0',
+                                    background: 'rgba(255, 255, 255, 0.7)',
+                                    backdropFilter: 'blur(12px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.3)',
                                     borderRadius: 5,
                                     overflow: 'hidden',
-                                    transition: 'all 0.2s',
+                                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    position: 'relative',
                                     '&:hover': {
-                                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
-                                        borderColor: '#3b82f6'
+                                        transform: 'translateY(-8px)',
+                                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                                        borderColor: 'primary.main',
+                                        '& .card-action-bar': { backgroundColor: 'primary.light' }
                                     }
                                 }}
                             >
                                 <CardContent className="p-0">
-                                    <div className="p-5 flex items-start justify-between">
-                                        <div className="flex items-center gap-4">
+                                    <div className="p-6 flex items-start justify-between">
+                                        <div className="flex items-center gap-5">
                                             <Avatar
                                                 src={pt.profilePhoto}
-                                                sx={{ width: 56, height: 56, borderRadius: 3, bgcolor: '#eff6ff', color: '#3b82f6', fontWeight: 800, fontSize: '1.2rem' }}
+                                                sx={{ 
+                                                    width: 64, 
+                                                    height: 64, 
+                                                    borderRadius: 4, 
+                                                    bgcolor: '#f0f9ff', 
+                                                    color: '#0ea5e9', 
+                                                    fontWeight: 900,
+                                                    fontSize: '1.25rem',
+                                                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+                                                }}
                                             >
-                                                {pt.fullName?.charAt(0) || <UserCircle size={28} />}
+                                                {pt.fullName?.charAt(0) || <UserCircle size={32} />}
                                             </Avatar>
                                             <div>
-                                                <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+                                                <Typography variant="subtitle2" fontWeight={600} color="text.primary" sx={{ lineHeight: 1.3 }}>
                                                     {pt.fullName}
                                                 </Typography>
-                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                    ID: #{(pt.userId || pt.id)?.slice(-6)}
+                                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                    ID: #{(pt.userId || pt.id)?.slice(-6)?.toUpperCase()}
                                                 </Typography>
                                             </div>
                                         </div>
                                         {(role === 'Admin' || role === 'Receptionist' || role === 'Doctor' || (role === 'Patient' && pt.userId === user?.id)) && (
-                                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, pt)}>
-                                                <MoreHorizontal size={20} />
+                                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, pt)} 
+                                                sx={{ 
+                                                    bgcolor: 'white', 
+                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                                    '&:hover': { bgcolor: '#f8fafc' }
+                                                }}>
+                                                <MoreHorizontal size={18} />
                                             </IconButton>
                                         )}
                                     </div>
 
-                                    <div className="px-5 pb-5 grid grid-cols-2 gap-3">
-                                        <div className="rounded-2xl bg-slate-50 p-2.5 px-3">
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                    <div className="px-6 pb-6 grid grid-cols-2 gap-4">
+                                        <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                                 Phone
                                             </Typography>
-                                            <Typography variant="body2" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Phone size={14} className="text-slate-400" /> {pt.phone || 'N/A'}
+                                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Phone size={13} className="text-teal-500 shrink-0" /> {pt.phone || 'N/A'}
                                             </Typography>
                                         </div>
-                                        <div className="rounded-2xl bg-slate-50 p-2.5 px-3">
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                        <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                                 Blood Group
                                             </Typography>
-                                            <Typography variant="body2" fontWeight={700} color="error.main">
-                                                {pt.bloodGroup || 'Not set'}
-                                            </Typography>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full shrink-0 ${pt.bloodGroup ? 'bg-red-500' : 'bg-slate-300'}`} />
+                                                <Typography variant="body2" color={pt.bloodGroup ? 'error.main' : 'text.disabled'}>
+                                                    {pt.bloodGroup || 'Not set'}
+                                                </Typography>
+                                            </div>
                                         </div>
                                         {pt.email && (
-                                            <div className="col-span-2 rounded-2xl bg-slate-50 p-2.5 px-3">
-                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                            <div className="col-span-2 rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
+                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                                     Email
                                                 </Typography>
-                                                <Typography variant="body2" fontWeight={600} className="truncate">
+                                                <Typography variant="body2" className="truncate">
                                                     {pt.email}
                                                 </Typography>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="p-3 bg-slate-50/50 border-t border-slate-100 flex gap-2">
+                                    <div className="px-4 pb-4 flex gap-2">
                                         <Button
                                             fullWidth
-                                            size="small"
+                                            size="medium"
                                             variant="outlined"
-                                            startIcon={<FileText size={14} />}
-                                            sx={{ borderRadius: 2, textTransform: 'none', backgroundColor: 'white' }}
+                                            startIcon={<FileText size={15} />}
                                             onClick={() => navigate(`/emr?patientId=${pt.userId || pt.id}`)}
                                         >
-                                            Medical Records
+                                            Records
                                         </Button>
                                         <Button
                                             fullWidth
-                                            size="small"
-                                            variant="outlined"
-                                            startIcon={<Calendar size={14} />}
-                                            sx={{ borderRadius: 2, textTransform: 'none', backgroundColor: 'white' }}
+                                            size="medium"
+                                            variant="contained"
+                                            startIcon={<Calendar size={15} />}
                                             onClick={() => navigate(`/appointments?patientId=${pt.userId || pt.id}`)}
                                         >
-                                            Book Visit
+                                            Book
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -359,5 +380,6 @@ export default function PatientListPage() {
                 onSuccess={role === 'Patient' ? fetchMyProfile : fetchPatients}
             />
         </div>
+    </Box>
     );
 }

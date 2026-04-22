@@ -6,35 +6,41 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
-import DoctorProfile from './src/models/DoctorProfile.js';
+
+// Routes
 import doctorRoutes from './src/routes/doctorRoutes.js';
+import inventoryRoutes from './src/routes/inventoryRoutes.js';
+import reportRoutes from './src/routes/reportRoutes.js';
+
+// Models
+import DoctorProfile from './src/models/DoctorProfile.js';
+import './src/models/InventoryItem.js';
+import './src/models/StockTransaction.js';
+import './src/models/Report.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// â”€â”€â”€ Middlewares â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(cors());
 app.use(express.json());
-
-// Serve uploaded profile photos statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/doctors', doctorRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/reports', reportRoutes);
 
-// â”€â”€â”€ Health Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Health Check ─────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.status(200).json({ service: 'doctor-service', status: 'healthy' });
 });
 
-// â”€â”€â”€ 404 Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
-// â”€â”€â”€ Startup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PORT = process.env.DOCTOR_PORT || 5010;
 
 const startServer = async () => {
@@ -46,10 +52,9 @@ const startServer = async () => {
     await sequelize.sync();
     console.log('Database models synced.');
 
-    // â”€â”€ Add new columns if they don't exist (safe migration) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Safe column migration for DoctorProfiles
     const qi = sequelize.getQueryInterface();
     const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
-
     const newColumns = {
         videoFee:           'DECIMAL(10,2) NULL',
         serviceTypes:       'JSON NULL',
@@ -62,7 +67,6 @@ const startServer = async () => {
         awards:             'JSON NULL',
         maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
     };
-
     for (const [col, definition] of Object.entries(newColumns)) {
         if (!tableDesc[col]) {
             await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
@@ -71,7 +75,7 @@ const startServer = async () => {
     }
 
     app.listen(PORT, () => {
-      console.log(`doctor-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+      console.log(`doctor-service (+ inventory + reports) running on port ${PORT}`);
     });
   } catch (error) {
     console.error('Unable to start doctor-service:', error);
@@ -80,4 +84,3 @@ const startServer = async () => {
 };
 
 startServer();
-

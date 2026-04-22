@@ -14,11 +14,11 @@ const services = {
   '/api/auth': process.env.AUTH_SERVICE_URL || 'http://localhost:5001',
   '/api/patients': process.env.PATIENT_SERVICE_URL || 'http://localhost:5002',
   '/api/appointments': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
-  '/api/emr': process.env.EMR_SERVICE_URL || 'http://localhost:5004',
-  '/api/billing': process.env.BILLING_SERVICE_URL || 'http://localhost:5005',
-  '/api/inventory': process.env.INVENTORY_SERVICE_URL || 'http://localhost:5006',
-  '/api/reports': process.env.REPORT_SERVICE_URL || 'http://localhost:5007',
-  '/api/notifications': process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5008',
+  '/api/emr': process.env.PATIENT_SERVICE_URL || 'http://localhost:5002', // Merged into Patient
+  '/api/billing': process.env.PATIENT_SERVICE_URL || 'http://localhost:5002', // Merged into Patient
+  '/api/inventory': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010', // Merged into Doctor
+  '/api/reports': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010', // Merged into Doctor
+  '/api/notifications': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003', // Merged into Appointment
   '/api/ai': process.env.AI_SERVICE_URL || 'http://localhost:5009',
   '/api/doctors': process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010'
 };
@@ -39,9 +39,9 @@ Object.entries(services).forEach(([path, target]) => {
   }));
 });
 
-// Dedicated Socket.IO / WebSocket proxy — must use http.createServer + server.on('upgrade')
+// Dedicated Socket.IO / WebSocket proxy — points to appointment-service (merged with notification)
 const socketProxy = createProxyMiddleware({
-  target: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5008',
+  target: process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
   ws: true,
   changeOrigin: true,
   logLevel: 'warn',

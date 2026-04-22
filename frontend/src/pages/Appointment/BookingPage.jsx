@@ -178,11 +178,11 @@ const BookingPage = () => {
                                         <Star className="w-4 h-4 fill-current" />
                                         <span className="text-sm font-black text-slate-900">4.9</span>
                                     </div>
-                                    <p className="text-[10px] font-black uppercase text-slate-400">Rating</p>
+                                    <p className="text-xs font-black uppercase text-slate-400">Rating</p>
                                 </div>
                                 <div className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                     <span className="text-sm font-black text-slate-900">{doctor?.experience || '5'}+ Yrs</span>
-                                    <p className="text-[10px] font-black uppercase text-slate-400">Experience</p>
+                                    <p className="text-xs font-black uppercase text-slate-400">Experience</p>
                                 </div>
                             </div>
 
@@ -249,7 +249,7 @@ const BookingPage = () => {
                                             >
                                                 {slot.time}
                                                 {slot.available && slot.remainingSpots === 1 && (
-                                                    <span className="block text-[8px] mt-0.5 text-orange-500">Last Spot</span>
+                                                    <span className="block text-xs mt-0.5 text-orange-500 font-bold uppercase">Last Spot</span>
                                                 )}
                                             </button>
                                         ))}
@@ -289,7 +289,7 @@ const BookingPage = () => {
                                                     }`}
                                                 >
                                                     <span>{label}</span>
-                                                    <span className={`text-[10px] font-medium ${consultationType === val ? 'text-white/80' : 'text-slate-400'}`}>{desc}</span>
+                                                    <span className={`text-xs font-medium ${consultationType === val ? 'text-white/80' : 'text-slate-400'}`}>{desc}</span>
                                                 </button>
                                             ))}
                                         </div>

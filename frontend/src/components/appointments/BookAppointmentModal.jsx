@@ -4,7 +4,7 @@ import {
     Typography, Button, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, Grid,
     FormControl, InputLabel, Select, MenuItem,
-    IconButton, CircularProgress
+    IconButton, CircularProgress, Box
 } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
 import doctorService from '../../api/doctor.service';
@@ -154,37 +154,52 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
                             {/* Patient */}
                             {isStaff ? (
                                 <Grid item xs={12}>
-                                    <FormControl fullWidth required>
-                                        <InputLabel>Select Patient</InputLabel>
-                                        <Select name="patientId" value={formData.patientId}
-                                            label="Select Patient" onChange={handleInputChange}>
-                                            {patients.map(p => (
-                                                <MenuItem key={p.id} value={p.userId || p.id}>
-                                                    {p.fullName || p.name}{p.email ? ` (${p.email})` : ''}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                            Select Patient
+                                        </Typography>
+                                        <FormControl fullWidth required>
+                                            <Select name="patientId" value={formData.patientId}
+                                                displayEmpty onChange={handleInputChange}>
+                                                <MenuItem value="" disabled>Choose Patient</MenuItem>
+                                                {patients.map(p => (
+                                                    <MenuItem key={p.id} value={p.userId || p.id}>
+                                                        {p.fullName || p.name}{p.email ? ` (${p.email})` : ''}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
                                 </Grid>
                             ) : (
                                 <Grid item xs={12}>
-                                    <TextField label="Patient Name" fullWidth disabled value={user?.fullName || ''} />
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                            Patient Name
+                                        </Typography>
+                                        <TextField fullWidth disabled value={user?.fullName || ''} />
+                                    </Box>
                                 </Grid>
                             )}
 
                             {/* Doctor */}
                             <Grid item xs={12}>
-                                <FormControl fullWidth required>
-                                    <InputLabel>Select Doctor</InputLabel>
-                                    <Select name="doctorId" value={formData.doctorId}
-                                        label="Select Doctor" onChange={handleInputChange}>
-                                        {doctors.map(d => (
-                                            <MenuItem key={d.id} value={d.userId || d.id}>
-                                                {d.fullName} — {d.specialization}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        Select Doctor
+                                    </Typography>
+                                    <FormControl fullWidth required>
+                                        <Select name="doctorId" value={formData.doctorId}
+                                            displayEmpty onChange={handleInputChange}>
+                                            <MenuItem value="" disabled>Choose Doctor</MenuItem>
+                                            {doctors.map(d => (
+                                                <MenuItem key={d.id} value={d.userId || d.id}>
+                                                    {d.fullName} — {d.specialization}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
                             </Grid>
 
                             {/* Consultation Type — filtered by doctor's serviceTypes */}
@@ -211,7 +226,7 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
                                                         : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'
                                                 }`}>
                                                 <span>{label}</span>
-                                                <span className={`text-[10px] ${formData.type === val ? 'text-white/70' : 'text-slate-400'}`}>{desc}</span>
+                                                <span className={`text-xs ${formData.type === val ? 'text-white/70' : 'text-slate-400'}`}>{desc}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -225,46 +240,65 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
 
                             {/* Date */}
                             <Grid item xs={12} md={6}>
-                                <TextField label="Date" name="appointmentDate" type="date" fullWidth required
-                                    InputLabelProps={{ shrink: true }}
-                                    inputProps={{ min: new Date().toISOString().split('T')[0] }}
-                                    value={formData.appointmentDate} onChange={handleInputChange} />
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        Appointment Date
+                                    </Typography>
+                                    <TextField name="appointmentDate" type="date" fullWidth required
+                                        inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                                        value={formData.appointmentDate} onChange={handleInputChange} />
+                                </Box>
                             </Grid>
 
                             {/* Time — slot picker if available, else free input */}
                             <Grid item xs={12} md={6}>
-                                {formData.doctorId && availableSlots.length > 0 ? (
-                                    <FormControl fullWidth required>
-                                        <InputLabel>Time Slot</InputLabel>
-                                        <Select name="appointmentTime" value={formData.appointmentTime}
-                                            label="Time Slot" onChange={handleInputChange}>
-                                            {availableSlots.map(s => (
-                                                <MenuItem key={s.timeValue} value={s.timeValue}>
-                                                    {s.time} ({s.remainingSpots} spot{s.remainingSpots !== 1 ? 's' : ''} left)
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                ) : (
-                                    <TextField label="Time" name="appointmentTime" type="time" fullWidth required
-                                        InputLabelProps={{ shrink: true }}
-                                        helperText={fetchingSlots ? 'Loading slots...' : formData.doctorId ? 'No available slots — enter manually' : 'Select a doctor first'}
-                                        value={formData.appointmentTime} onChange={handleInputChange} />
-                                )}
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        {formData.doctorId && availableSlots.length > 0 ? 'Select Time Slot' : 'Appointment Time'}
+                                    </Typography>
+                                    {formData.doctorId && availableSlots.length > 0 ? (
+                                        <FormControl fullWidth required>
+                                            <Select name="appointmentTime" value={formData.appointmentTime}
+                                                displayEmpty onChange={handleInputChange}>
+                                                <MenuItem value="" disabled>Choose Slot</MenuItem>
+                                                {availableSlots.map(s => (
+                                                    <MenuItem key={s.timeValue} value={s.timeValue}>
+                                                        {s.time} ({s.remainingSpots} spot{s.remainingSpots !== 1 ? 's' : ''} left)
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    ) : (
+                                        <TextField name="appointmentTime" type="time" fullWidth required
+                                            helperText={fetchingSlots ? 'Loading slots...' : formData.doctorId ? 'No available slots — enter manually' : 'Select a doctor first'}
+                                            value={formData.appointmentTime} onChange={handleInputChange} />
+                                    )}
+                                </Box>
                             </Grid>
 
                             {/* Reason */}
                             <Grid item xs={12}>
-                                <TextField label="Reason for Visit" name="reason" fullWidth required
-                                    placeholder="e.g. Routine Checkup, Follow-up visit"
-                                    value={formData.reason} onChange={handleInputChange} />
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        Reason for Visit
+                                    </Typography>
+                                    <TextField name="reason" fullWidth required
+                                        placeholder="e.g. Routine Checkup, Follow-up visit"
+                                        value={formData.reason} onChange={handleInputChange} />
+                                </Box>
                             </Grid>
 
                             {/* Notes (staff only) */}
                             {isStaff && (
                                 <Grid item xs={12}>
-                                    <TextField label="Internal Notes" name="notes" fullWidth multiline rows={2}
-                                        value={formData.notes} onChange={handleInputChange} />
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                            Internal Notes
+                                        </Typography>
+                                        <TextField name="notes" fullWidth multiline rows={2}
+                                            placeholder="Internal staff notes..."
+                                            value={formData.notes} onChange={handleInputChange} />
+                                    </Box>
                                 </Grid>
                             )}
                         </Grid>

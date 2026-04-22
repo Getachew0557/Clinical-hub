@@ -8,7 +8,7 @@ import {
     Typography, Button, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, Grid,
     FormControl, InputLabel, Select, MenuItem,
-    IconButton, CircularProgress, Alert
+    IconButton, CircularProgress, Alert, Box
 } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
 import doctorService from '../../api/doctor.service';
@@ -118,97 +118,119 @@ export default function EditAppointmentModal({ open, onClose, onSuccess, appoint
 
                         {isStaff && (
                             <Grid item xs={12}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Doctor</InputLabel>
-                                    <Select
-                                        name="doctorId"
-                                        value={formData.doctorId}
-                                        label="Doctor"
-                                        onChange={handleInputChange}
-                                        disabled={!canEditDetails}
-                                    >
-                                        {doctors.map(d => (
-                                            <MenuItem key={d.id} value={d.userId}>
-                                                {d.fullName} ({d.specialization})
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        Assigned Doctor
+                                    </Typography>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            name="doctorId"
+                                            value={formData.doctorId}
+                                            displayEmpty
+                                            onChange={handleInputChange}
+                                            disabled={!canEditDetails}
+                                        >
+                                            <MenuItem value="" disabled>Select Doctor</MenuItem>
+                                            {doctors.map(d => (
+                                                <MenuItem key={d.id} value={d.userId}>
+                                                    {d.fullName} ({d.specialization})
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
                             </Grid>
                         )}
 
                         <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Date"
-                                name="appointmentDate"
-                                type="date"
-                                fullWidth
-                                required
-                                InputLabelProps={{ shrink: true }}
-                                value={formData.appointmentDate}
-                                onChange={handleInputChange}
-                                disabled={!canEditDetails}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Appointment Date
+                                </Typography>
+                                <TextField
+                                    name="appointmentDate"
+                                    type="date"
+                                    fullWidth
+                                    required
+                                    value={formData.appointmentDate}
+                                    onChange={handleInputChange}
+                                    disabled={!canEditDetails}
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Time"
-                                name="appointmentTime"
-                                type="time"
-                                fullWidth
-                                required
-                                InputLabelProps={{ shrink: true }}
-                                value={formData.appointmentTime}
-                                onChange={handleInputChange}
-                                disabled={!canEditDetails}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Appointment Time
+                                </Typography>
+                                <TextField
+                                    name="appointmentTime"
+                                    type="time"
+                                    fullWidth
+                                    required
+                                    value={formData.appointmentTime}
+                                    onChange={handleInputChange}
+                                    disabled={!canEditDetails}
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12}>
-                            <TextField
-                                label="Reason for Visit"
-                                name="reason"
-                                fullWidth
-                                required
-                                multiline
-                                rows={2}
-                                value={formData.reason}
-                                onChange={handleInputChange}
-                                disabled={!canEditDetails}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Reason for Visit
+                                </Typography>
+                                <TextField
+                                    name="reason"
+                                    fullWidth
+                                    required
+                                    multiline
+                                    rows={2}
+                                    value={formData.reason}
+                                    onChange={handleInputChange}
+                                    disabled={!canEditDetails}
+                                />
+                            </Box>
                         </Grid>
 
                         <Grid item xs={12}>
-                            <TextField
-                                label="Clinical Notes"
-                                name="notes"
-                                fullWidth
-                                multiline
-                                rows={3}
-                                value={formData.notes}
-                                onChange={handleInputChange}
-                                disabled={!canEditNotes}
-                                placeholder={isDoctor ? "Add diagnosis, treatment plan, etc." : "Internal clinic notes"}
-                            />
+                            <Box>
+                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                    Clinical Notes
+                                </Typography>
+                                <TextField
+                                    name="notes"
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    value={formData.notes}
+                                    onChange={handleInputChange}
+                                    disabled={!canEditNotes}
+                                    placeholder={isDoctor ? "Add diagnosis, treatment plan, etc." : "Internal clinic notes"}
+                                />
+                            </Box>
                         </Grid>
 
                         {isStaff && (
                             <Grid item xs={12}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Status</InputLabel>
-                                    <Select
-                                        name="status"
-                                        value={formData.status}
-                                        label="Status"
-                                        onChange={handleInputChange}
-                                    >
-                                        <MenuItem value="Pending">Pending</MenuItem>
-                                        <MenuItem value="Confirmed">Confirmed</MenuItem>
-                                        <MenuItem value="Completed">Completed</MenuItem>
-                                        <MenuItem value="Cancelled">Cancelled</MenuItem>
-                                    </Select>
-                                </FormControl>
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        Appointment Status
+                                    </Typography>
+                                    <FormControl fullWidth>
+                                        <Select
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleInputChange}
+                                        >
+                                            <MenuItem value="Pending">Pending</MenuItem>
+                                            <MenuItem value="Confirmed">Confirmed</MenuItem>
+                                            <MenuItem value="Completed">Completed</MenuItem>
+                                            <MenuItem value="Cancelled">Cancelled</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
                             </Grid>
                         )}
                     </Grid>

@@ -173,13 +173,14 @@ export default function AppointmentListPage() {
                 color={config.color}
                 size="small"
                 variant={status === 'Pending' && !isAdminApproved ? 'filled' : 'outlined'}
-                sx={{ fontWeight: 700, borderRadius: 2, fontSize: '0.65rem' }}
+                sx={{ fontWeight: 800, borderRadius: 2 }}
             />
         );
     };
 
     return (
-        <div className="flex flex-col gap-6">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+            <div className="flex flex-col gap-6">
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -228,7 +229,7 @@ export default function AppointmentListPage() {
                                         label={
                                             <span className="flex flex-col items-center gap-0.5">
                                                 <span>{tab}</span>
-                                                <span className="flex items-center gap-1 text-[10px] font-normal">
+                                                <span className="flex items-center gap-1 text-xs font-normal">
                                                     <span className="bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full font-bold">{live}</span>
                                                     {cumulative !== undefined && cumulative !== live && (
                                                         <span className="text-slate-400">/ {cumulative} total</span>
@@ -301,12 +302,12 @@ export default function AppointmentListPage() {
                                                             {apt.reason}
                                                         </Typography>
                                                         {apt.type === 'video' && (
-                                                            <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-bold rounded-full border border-teal-100 flex items-center gap-1">
+                                                            <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-xs font-extrabold rounded-full border border-teal-100 flex items-center gap-1">
                                                                 <Video size={10} /> Video
                                                             </span>
                                                         )}
                                                         {apt.type === 'clinic' && (
-                                                            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full border border-amber-100">
+                                                            <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-extrabold rounded-full border border-amber-100">
                                                                 🏥 Clinic
                                                             </span>
                                                         )}
@@ -315,14 +316,14 @@ export default function AppointmentListPage() {
                                                         {/* Show patient name for Doctor/Admin/Receptionist */}
                                                         {!isPatient && (
                                                             <div className="flex items-start gap-1.5 text-slate-500">
-                                                                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[9px] shrink-0 mt-0.5">
+                                                                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-extrabold text-xs shrink-0 mt-0.5">
                                                                     {(apt.patientName || apt.patientDetails?.fullName || '?').charAt(0).toUpperCase()}
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <Typography variant="caption" fontWeight={700} color="text.primary">
                                                                         {apt.patientName || apt.patientDetails?.fullName || `Patient #${apt.patientId?.slice(-6)}`}
                                                                     </Typography>
-                                                                    <span className="text-[10px] text-slate-400">
+                                                                    <span className="text-xs text-slate-400">
                                                                         ID: #{apt.patientId?.slice(-6)}
                                                                         {apt.patientDetails?.phone && ` · ${apt.patientDetails.phone}`}
                                                                         {apt.patientDetails?.email && ` · ${apt.patientDetails.email}`}
@@ -358,7 +359,7 @@ export default function AppointmentListPage() {
                                                         </button>
                                                     )}
                                                     {apt.status === 'Pending' && !apt.isAdminApproved && role === 'Patient' && (
-                                                        <span className="text-[10px] text-amber-600 font-semibold">Awaiting clinic approval</span>
+                                                        <span className="text-xs text-amber-600 font-bold">Awaiting clinic approval</span>
                                                     )}
                                                     <IconButton size="small" onClick={(e) => handleMenuOpen(e, apt)}>
                                                         <MoreHorizontal size={18} />
@@ -480,6 +481,7 @@ export default function AppointmentListPage() {
                 onSuccess={fetchAppointments}
             />
         </div >
+    </Box>
     );
 }
 

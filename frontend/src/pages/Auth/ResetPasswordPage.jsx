@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Button, TextField, Typography, Card, CardContent, Alert, CircularProgress, IconButton, InputAdornment } from "@mui/material";
-import { Stethoscope, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
+import { Button, TextField, Typography, Card, CardContent, Alert, CircularProgress, IconButton, InputAdornment, Box } from "@mui/material";
+import { Stethoscope, CheckCircle2 } from "lucide-react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import authService from "../../api/auth.service";
 
@@ -77,23 +77,50 @@ export default function ResetPasswordPage() {
                         ) : (
                             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                                 {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
-                                <TextField fullWidth label="New Password"
-                                    type={showPassword ? "text" : "password"}
-                                    value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                                    required disabled={!token}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton onClick={() => setShowPassword(!showPassword)}>
-                                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        )
-                                    }} />
-                                <TextField fullWidth label="Confirm New Password"
-                                    type={showPassword ? "text" : "password"}
-                                    value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                                    required disabled={!token} />
+                                
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        New Password
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Enter new password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        required
+                                        disabled={!token}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton onClick={() => setShowPassword(!showPassword)}>
+                                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                            sx: { borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }
+                                        }}
+                                    />
+                                </Box>
+
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
+                                        Confirm New Password
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Confirm new password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        required
+                                        disabled={!token}
+                                        InputProps={{
+                                            sx: { borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.5)' }
+                                        }}
+                                    />
+                                </Box>
+
                                 <Button type="submit" variant="contained" fullWidth
                                     disabled={loading || !token}
                                     sx={{ borderRadius: 3, py: 1.5, textTransform: 'none', fontWeight: 700 }}>

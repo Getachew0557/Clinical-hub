@@ -79,7 +79,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                     {!collapsed && (
                         <div className="flex flex-col leading-tight">
                             <span className="text-sm font-bold text-white">Biruh Tena</span>
-                            <span className="text-[11px] text-teal-300" style={{ fontFamily: 'Noto Serif Ethiopic, serif' }}>ብሩህ ጤና</span>
+                            <span className="text-xs text-teal-300 font-ethiopic">ብሩህ ጤና</span>
                         </div>
                     )}
                 </div>
@@ -99,10 +99,10 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                     <div className={cn('flex items-center gap-2.5 rounded-xl px-3 py-2.5', meta.badgeBg)}>
                         <span className={cn('h-2 w-2 shrink-0 rounded-full', meta.dotColor)} />
                         <div className="min-w-0">
-                            <p className={cn('text-[11px] font-bold uppercase tracking-wider leading-none', meta.textColor)}>
+                            <p className={cn('text-xs font-bold uppercase tracking-wider leading-none', meta.textColor)}>
                                 {meta.label}
                             </p>
-                            <p className="text-[11px] text-white/40 mt-0.5 truncate leading-none">
+                            <p className="text-xs text-white/40 mt-0.5 truncate leading-none">
                                 {user?.fullName || user?.email || ''}
                             </p>
                         </div>
@@ -112,8 +112,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
 
             {/* ── Nav Items ── */}
             <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Main navigation">
+                {/* Main nav items (all except Settings) */}
                 <ul className="flex flex-col gap-0.5">
-                    {navItems.map((item) => {
+                    {navItems.filter(item => item.to !== '/settings').map((item) => {
                         const isActive = item.end
                             ? location.pathname === item.to
                             : location.pathname.startsWith(item.to);
@@ -128,12 +129,12 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                                         'flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200',
                                         isActive
                                             ? 'bg-teal-600 text-white shadow-md shadow-teal-900/40'
-                                            : 'text-white/60 hover:bg-white/10 hover:text-white'
+                                            : 'text-white/65 hover:bg-white/10 hover:text-white'
                                     )}
                                 >
-                                    <item.icon className="h-[18px] w-[18px] shrink-0" />
+                                    <item.icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'text-white' : 'text-teal-400/70')} />
                                     {!collapsed && (
-                                        <span className="text-[13px] font-medium leading-none">
+                                        <span className="text-sm font-medium">
                                             {t(item.labelKey)}
                                         </span>
                                     )}
@@ -142,15 +143,43 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                         );
                     })}
                 </ul>
+
+                {/* Divider + Settings pinned at bottom of nav */}
+                <div className={cn('mt-2 pt-2 border-t border-white/10', collapsed ? 'mx-1' : 'mx-0')}>
+                    {navItems.filter(item => item.to === '/settings').map((item) => {
+                        const isActive = location.pathname.startsWith(item.to);
+                        return (
+                            <NavLink
+                                key={item.to}
+                                to={item.to}
+                                onClick={onMobileClose}
+                                title={collapsed ? t(item.labelKey) : undefined}
+                                className={cn(
+                                    'flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200',
+                                    isActive
+                                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/40'
+                                        : 'text-white/65 hover:bg-white/10 hover:text-white'
+                                )}
+                            >
+                                <item.icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'text-white' : 'text-teal-400/70')} />
+                                {!collapsed && (
+                                    <span className="text-sm font-medium">
+                                        {t(item.labelKey)}
+                                    </span>
+                                )}
+                            </NavLink>
+                        );
+                    })}
+                </div>
             </nav>
 
             {/* ── Clinic Hours Footer ── */}
             {!collapsed && (
                 <div className="border-t border-white/10 p-4">
                     <div className="rounded-xl bg-white/5 px-3 py-3">
-                        <p className="text-[11px] font-semibold text-white/60 mb-1">{t('sidebar.clinicHours')}</p>
-                        <p className="text-[11px] text-white/35">{t('sidebar.weekdayHours')}</p>
-                        <p className="text-[11px] text-white/35">{t('sidebar.saturdayHours')}</p>
+                        <p className="text-xs font-semibold text-white/60 mb-1">{t('sidebar.clinicHours')}</p>
+                        <p className="text-xs text-white/35">{t('sidebar.weekdayHours')}</p>
+                        <p className="text-xs text-white/35">{t('sidebar.saturdayHours')}</p>
                     </div>
                 </div>
             )}

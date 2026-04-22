@@ -1,25 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-    User, Mail, Lock, Shield,
-    Save, Key, AlertCircle, CheckCircle2,
-    Stethoscope, Phone, Clock, DollarSign
-} from 'lucide-react';
-import {
-    Typography, Button, Card, CardContent,
-    TextField, Grid, Avatar,
-    Alert, CircularProgress, Box, IconButton, InputAdornment
-} from '@mui/material';
-import { useSelector } from 'react-redux';
+import { User, Mail, Lock, Shield, Save, Key, AlertCircle, CheckCircle2, Stethoscope, Phone, Clock, DollarSign, Camera } from 'lucide-react';
+import { Typography, Button, Card, CardContent, TextField, Grid, Avatar, Alert, CircularProgress, Box, IconButton, InputAdornment, Tooltip } from '@mui/material';
+import { useSelector, useDispatch } from 'react-redux';
 import authService from '../../api/auth.service';
 import doctorService from '../../api/doctor.service';
-import { getDoctorPhotoUrl } from '../../utils/cn';
+import { getDoctorPhotoUrl, getAuthPhotoUrl } from '../../utils/cn';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 export default function ProfilePage() {
+    const dispatch = useDispatch();
     const { user } = useSelector((s) => s.auth);
     const isDoctor = user?.role === 'Doctor';
 
     const [loading, setLoading] = useState(false);
+    const [photoLoading, setPhotoLoading] = useState(false);
     const [doctorSaving, setDoctorSaving] = useState(false);
     const [doctorLoading, setDoctorLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
@@ -107,11 +101,34 @@ export default function ProfilePage() {
         } finally { setLoading(false); }
     };
 
+    const handlePhotoChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setPhotoLoading(true);
+        setErrorMsg('');
+        try {
+            const formData = new FormData();
+            formData.append('profilePhoto', file);
+            await authService.updateMe(formData);
+            setSuccessMsg('Profile photo updated successfully!');
+            // Page will re-render as authService.updateMe updates localStorage which redux should pick up 
+            // depending on implementation, but standard here is manual refresh or redux dispatch.
+            // For now, let's assume updateMe updates the local user object.
+            setTimeout(() => window.location.reload(), 1000); 
+        } catch (err) {
+            setErrorMsg('Failed to upload photo');
+        } finally {
+            setPhotoLoading(false);
+        }
+    };
+
     return (
-        <div className="max-w-4xl mx-auto flex flex-col gap-6 pb-12">
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 32 }}>
+            <div className="flex flex-col gap-6">
             <div>
-                <Typography variant="h5" color="text.primary">My Account</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                <Typography variant="h5" fontWeight={900} color="text.primary">My Account</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
                     Manage your personal information and security settings
                 </Typography>
             </div>
@@ -127,19 +144,75 @@ export default function ProfilePage() {
             <Grid container spacing={4}>
                 {/* ── Avatar sidebar ── */}
                 <Grid item xs={12} md={4}>
-                    <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
+                    <Card elevation={0} sx={{ 
+                        background: 'rgba(255, 255, 255, 0.7)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)', 
+                        borderRadius: 3 
+                    }}>
                         <CardContent className="p-8 flex flex-col items-center text-center">
-                            <Avatar src={getDoctorPhotoUrl(doctorProfile?.profilePhoto) || undefined}
-                                sx={{ width: 110, height: 110, mb: 3, bgcolor: '#eff6ff', color: '#3b82f6', fontSize: '2.5rem', fontWeight: 800, boxShadow: '0 0 0 8px #f8fafc' }}>
-                                {user?.fullName?.charAt(0)}
-                            </Avatar>
-                            <Typography variant="h6" fontWeight={800}>{user?.fullName}</Typography>
-                            <Typography variant="body2" color="primary.main" fontWeight={700}
-                                sx={{ mt: 1, px: 2, py: 0.5, bgcolor: '#eff6ff', borderRadius: 2 }}>
-                                {user?.role}
-                            </Typography>
+                            <Box sx={{ position: 'relative' }}>
+                                <Avatar 
+                                    src={isDoctor ? getDoctorPhotoUrl(doctorProfile?.profilePhoto) : getAuthPhotoUrl(user?.profilePhoto)}
+                                    sx={{ 
+                                        width: 120, 
+                                        height: 120, 
+                                        mb: 3, 
+                                        bgcolor: '#eff6ff', 
+                                        color: '#3b82f6', 
+                                        fontWeight: 900, 
+                                        fontSize: '2.5rem',
+                                        boxShadow: '0 0 0 8px #f8fafc',
+                                        border: '4px solid white'
+                                    }}
+                                >
+                                    {user?.fullName?.charAt(0)}
+                                </Avatar>
+                                {photoLoading && (
+                                    <CircularProgress 
+                                        size={120} 
+                                        sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1, color: 'primary.main' }} 
+                                    />
+                                )}
+                                <input
+                                    type="file"
+                                    id="photo-upload"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handlePhotoChange}
+                                />
+                                <label htmlFor="photo-upload">
+                                    <Tooltip title="Update Photo">
+                                        <IconButton
+                                            component="span"
+                                            sx={{
+                                                position: 'absolute',
+                                                bottom: 24,
+                                                right: 0,
+                                                bgcolor: 'white',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                                '&:hover': { bgcolor: '#f8fafc' }
+                                            }}
+                                            size="small"
+                                        >
+                                            <Camera size={16} className="text-blue-600" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </label>
+                            </Box>
+                            
+                            <Typography variant="h6" fontWeight={900} sx={{ mt: 1 }}>{user?.fullName}</Typography>
+                            
+                            {/* Repetition Fix: Only show badge if Name != Role (e.g. not "Admin Admin") */}
+                            {user?.fullName?.toLowerCase() !== user?.role?.toLowerCase() && (
+                                <Typography variant="body2" color="primary.main" fontWeight={800}
+                                    sx={{ mt: 1, px: 2, py: 0.5, bgcolor: '#eff6ff', borderRadius: 2, textTransform: 'uppercase', fontSize: '0.7rem', display: 'inline-block' }}>
+                                    {user?.role}
+                                </Typography>
+                            )}
+
                             {isDoctor && doctorProfile?.specialization && (
-                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, fontWeight: 700 }}>
                                     {doctorProfile.specialization}
                                 </Typography>
                             )}
@@ -177,19 +250,26 @@ export default function ProfilePage() {
                         {/* Account Details */}
                         <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
                             <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-5">
+                                <div className="flex items-center gap-3 mb-5 pl-1">
                                     <User size={20} className="text-blue-600" />
                                     <Typography variant="h6" fontWeight={800}>Account Details</Typography>
                                 </div>
                                 <form onSubmit={handleUpdateProfile}>
                                     <Grid container spacing={3}>
                                         <Grid item xs={12}>
-                                            <TextField label="Full Name" name="fullName" fullWidth required
+                                            <Box sx={{ mb: 0.75 }}>
+                                                <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Full Name</Typography>
+                                            </Box>
+                                            <TextField name="fullName" fullWidth required
+                                                placeholder="Enter your full name"
                                                 value={profileData.fullName}
                                                 onChange={(e) => setProfileData({ fullName: e.target.value })} />
                                         </Grid>
                                         <Grid item xs={12}>
-                                            <TextField label="Email Address" fullWidth disabled
+                                            <Box sx={{ mb: 0.75 }}>
+                                                <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Email Address</Typography>
+                                            </Box>
+                                            <TextField fullWidth disabled
                                                 value={user?.email || ''}
                                                 helperText="Email cannot be changed"
                                                 sx={{ '& .MuiInputBase-root': { bgcolor: '#f8fafc' } }} />
@@ -209,7 +289,7 @@ export default function ProfilePage() {
                         {isDoctor && (
                             <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
                                 <CardContent className="p-6">
-                                    <div className="flex items-center gap-3 mb-5">
+                                    <div className="flex items-center gap-3 mb-5 pl-1">
                                         <Stethoscope size={20} className="text-teal-600" />
                                         <Typography variant="h6" fontWeight={800}>Clinical Profile</Typography>
                                     </div>
@@ -217,55 +297,85 @@ export default function ProfilePage() {
                                         <form onSubmit={handleUpdateDoctorProfile}>
                                             <Grid container spacing={3}>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="Specialization" fullWidth disabled
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Specialization</Typography>
+                                                    </Box>
+                                                    <TextField fullWidth disabled
                                                         value={doctorProfile?.specialization || ''}
                                                         sx={{ '& .MuiInputBase-root': { bgcolor: '#f8fafc' } }} />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="Qualification" fullWidth disabled
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Qualification</Typography>
+                                                    </Box>
+                                                    <TextField fullWidth disabled
                                                         value={doctorProfile?.qualification || ''}
                                                         sx={{ '& .MuiInputBase-root': { bgcolor: '#f8fafc' } }} />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="Experience (years)" fullWidth disabled
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Experience (years)</Typography>
+                                                    </Box>
+                                                    <TextField fullWidth disabled
                                                         value={doctorProfile?.experience || ''}
                                                         sx={{ '& .MuiInputBase-root': { bgcolor: '#f8fafc' } }} />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="License Number" fullWidth disabled
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>License Number</Typography>
+                                                    </Box>
+                                                    <TextField fullWidth disabled
                                                         value={doctorProfile?.licenseNumber || ''}
                                                         sx={{ '& .MuiInputBase-root': { bgcolor: '#f8fafc' } }} />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="Phone" name="phone" fullWidth
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Phone</Typography>
+                                                    </Box>
+                                                    <TextField name="phone" fullWidth
+                                                        placeholder="Enter phone number"
                                                         value={doctorForm.phone}
                                                         onChange={(e) => setDoctorForm({ ...doctorForm, phone: e.target.value })} />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="Consultation Fee (ETB)" name="consultationFee"
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Consultation Fee (ETB)</Typography>
+                                                    </Box>
+                                                    <TextField name="consultationFee"
                                                         type="number" fullWidth
+                                                        placeholder="e.g. 500"
                                                         value={doctorForm.consultationFee}
                                                         onChange={(e) => setDoctorForm({ ...doctorForm, consultationFee: e.target.value })} />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="Working Hours Start" name="workingHoursStart"
-                                                        type="time" fullWidth InputLabelProps={{ shrink: true }}
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Working Hours Start</Typography>
+                                                    </Box>
+                                                    <TextField name="workingHoursStart"
+                                                        type="time" fullWidth
                                                         value={doctorForm.workingHoursStart}
                                                         onChange={(e) => setDoctorForm({ ...doctorForm, workingHoursStart: e.target.value })} />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <TextField label="Working Hours End" name="workingHoursEnd"
-                                                        type="time" fullWidth InputLabelProps={{ shrink: true }}
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Working Hours End</Typography>
+                                                    </Box>
+                                                    <TextField name="workingHoursEnd"
+                                                        type="time" fullWidth
                                                         value={doctorForm.workingHoursEnd}
                                                         onChange={(e) => setDoctorForm({ ...doctorForm, workingHoursEnd: e.target.value })} />
                                                 </Grid>
                                                 <Grid item xs={12}>
-                                                    <TextField label="Bio" name="bio" fullWidth multiline rows={3}
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Bio</Typography>
+                                                    </Box>
+                                                    <TextField name="bio" fullWidth multiline rows={3}
+                                                        placeholder="Write a short biography..."
                                                         value={doctorForm.bio}
                                                         onChange={(e) => setDoctorForm({ ...doctorForm, bio: e.target.value })} />
                                                 </Grid>
                                                 <Grid item xs={12}>
-                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 700, textTransform: 'uppercase' }}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5, fontWeight: 800, textTransform: 'uppercase', tracking: '0.05em' }}>
                                                         Working Days
                                                     </Typography>
                                                     <div className="flex flex-wrap gap-2">
@@ -285,7 +395,7 @@ export default function ProfilePage() {
                                                     </div>
                                                 </Grid>
                                                 <Grid item xs={12}>
-                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 700, textTransform: 'uppercase' }}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5, fontWeight: 800, textTransform: 'uppercase', tracking: '0.05em' }}>
                                                         Service Types
                                                     </Typography>
                                                     <div className="flex gap-3">
@@ -321,15 +431,19 @@ export default function ProfilePage() {
                         {/* Change Password */}
                         <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
                             <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-5">
+                                <div className="flex items-center gap-3 mb-5 pl-1">
                                     <Key size={20} className="text-orange-600" />
                                     <Typography variant="h6" fontWeight={800}>Change Password</Typography>
                                 </div>
                                 <form onSubmit={handleChangePassword}>
                                     <Grid container spacing={3}>
                                         <Grid item xs={12}>
-                                            <TextField label="Current Password" name="oldPassword"
+                                            <Box sx={{ mb: 0.75 }}>
+                                                <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Current Password</Typography>
+                                            </Box>
+                                            <TextField name="oldPassword"
                                                 type={showPasswords ? 'text' : 'password'}
+                                                placeholder="Enter current password"
                                                 fullWidth required value={passwords.oldPassword}
                                                 onChange={(e) => setPasswords({ ...passwords, oldPassword: e.target.value })}
                                                 InputProps={{
@@ -343,14 +457,22 @@ export default function ProfilePage() {
                                                 }} />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <TextField label="New Password" name="newPassword"
+                                            <Box sx={{ mb: 0.75 }}>
+                                                <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>New Password</Typography>
+                                            </Box>
+                                            <TextField name="newPassword"
                                                 type={showPasswords ? 'text' : 'password'}
+                                                placeholder="Enter new password"
                                                 fullWidth required value={passwords.newPassword}
                                                 onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })} />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <TextField label="Confirm New Password" name="confirmPassword"
+                                            <Box sx={{ mb: 0.75 }}>
+                                                <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Confirm New Password</Typography>
+                                            </Box>
+                                            <TextField name="confirmPassword"
                                                 type={showPasswords ? 'text' : 'password'}
+                                                placeholder="Confirm new password"
                                                 fullWidth required value={passwords.confirmPassword}
                                                 onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })} />
                                         </Grid>
@@ -369,6 +491,7 @@ export default function ProfilePage() {
                     </div>
                 </Grid>
             </Grid>
-        </div>
+            </div>
+        </Box>
     );
 }
