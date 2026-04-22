@@ -35,8 +35,17 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
     port: parseInt(DB_PORT) || 3306,
     dialect: 'mysql',
     logging: false,
-    dialectOptions: { ...sslConfig },
-    pool: { max: 3, min: 0, acquire: 30000, idle: 10000 }
+    dialectOptions: {
+        ...sslConfig,
+        connectTimeout: 60000,  // 60s connect timeout for Aiven SSL
+    },
+    pool: {
+        max: 2,        // Keep low for free tier memory
+        min: 0,
+        acquire: 60000, // 60s acquire timeout (Aiven SSL is slow)
+        idle: 10000,
+        evict: 10000
+    }
 });
 
 export default sequelize;
