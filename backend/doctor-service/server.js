@@ -49,29 +49,33 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    await sequelize.sync();
+    const isProd = process.env.NODE_ENV === 'production';
+    // In production: sync without alter (fast). In dev: sync with alter.
+    await sequelize.sync({ alter: !isProd });
     console.log('Database models synced.');
 
-    // Safe column migration for DoctorProfiles
-    const qi = sequelize.getQueryInterface();
-    const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
-    const newColumns = {
-        videoFee:           'DECIMAL(10,2) NULL',
-        serviceTypes:       'JSON NULL',
-        slotDuration:       'INT NOT NULL DEFAULT 30',
-        breakStart:         'TIME NULL',
-        breakEnd:           'TIME NULL',
-        languages:          'JSON NULL',
-        education:          'JSON NULL',
-        workExperience:     'JSON NULL',
-        awards:             'JSON NULL',
-        maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
-    };
-    for (const [col, definition] of Object.entries(newColumns)) {
-        if (!tableDesc[col]) {
-            await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
-            console.log(`Added column: ${col}`);
-        }
+    // Safe column migration — only in dev
+    if (!isProd) {
+      const qi = sequelize.getQueryInterface();
+      const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
+      const newColumns = {
+          videoFee:           'DECIMAL(10,2) NULL',
+          serviceTypes:       'JSON NULL',
+          slotDuration:       'INT NOT NULL DEFAULT 30',
+          breakStart:         'TIME NULL',
+          breakEnd:           'TIME NULL',
+          languages:          'JSON NULL',
+          education:          'JSON NULL',
+          workExperience:     'JSON NULL',
+          awards:             'JSON NULL',
+          maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
+      };
+      for (const [col, definition] of Object.entries(newColumns)) {
+          if (!tableDesc[col]) {
+              await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
+              console.log(`Added column: ${col}`);
+          }
+      }
     }
 
     app.listen(PORT, () => {

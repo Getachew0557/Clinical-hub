@@ -91,10 +91,11 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    await sequelize.sync({ alter: true });
+    const isProd = process.env.NODE_ENV === 'production';
+    await sequelize.sync({ alter: !isProd });
     console.log('Database models synced.');
 
-    await connectEventBus();
+    connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
     subscribeToEvent('notification_service_registration', 'user.registered', handleUserRegistered);
 
     httpServer.listen(PORT, () => {

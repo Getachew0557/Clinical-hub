@@ -47,20 +47,23 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
 
-    // Sync models
-    await sequelize.sync({ alter: true });
+    // Use sync without alter in production for faster startup
+    const isProduction = process.env.NODE_ENV === 'production';
+    await sequelize.sync({ alter: !isProduction });
     console.log('Database models synced.');
 
-    // Safe column migration for profilePhoto
-    const qi = sequelize.getQueryInterface();
-    const tableDesc = await qi.describeTable('Users').catch(() => ({}));
-    if (!tableDesc.profilePhoto) {
-        await sequelize.query('ALTER TABLE `Users` ADD COLUMN `profilePhoto` VARCHAR(255) NULL;');
-        console.log('Added column: profilePhoto');
+    // Safe column migration for profilePhoto (only in dev)
+    if (!isProduction) {
+      const qi = sequelize.getQueryInterface();
+      const tableDesc = await qi.describeTable('Users').catch(() => ({}));
+      if (!tableDesc.profilePhoto) {
+          await sequelize.query('ALTER TABLE `Users` ADD COLUMN `profilePhoto` VARCHAR(255) NULL;');
+          console.log('Added column: profilePhoto');
+      }
     }
 
-    // Connect to Event Bus
-    await connectEventBus();
+    // Connect to Event Bus (non-blocking)
+    connectEventBus().catch(err => console.warn('EventBus connect failed (non-fatal):', err.message));
 
     app.listen(PORT, () => {
       console.log(`auth-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
