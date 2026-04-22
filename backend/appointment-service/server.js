@@ -85,26 +85,22 @@ app.use((req, res) => {
 
 const PORT = process.env.APPT_PORT || 5003;
 
-const startServer = async () => {
-  try {
-    await ensureDatabaseExists();
-    await sequelize.authenticate();
-    console.log('Database connected successfully.');
-
-    const isProd = process.env.NODE_ENV === 'production';
-    await sequelize.sync({ alter: !isProd });
-    console.log('Database models synced.');
-
-    connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
-    subscribeToEvent('notification_service_registration', 'user.registered', handleUserRegistered);
-
-    httpServer.listen(PORT, () => {
-      console.log(`appointment-service (+ notification + video) running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Unable to start appointment-service:', error);
-    process.exit(1);
-  }
+const connectDB = async () => {
+  await ensureDatabaseExists();
+  await sequelize.authenticate();
+  console.log('Database connected successfully.');
+  const isProd = process.env.NODE_ENV === 'production';
+  await sequelize.sync({ alter: !isProd });
+  console.log('Database models synced.');
+  connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
+  subscribeToEvent('notification_service_registration', 'user.registered', handleUserRegistered);
+  console.log('appointment-service fully ready.');
 };
 
-startServer();
+httpServer.listen(PORT, () => {
+  console.log(`appointment-service (+ notification + video) running on port ${PORT}`);
+  connectDB().catch(err => {
+    console.error('DB failed, retrying in 15s:', err.message);
+    setTimeout(() => connectDB().catch(console.error), 15000);
+  });
+});

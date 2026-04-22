@@ -43,48 +43,20 @@ app.use((req, res) => {
 
 const PORT = process.env.DOCTOR_PORT || 5010;
 
-const startServer = async () => {
-  try {
-    await ensureDatabaseExists();
-    await sequelize.authenticate();
-    console.log('Database connected successfully.');
-
-    const isProd = process.env.NODE_ENV === 'production';
-    // In production: sync without alter (fast). In dev: sync with alter.
-    await sequelize.sync({ alter: !isProd });
-    console.log('Database models synced.');
-
-    // Safe column migration — only in dev
-    if (!isProd) {
-      const qi = sequelize.getQueryInterface();
-      const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
-      const newColumns = {
-          videoFee:           'DECIMAL(10,2) NULL',
-          serviceTypes:       'JSON NULL',
-          slotDuration:       'INT NOT NULL DEFAULT 30',
-          breakStart:         'TIME NULL',
-          breakEnd:           'TIME NULL',
-          languages:          'JSON NULL',
-          education:          'JSON NULL',
-          workExperience:     'JSON NULL',
-          awards:             'JSON NULL',
-          maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
-      };
-      for (const [col, definition] of Object.entries(newColumns)) {
-          if (!tableDesc[col]) {
-              await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
-              console.log(`Added column: ${col}`);
-          }
-      }
-    }
-
-    app.listen(PORT, () => {
-      console.log(`doctor-service (+ inventory + reports) running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Unable to start doctor-service:', error);
-    process.exit(1);
-  }
+const connectDB = async () => {
+  await ensureDatabaseExists();
+  await sequelize.authenticate();
+  console.log('Database connected successfully.');
+  const isProd = process.env.NODE_ENV === 'production';
+  await sequelize.sync({ alter: !isProd });
+  console.log('Database models synced.');
+  console.log('doctor-service fully ready.');
 };
 
-startServer();
+app.listen(PORT, () => {
+  console.log(`doctor-service (+ inventory + reports) running on port ${PORT}`);
+  connectDB().catch(err => {
+    console.error('DB failed, retrying in 15s:', err.message);
+    setTimeout(() => connectDB().catch(console.error), 15000);
+  });
+});

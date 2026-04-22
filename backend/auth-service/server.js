@@ -33,7 +33,7 @@ app.post('/api/internal/events', async (req, res) => {
   res.sendStatus(200);
 });
 
-// Health Check
+// Health Check — responds immediately even before DB is ready
 app.get('/api/health', (req, res) => {
   res.status(200).json({ service: 'auth-service', status: 'healthy' });
 });
@@ -41,38 +41,24 @@ app.get('/api/health', (req, res) => {
 // Sync Database & Start Server
 const PORT = process.env.AUTH_PORT || 5001;
 
-const startServer = async () => {
-  try {
-    await ensureDatabaseExists();
-    await sequelize.authenticate();
-    console.log('Database connected successfully.');
-
-    // Use sync without alter in production for faster startup
-    const isProduction = process.env.NODE_ENV === 'production';
-    await sequelize.sync({ alter: !isProduction });
-    console.log('Database models synced.');
-
-    // Safe column migration for profilePhoto (only in dev)
-    if (!isProduction) {
-      const qi = sequelize.getQueryInterface();
-      const tableDesc = await qi.describeTable('Users').catch(() => ({}));
-      if (!tableDesc.profilePhoto) {
-          await sequelize.query('ALTER TABLE `Users` ADD COLUMN `profilePhoto` VARCHAR(255) NULL;');
-          console.log('Added column: profilePhoto');
-      }
-    }
-
-    // Connect to Event Bus (non-blocking)
-    connectEventBus().catch(err => console.warn('EventBus connect failed (non-fatal):', err.message));
-
-    app.listen(PORT, () => {
-      console.log(`auth-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
-    process.exit(1);
-  }
+const connectDB = async () => {
+  await ensureDatabaseExists();
+  await sequelize.authenticate();
+  console.log('Database connected successfully.');
+  const isProduction = process.env.NODE_ENV === 'production';
+  await sequelize.sync({ alter: !isProduction });
+  console.log('Database models synced.');
+  connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
+  console.log('auth-service fully ready.');
 };
 
-startServer();
+// Start HTTP server FIRST — gateway can reach it immediately
+app.listen(PORT, () => {
+  console.log(`auth-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  // Connect to DB after server is listening
+  connectDB().catch(err => {
+    console.error('DB connection failed, retrying in 15s:', err.message);
+    setTimeout(() => connectDB().catch(console.error), 15000);
+  });
+});
 
