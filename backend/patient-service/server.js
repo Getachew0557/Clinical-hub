@@ -55,8 +55,7 @@ const connectDB = async () => {
   await ensureDatabaseExists();
   await sequelize.authenticate();
   console.log('Database connected successfully.');
-  const isProd = process.env.NODE_ENV === 'production';
-  await sequelize.sync({ alter: !isProd });
+  await sequelize.sync();
   console.log('Database models synced.');
   connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
   subscribeToEvent('patient_service_registration', 'user.registered', handleUserRegistered);

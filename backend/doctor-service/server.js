@@ -47,8 +47,7 @@ const connectDB = async () => {
   await ensureDatabaseExists();
   await sequelize.authenticate();
   console.log('Database connected successfully.');
-  const isProd = process.env.NODE_ENV === 'production';
-  await sequelize.sync({ alter: !isProd });
+  await sequelize.sync();
   console.log('Database models synced.');
   console.log('doctor-service fully ready.');
 };
