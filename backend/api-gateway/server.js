@@ -35,8 +35,8 @@ Object.entries(services).forEach(([path, target]) => {
     target,
     changeOrigin: true,
     pathRewrite: (pathStr, req) => req.originalUrl,
-    proxyTimeout: 30000,   // 30s — services may be slow on cold start
-    timeout: 30000,
+    proxyTimeout: 60000,   // 60s — Aiven SSL connection can be slow
+    timeout: 60000,
     onProxyReq: (proxyReq, req) => {
       console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${target}`);
     },
