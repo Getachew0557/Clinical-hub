@@ -74,6 +74,28 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Root — API info
+app.get('/', (req, res) => {
+  res.status(200).json({
+    name: 'Clinical Hub API',
+    version: '1.0.0',
+    status: 'running',
+    docs: '/api/health',
+    endpoints: [
+      '/api/auth',
+      '/api/patients',
+      '/api/appointments',
+      '/api/doctors',
+      '/api/emr',
+      '/api/billing',
+      '/api/inventory',
+      '/api/reports',
+      '/api/notifications',
+      '/api/ai'
+    ]
+  });
+});
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found', path: req.originalUrl });
