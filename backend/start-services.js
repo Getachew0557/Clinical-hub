@@ -19,13 +19,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const gateway = { name: 'api-gateway',        mem: 50,  color: '\x1b[36m' };
+const gateway = { name: 'api-gateway', mem: 50, color: '\x1b[36m' };
 
 const services = [
-  { name: 'auth-service',        mem: 60,  color: '\x1b[35m', delay: 3000  },
-  { name: 'patient-service',     mem: 80,  color: '\x1b[34m', delay: 8000  },
-  { name: 'appointment-service', mem: 80,  color: '\x1b[32m', delay: 13000 },
-  { name: 'doctor-service',      mem: 80,  color: '\x1b[37m', delay: 18000 },
+  { name: 'auth-service',        mem: 100, color: '\x1b[35m', delay: 3000,  port: { AUTH_PORT: '5001' }   },
+  { name: 'patient-service',     mem: 120, color: '\x1b[34m', delay: 6000,  port: { PATIENT_PORT: '5002' } },
+  { name: 'appointment-service', mem: 120, color: '\x1b[32m', delay: 9000,  port: { APPT_PORT: '5003' }   },
+  { name: 'doctor-service',      mem: 120, color: '\x1b[37m', delay: 12000, port: { DOCTOR_PORT: '5010' } },
 ];
 
 const RESET = '\x1b[0m';
@@ -35,7 +35,7 @@ function startService(svc) {
   const proc = spawn('node', [`--max-old-space-size=${svc.mem}`, 'server.js'], {
     cwd,
     stdio: 'pipe',
-    env: { ...process.env }
+    env: { ...process.env, ...(svc.port || {}) }
   });
 
   proc.stdout.on('data', (d) => process.stdout.write(`${svc.color}[${svc.name}]${RESET} ${d}`));
