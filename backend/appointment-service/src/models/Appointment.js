@@ -52,6 +52,11 @@ const Appointment = sequelize.define('Appointment', {
         type: DataTypes.ENUM('clinic', 'video'),
         defaultValue: 'clinic',
         comment: 'clinic = in-person visit, video = online video consultation'
+    },
+    attachmentUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Optional file attachment (image/PDF) uploaded by patient'
     }
 });
 

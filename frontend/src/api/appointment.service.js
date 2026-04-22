@@ -41,6 +41,20 @@ const appointmentService = {
     },
 
     /**
+     * Book a new appointment (with optional file attachment via FormData)
+     */
+    createAppointmentWithFile: async (formData) => {
+        const token = localStorage.getItem('token');
+        const response = await axios.post(API_URL, formData, {
+            headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    },
+
+    /**
      * Book a new appointment
      */
     createAppointment: async (appointmentData) => {

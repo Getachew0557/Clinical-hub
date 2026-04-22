@@ -125,8 +125,9 @@ export default function PatientEMRPage() {
             if (pData?.id) {
                 // 2. Fetch EMR Records using the resolved Profile ID
                 const rData = await emrService.getPatientRecords(pData.id);
-                console.log('EMR Records Response:', rData);
-                setRecords(rData.records || []);
+                // Sort latest first
+                const sorted = (rData.records || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                setRecords(sorted);
             }
             setError(null);
         } catch (err) {
@@ -142,19 +143,25 @@ export default function PatientEMRPage() {
             setLoading(true);
             const pData = await patientService.getMyProfile();
             setPatient(pData);
-            // EMR records may be stored with either the profile id or the auth userId
-            // Try profile id first, then fall back to userId
+            // Try profile id first, then userId
             const profileId = pData?.id;
             const authUserId = pData?.userId || user?.id;
-            try {
-                const rData = await emrService.getPatientRecords(profileId || authUserId);
-                setRecords(rData.records || []);
-            } catch {
-                // Fallback: try with auth userId
-                if (authUserId && authUserId !== profileId) {
+            let fetched = false;
+            if (profileId) {
+                try {
+                    const rData = await emrService.getPatientRecords(profileId);
+                    // Sort latest first
+                    const sorted = (rData.records || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    setRecords(sorted);
+                    fetched = true;
+                } catch { /* try next */ }
+            }
+            if (!fetched && authUserId) {
+                try {
                     const rData = await emrService.getPatientRecords(authUserId);
-                    setRecords(rData.records || []);
-                } else {
+                    const sorted = (rData.records || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    setRecords(sorted);
+                } catch {
                     setRecords([]);
                 }
             }
@@ -162,7 +169,6 @@ export default function PatientEMRPage() {
         } catch (err) {
             console.error('Fetch My EMR Error:', err);
             if (err.response?.status === 404) {
-                // No profile yet — show empty state gracefully
                 setPatient({ fullName: user?.fullName, id: user?.id });
                 setRecords([]);
                 setError(null);

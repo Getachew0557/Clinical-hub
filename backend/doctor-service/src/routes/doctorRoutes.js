@@ -1,7 +1,6 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
+import upload from '../middlewares/uploadMiddleware.js';
 import {
     createDoctorProfile,
     getAllDoctors,
@@ -14,26 +13,6 @@ import {
 } from '../controllers/doctorController.js';
 
 const router = express.Router();
-
-// ─── Multer config (profile photo upload) ─────────────────────────────────
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => {
-        const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        cb(null, `doctor-${unique}${path.extname(file.originalname)}`);
-    }
-});
-const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
-    fileFilter: (req, file, cb) => {
-        const allowed = /jpeg|jpg|png|webp/;
-        const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-        const mime = allowed.test(file.mimetype);
-        if (ext && mime) return cb(null, true);
-        cb(new Error('Only image files (jpeg, jpg, png, webp) are allowed'));
-    }
-});
 
 // ─── Public-ish (any authenticated user) ─────────────────────────────────
 

@@ -38,7 +38,8 @@ export const createAppointment = async (req, res) => {
             notes: notes || null,
             type: type || 'clinic',
             createdBy: req.user.id,
-            isAdminApproved: ['Admin', 'Receptionist', 'Doctor'].includes(req.user.role)
+            isAdminApproved: ['Admin', 'Receptionist', 'Doctor'].includes(req.user.role),
+            attachmentUrl: req.file ? (req.file.path || req.file.secure_url || req.file.url) : null
         });
 
         // ─── TRIGGER NOTIFICATIONS ──────────────────────────────────────────

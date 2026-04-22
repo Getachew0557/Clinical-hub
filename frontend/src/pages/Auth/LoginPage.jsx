@@ -3,43 +3,24 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { login, reset } from "../../store/slices/authSlice";
-import {
-    Button,
-    TextField,
-    Typography,
-    Card,
-    CardContent,
-    IconButton,
-    InputAdornment,
-    Box,
-    Alert,
-    CircularProgress
-} from "@mui/material";
-import { Stethoscope, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Stethoscope, AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const { t } = useTranslation();
-
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
-    const { user, isLoading, isError, isSuccess, message } = useSelector(
-        (state) => state.auth
-    );
-
+    const { user, isLoading, isError, isSuccess, message } = useSelector(s => s.auth);
     const location = useLocation();
 
     useEffect(() => {
         if (isSuccess || user) {
             const params = new URLSearchParams(location.search);
             const redirect = params.get("redirect");
-            // Validate: only allow relative paths, prevent open redirect
             const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
-                ? redirect
-                : '/dashboard';
+                ? redirect : '/dashboard';
             navigate(safeRedirect);
         }
         dispatch(reset());
@@ -51,115 +32,106 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-[60vh] items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                {/* Logo Section */}
-                <div className="mb-8 flex flex-col items-center gap-3">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-200">
-                        <Stethoscope size={32} />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-100 flex items-center justify-center p-4">
+            <div className="w-full max-w-[420px]">
+
+                {/* ── Brand header ── */}
+                <div className="flex items-center justify-center gap-3 mb-8">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 shadow-lg shadow-teal-600/25">
+                        <Stethoscope size={26} className="text-white" />
                     </div>
-                    <div className="text-center">
-                        <Typography variant="h5" color="text.primary">
-                            {t('auth.login.systemName')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                            {t('auth.login.systemSubtitle')}
-                        </Typography>
+                    <div>
+                        <h1 className="text-xl font-bold text-slate-900 leading-tight">Biruh Tena</h1>
+                        <p className="text-xs text-teal-600 font-ethiopic">ብሩህ ጤና</p>
                     </div>
                 </div>
 
-                <Card className="shadow-xl rounded-2xl border-0">
-                    <CardContent className="p-8">
-                        <div className="text-center mb-6">
-                            <Typography variant="subtitle1" color="text.primary" sx={{ mb: 0.5 }}>
-                                {t('auth.login.title')}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                {t('auth.login.subtitle')}
-                            </Typography>
+                {/* ── Card ── */}
+                <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8">
+
+                    <div className="mb-6">
+                        <h2 className="text-lg font-bold text-slate-900">Sign in to your account</h2>
+                        <p className="text-sm text-slate-500 mt-0.5">Enter your credentials to continue</p>
+                    </div>
+
+                    {isError && (
+                        <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
+                            <AlertCircle size={16} className="shrink-0" />
+                            {message || "Invalid email or password"}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Email */}
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
+                                Email address
+                            </label>
+                            <input
+                                type="email"
+                                required
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                placeholder="name@clinic.com"
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                            />
                         </div>
 
-                        {isError && (
-                            <Alert severity="error" className="mb-6 rounded-xl text-sm">
-                                {message || t('auth.login.invalidCredentials')}
-                            </Alert>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                            <Box>
-                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
-                                    {t('auth.login.email')}
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    type="email"
-                                    placeholder="name@clinic.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    variant="outlined"
-                                />
-                            </Box>
-
-                            <Box>
-                                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ ml: 0.5, mb: 0.75, display: 'block', textTransform: 'uppercase' }}>
-                                    {t('auth.login.password')}
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    variant="outlined"
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    edge="end"
-                                                >
-                                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                            </Box>
-
-                            <div className="flex justify-end -mt-2">
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-                                >
-                                    {t('auth.login.forgotPassword')}
+                        {/* Password */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    Password
+                                </label>
+                                <Link to="/forgot-password" className="text-xs font-semibold text-teal-600 hover:text-teal-700 hover:underline">
+                                    Forgot password?
                                 </Link>
                             </div>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="w-full px-4 py-3 pr-11 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(p => !p)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </div>
 
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                fullWidth
-                                disabled={isLoading}
-                                className="py-3 text-lg font-bold bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all normal-case"
-                            >
-                                {isLoading ? (
-                                    <CircularProgress size={24} color="inherit" />
-                                ) : (
-                                    t('auth.login.submit')
-                                )}
-                            </Button>
-                        </form>
+                        {/* Submit */}
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-teal-600/20 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+                        >
+                            {isLoading ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Signing in...
+                                </span>
+                            ) : "Sign In"}
+                        </button>
+                    </form>
 
-                        <Typography variant="body2" sx={{ mt: 4, textAlign: 'center', color: 'text.secondary' }}>
-                            {t('auth.login.noAccount')}{" "}
-                            <Link to="/register" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                                {t('auth.login.register')}
-                            </Link>
-                        </Typography>
-                    </CardContent>
-                </Card>
+                    <p className="text-center text-sm text-slate-500 mt-6">
+                        Don't have an account?{" "}
+                        <Link to="/register" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline">
+                            Create account
+                        </Link>
+                    </p>
+                </div>
+
+                <p className="text-center text-xs text-slate-400 mt-6">
+                    © {new Date().getFullYear()} Biruh Tena Clinical System
+                </p>
             </div>
         </div>
     );

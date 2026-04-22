@@ -160,9 +160,24 @@ function getNext7Days() {
             date: d.toISOString().split('T')[0],
             day: d.getDate(),
             month: monthNames[d.getMonth()],
+            dayName: dayNames[d.getDay()], // full day name for working days check
         });
     }
     return days;
+}
+
+// Filter days to only show doctor's working days
+function getAvailableDays(doctor) {
+    const all = getNext7Days();
+    if (!doctor) return all;
+    let workingDays = doctor.workingDays;
+    if (typeof workingDays === 'string') {
+        try { workingDays = JSON.parse(workingDays); } catch { workingDays = null; }
+    }
+    if (!workingDays || !Array.isArray(workingDays) || workingDays.length === 0) return all;
+    // workingDays is like ['Monday','Tuesday',...]
+    const fullDayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    return all.filter(d => workingDays.includes(fullDayNames[new Date(d.date).getDay()]));
 }
 
 // ─── Timeline Item ────────────────────────────────────────────────────────────
@@ -289,7 +304,7 @@ function PatientAutocomplete({ patients, value, onChange }) {
 function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
     const isClinic = type === 'clinic';
     const isStaff = user && ['Admin', 'Receptionist'].includes(user.role);
-    const days = getNext7Days();
+    const days = getAvailableDays(doctor);
 
     const [open, setOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(days[0].date);

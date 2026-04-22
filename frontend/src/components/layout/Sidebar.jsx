@@ -41,11 +41,12 @@ const NAV_BY_ROLE = {
         { to: '/settings',     icon: UserCog,         labelKey: 'sidebar.settings' },
     ],
     Patient: [
-        { to: '/dashboard',    icon: Home,        labelKey: 'sidebar.myPortal',  end: true },
-        { to: '/appointments', icon: CalendarDays,labelKey: 'sidebar.bookings' },
-        { to: '/emr',          icon: FileText,    labelKey: 'sidebar.myRecords' },
-        { to: '/billing',      icon: Receipt,     labelKey: 'sidebar.myBills' },
-        { to: '/settings',     icon: UserCog,     labelKey: 'sidebar.settings' },
+        { to: '/dashboard',          icon: Home,        labelKey: 'sidebar.myPortal',          end: true },
+        { to: '/appointments',       icon: CalendarDays,labelKey: 'sidebar.bookings' },
+        { to: '/video-consultations',icon: Video,       labelKey: 'sidebar.videoConsultations' },
+        { to: '/emr',                icon: FileText,    labelKey: 'sidebar.myRecords' },
+        { to: '/billing',            icon: Receipt,     labelKey: 'sidebar.myBills' },
+        { to: '/settings',           icon: UserCog,     labelKey: 'sidebar.settings' },
     ],
 };
 
