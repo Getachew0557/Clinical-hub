@@ -119,6 +119,19 @@ const connectDB = async () => {
   console.log('Database connected successfully.');
   await sequelize.sync({ alter: true });
   console.log('Database models synced.');
+
+  // Safe column additions for existing DB
+  const qi = sequelize.getQueryInterface();
+  const cols = await qi.describeTable('Appointments').catch(() => ({}));
+  if (!cols.patientName) {
+    await sequelize.query("ALTER TABLE `Appointments` ADD COLUMN `patientName` VARCHAR(255) NULL;").catch(() => {});
+    console.log('Added column: Appointments.patientName');
+  }
+  if (!cols.doctorName) {
+    await sequelize.query("ALTER TABLE `Appointments` ADD COLUMN `doctorName` VARCHAR(255) NULL;").catch(() => {});
+    console.log('Added column: Appointments.doctorName');
+  }
+
   console.log('appointment-service fully ready.');
 };
 

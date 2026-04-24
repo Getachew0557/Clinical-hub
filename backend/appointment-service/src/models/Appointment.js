@@ -63,6 +63,16 @@ const Appointment = sequelize.define('Appointment', {
         allowNull: true,
         comment: 'Full name of the user who confirmed (denormalized for display)'
     },
+    patientName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Denormalized patient full name — stored at booking time for reliable display'
+    },
+    doctorName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Denormalized doctor full name — stored at booking time for reliable display'
+    },
     type: {
         type: DataTypes.ENUM('clinic', 'video'),
         defaultValue: 'clinic',
