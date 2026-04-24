@@ -28,23 +28,35 @@ for (const svc of services_with_uploads) {
   } catch {}
 }
 
-const gateway = { name: 'api-gateway', mem: 50, color: '\x1b[36m' };
+const gateway = { name: 'api-gateway', mem: 50, color: '\x1b[36m', keepPort: true };
 
 const services = [
-  { name: 'auth-service',        mem: 100, color: '\x1b[35m', delay: 2000,  port: { AUTH_PORT: '5001' }   },
-  { name: 'patient-service',     mem: 150, color: '\x1b[34m', delay: 4000,  port: { PATIENT_PORT: '5002' } },
-  { name: 'appointment-service', mem: 150, color: '\x1b[32m', delay: 6000,  port: { APPT_PORT: '5003' }   },
-  { name: 'doctor-service',      mem: 150, color: '\x1b[37m', delay: 8000,  port: { DOCTOR_PORT: '5010' } },
+  { name: 'auth-service',        mem: 100, color: '\x1b[35m', delay: 2000,  port: { AUTH_PORT: '5001',  PORT: '5001'  } },
+  { name: 'patient-service',     mem: 150, color: '\x1b[34m', delay: 4000,  port: { PATIENT_PORT: '5002', PORT: '5002' } },
+  { name: 'appointment-service', mem: 150, color: '\x1b[32m', delay: 6000,  port: { APPT_PORT: '5003',  PORT: '5003'  } },
+  { name: 'doctor-service',      mem: 150, color: '\x1b[37m', delay: 8000,  port: { DOCTOR_PORT: '5010', PORT: '5010' } },
 ];
 
 const RESET = '\x1b[0m';
 
 function startService(svc) {
   const cwd = join(__dirname, svc.name);
+
+  // For the api-gateway: keep Render's PORT so it binds to the public port.
+  // For all other services: strip Render's PORT and inject their own fixed port,
+  // otherwise PORT=10000 leaks in and overrides their intended port.
+  let childEnv;
+  if (svc.keepPort) {
+    childEnv = { ...process.env, ...(svc.port || {}) };
+  } else {
+    const { PORT: _ignored, ...parentEnv } = process.env;
+    childEnv = { ...parentEnv, ...(svc.port || {}) };
+  }
+
   const proc = spawn('node', [`--max-old-space-size=${svc.mem}`, 'server.js'], {
     cwd,
     stdio: 'pipe',
-    env: { ...process.env, ...(svc.port || {}) }
+    env: childEnv
   });
 
   proc.stdout.on('data', (d) => process.stdout.write(`${svc.color}[${svc.name}]${RESET} ${d}`));
