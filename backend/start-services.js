@@ -84,3 +84,36 @@ for (const svc of services) {
 }
 
 console.log('Startup sequence initiated. Services starting in background...');
+
+// ─── Keep-Alive Pinger ────────────────────────────────────────────────────
+// Render free tier spins down after 15 min of inactivity.
+// Ping the gateway health endpoint every 14 minutes to stay awake.
+// Also pings the Aiven DB indirectly (auth-service queries DB on /api/auth/login).
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || null;
+const PING_INTERVAL_MS = 14 * 60 * 1000; // 14 minutes
+
+if (RENDER_URL) {
+  const { default: https } = await import('https');
+  const { default: http  } = await import('http');
+
+  const ping = () => {
+    const url = new URL('/api/health', RENDER_URL);
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.get(url.toString(), { timeout: 10000 }, (res) => {
+      console.log(`[KeepAlive] Pinged ${url} → HTTP ${res.statusCode}`);
+      res.resume(); // drain response
+    });
+    req.on('error', (err) => console.warn(`[KeepAlive] Ping failed: ${err.message}`));
+    req.on('timeout', () => { req.destroy(); console.warn('[KeepAlive] Ping timed out'); });
+  };
+
+  // First ping after all services have started (30s delay)
+  setTimeout(() => {
+    ping();
+    setInterval(ping, PING_INTERVAL_MS);
+  }, 30000);
+
+  console.log(`[KeepAlive] Self-ping enabled → ${RENDER_URL}/api/health every 14 min`);
+} else {
+  console.log('[KeepAlive] RENDER_EXTERNAL_URL not set — self-ping disabled (local dev)');
+}
