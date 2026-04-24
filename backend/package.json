@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "concurrently -n \"GATEWAY,AUTH,PATIENT,APPT,DOCTOR,AI\" -c \"cyan,magenta,blue,green,white,greenBright\" \"npm run dev --prefix api-gateway\" \"npm run dev --prefix auth-service\" \"npm run dev --prefix patient-service\" \"npm run dev --prefix appointment-service\" \"npm run dev --prefix doctor-service\" \"npm run dev --prefix ai-service\"",
     "start": "node start-services.js",
-    "install:all": "for dir in api-gateway auth-service patient-service appointment-service doctor-service ai-service; do npm install --prefix $dir; done"
+    "build": "npm install --prefix api-gateway --legacy-peer-deps && npm install --prefix auth-service --legacy-peer-deps && npm install --prefix patient-service --legacy-peer-deps && npm install --prefix appointment-service --legacy-peer-deps && npm install --prefix doctor-service --legacy-peer-deps",
+    "install:all": "for dir in api-gateway auth-service patient-service appointment-service doctor-service; do npm install --prefix $dir; done"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
