@@ -8,7 +8,12 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import DoctorProfile from './src/models/DoctorProfile.js';
+import './src/models/InventoryItem.js';
+import './src/models/StockTransaction.js';
+import './src/models/Report.js';
 import doctorRoutes from './src/routes/doctorRoutes.js';
+import inventoryRoutes from './src/routes/inventoryRoutes.js';
+import reportRoutes from './src/routes/reportRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +32,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/doctors', doctorRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/reports', reportRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
