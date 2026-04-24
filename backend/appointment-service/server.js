@@ -5,7 +5,9 @@ import express from 'express';
 import cors from 'cors';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import appointmentRoutes from './src/routes/appointmentRoutes.js';
+import notificationRoutes from './src/routes/notificationRoutes.js';
 import Appointment from './src/models/Appointment.js';
+import './src/models/Notification.js';
 
 const app = express();
 
@@ -15,6 +17,7 @@ app.use(express.json());
 
 // ─── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
