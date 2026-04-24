@@ -16,4 +16,7 @@ router.patch('/read-all', protect, markAllRead);
 router.delete('/:id', protect, deleteNotification);
 router.post('/', protect, createNotification);
 
+// Internal endpoint — no auth required (called by other services on same host)
+router.post('/internal', createNotification);
+
 export default router;

@@ -6,6 +6,14 @@ import axios from 'axios';
 // ─── Helper ────────────────────────────────────────────────────────────────
 const PATIENT_EDITABLE_STATUSES = ['Pending'];
 
+// Internal notification helper — uses /internal endpoint (no auth required)
+const notify = (notifyUrl, payload) => {
+    const internalUrl = notifyUrl.replace(/\/api\/notifications$/, '/api/notifications/internal');
+    return axios.post(internalUrl, payload).catch(err =>
+        console.warn(`[Notify] Failed to send "${payload.title}" to user ${payload.userId}: ${err.message}`)
+    );
+};
+
 // ─── CREATE ────────────────────────────────────────────────────────────────
 
 /**
@@ -84,22 +92,22 @@ export const createAppointment = async (req, res) => {
             const typeLabel   = isVideo ? 'Video Consultation' : 'Clinic Appointment';
 
             // → Patient
-            await axios.post(notifyUrl, {
+            await notify(notifyUrl, {
                 userId: resolvedPatientId,
                 title: `${typeLabel} Booked`,
                 message: `Your ${typeLabel.toLowerCase()} with Dr. ${doctorName} is scheduled for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
                 type: 'Success',
                 link: '/appointments'
-            }, authHeader).catch(() => {});
+            });
 
             // → Doctor
-            await axios.post(notifyUrl, {
+            await notify(notifyUrl, {
                 userId: doctorId,
                 title: `New ${typeLabel}`,
                 message: `${patientName} has booked a ${typeLabel.toLowerCase()} for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
                 type: 'Info',
                 link: '/appointments'
-            }, authHeader).catch(() => {});
+            });
 
             // → All Admins & Receptionists
             try {
@@ -108,13 +116,13 @@ export const createAppointment = async (req, res) => {
                 await Promise.all(
                     allUsers
                         .filter(u => u.role === 'Admin' || u.role === 'Receptionist')
-                        .map(staff => axios.post(notifyUrl, {
+                        .map(staff => notify(notifyUrl, {
                             userId: staff.id,
                             title: `📋 New ${typeLabel} Request`,
                             message: `${patientName} has requested a ${typeLabel.toLowerCase()} with Dr. ${doctorName} on ${appointmentDate} at ${appointmentTime.slice(0,5)}. Tap to review.`,
                             type: 'Warning',
                             link: '/appointments'
-                        }, authHeader).catch(() => {}))
+                        }))
                 );
             } catch { /* non-fatal */ }
 
@@ -524,7 +532,6 @@ export const updateAppointmentStatus = async (req, res) => {
 
         // ─── TRIGGER NOTIFICATIONS ON STATUS CHANGE ───
         try {
-            const authHeader = { headers: { Authorization: req.headers.authorization } };
             const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
             if (notifyUrl) {
                 const isVideo = appointment.type === 'video';
@@ -532,31 +539,27 @@ export const updateAppointmentStatus = async (req, res) => {
                 const storedPatientName = appointment.patientName || `Patient #${appointment.patientId.slice(-6).toUpperCase()}`;
 
                 if (status === 'Confirmed') {
-                    // → Patient: confirmed with visit instructions
                     const visitMsg = isVideo
                         ? `Your video consultation with Dr. ${storedDoctorName} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} is confirmed. Click to join the video call.`
                         : `Your clinic appointment with Dr. ${storedDoctorName} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} is confirmed. Please visit the clinic.`;
-                    await axios.post(notifyUrl, {
+                    await notify(notifyUrl, {
                         userId: appointment.patientId,
                         title: isVideo ? '📹 Video Consultation Confirmed' : '🏥 Clinic Appointment Confirmed',
                         message: visitMsg,
                         type: 'Success',
                         link: isVideo ? `/video/${appointment.id}` : '/appointments'
-                    }, authHeader).catch(() => {});
-
-                    // → Doctor: patient confirmed
-                    await axios.post(notifyUrl, {
+                    });
+                    await notify(notifyUrl, {
                         userId: appointment.doctorId,
                         title: 'Appointment Confirmed',
                         message: `${storedPatientName}'s ${isVideo ? 'video consultation' : 'clinic appointment'} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been confirmed.`,
                         type: 'Info',
                         link: '/appointments'
-                    }, authHeader).catch(() => {});
+                    });
                 }
 
                 if (status === 'In Progress') {
-                    // → Patient: doctor has started
-                    await axios.post(notifyUrl, {
+                    await notify(notifyUrl, {
                         userId: appointment.patientId,
                         title: isVideo ? '📹 Doctor Has Joined the Call' : '🏥 Your Consultation Has Started',
                         message: isVideo
@@ -564,34 +567,34 @@ export const updateAppointmentStatus = async (req, res) => {
                             : `Dr. ${storedDoctorName} is ready for your consultation. Please proceed to the clinic.`,
                         type: 'Info',
                         link: isVideo ? `/video/${appointment.id}` : '/appointments'
-                    }, authHeader).catch(() => {});
+                    });
                 }
 
                 if (status === 'Cancelled') {
-                    await axios.post(notifyUrl, {
+                    await notify(notifyUrl, {
                         userId: appointment.patientId,
                         title: 'Appointment Cancelled',
                         message: `Your ${isVideo ? 'video consultation' : 'appointment'} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been cancelled.`,
                         type: 'Error',
                         link: '/appointments'
-                    }, authHeader).catch(() => {});
-                    await axios.post(notifyUrl, {
+                    });
+                    await notify(notifyUrl, {
                         userId: appointment.doctorId,
                         title: 'Appointment Cancelled',
                         message: `${storedPatientName}'s appointment on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been cancelled.`,
                         type: 'Warning',
                         link: '/appointments'
-                    }, authHeader).catch(() => {});
+                    });
                 }
 
                 if (status === 'Completed') {
-                    await axios.post(notifyUrl, {
+                    await notify(notifyUrl, {
                         userId: appointment.patientId,
                         title: 'Consultation Completed ✓',
                         message: `Your ${isVideo ? 'video consultation' : 'appointment'} with Dr. ${storedDoctorName} has been completed. An invoice has been generated.`,
                         type: 'Success',
                         link: '/billing'
-                    }, authHeader).catch(() => {});
+                    });
                 }
             }
         } catch (err) {
@@ -651,33 +654,29 @@ export const approveAppointment = async (req, res) => {
 
         // ─── TRIGGER NOTIFICATION ON APPROVAL ───
         try {
-            const authHeader = { headers: { Authorization: req.headers.authorization } };
             const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
             if (notifyUrl) {
                 const isVideo = appointment.type === 'video';
                 const storedDoctorName = appointment.doctorName || 'Doctor';
                 const storedPatientName = appointment.patientName || `Patient #${appointment.patientId.slice(-6).toUpperCase()}`;
 
-                // → Patient: approved with visit instructions
                 const visitMsg = isVideo
                     ? `Your video consultation with Dr. ${storedDoctorName} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been approved. Click to join the video call when ready.`
                     : `Your clinic appointment with Dr. ${storedDoctorName} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been approved. Please visit the clinic.`;
-                await axios.post(notifyUrl, {
+                await notify(notifyUrl, {
                     userId: appointment.patientId,
                     title: 'Appointment Approved ✓',
                     message: visitMsg,
                     type: 'Success',
                     link: isVideo ? `/video/${appointment.id}` : '/appointments'
-                }, authHeader).catch(() => {});
-
-                // → Doctor: patient approved, now visible
-                await axios.post(notifyUrl, {
+                });
+                await notify(notifyUrl, {
                     userId: appointment.doctorId,
                     title: 'New Patient Approved',
                     message: `${storedPatientName}'s ${isVideo ? 'video consultation' : 'clinic appointment'} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been approved and is now in your schedule.`,
                     type: 'Info',
                     link: '/appointments'
-                }, authHeader).catch(() => {});
+                });
             }
         } catch (err) {
             console.error('Approval Notification Trigger Failed:', err.message);

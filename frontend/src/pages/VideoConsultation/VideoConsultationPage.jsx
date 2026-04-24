@@ -100,12 +100,16 @@ export default function VideoConsultationPage() {
     const remoteVideoNodeRef = useRef(null);
     const remoteVideoRef = useCallback((node) => {
         remoteVideoNodeRef.current = node;
-        if (node && remoteStream) node.srcObject = remoteStream;
+        if (node && remoteStream) {
+            node.srcObject = remoteStream;
+            node.play().catch(() => {}); // handle autoplay policy
+        }
     }, [remoteStream]);
 
     useEffect(() => {
         if (remoteVideoNodeRef.current && remoteStream) {
             remoteVideoNodeRef.current.srcObject = remoteStream;
+            remoteVideoNodeRef.current.play().catch(() => {});
         }
     }, [remoteStream]);
 

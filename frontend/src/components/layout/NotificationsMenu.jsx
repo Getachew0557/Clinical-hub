@@ -34,9 +34,17 @@ export default function NotificationsMenu() {
         // Initial fetch
         fetchNotifications();
 
-        // Polling every 30 seconds for new notifications
-        const interval = setInterval(fetchNotifications, 30000);
-        return () => clearInterval(interval);
+        // Poll every 15 seconds for new notifications
+        const interval = setInterval(fetchNotifications, 15000);
+
+        // Also refresh when window regains focus
+        const onFocus = () => fetchNotifications();
+        window.addEventListener('focus', onFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', onFocus);
+        };
     }, []);
 
     const handleClick = (event) => {

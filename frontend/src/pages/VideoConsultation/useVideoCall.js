@@ -222,13 +222,18 @@ export default function useVideoCall(roomId) {
     }, [roomId, getMedia, createPeerConnection, cleanup]);
 
     // ─── Toggle Mute ───────────────────────────────────────────────────────
-    // Audio tracks support enable/disable without stopping — camera light stays off
     const toggleMute = useCallback(() => {
         if (!localStreamRef.current) return;
         const audioTracks = localStreamRef.current.getAudioTracks();
         if (audioTracks.length === 0) return;
         const newEnabled = !audioTracks[0].enabled;
         audioTracks.forEach(t => { t.enabled = newEnabled; });
+        // Also update the sender in the peer connection
+        if (pcRef.current) {
+            pcRef.current.getSenders()
+                .filter(s => s.track?.kind === 'audio')
+                .forEach(s => { if (s.track) s.track.enabled = newEnabled; });
+        }
         setIsMuted(!newEnabled);
         socketRef.current?.emit('media-state-changed', { roomId, isMuted: !newEnabled });
     }, [roomId]);
