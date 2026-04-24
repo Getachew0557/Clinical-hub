@@ -197,7 +197,7 @@ export default function VideoConsultationPage() {
             <div className="absolute bottom-24 right-4 w-40 h-28 rounded-2xl overflow-hidden border-2 border-teal-500 shadow-2xl bg-slate-700 z-50">
                 {localStream && !isCameraOff && !permissionError ? (
                     <video ref={localVideoRef} autoPlay playsInline muted
-                        className="w-full h-full object-cover scale-x-[-1]" />
+                        className="w-full h-full object-contain scale-x-[-1]" />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 p-2 text-center">
                         <CameraOff className={`w-6 h-6 mb-1 ${permissionError ? 'text-amber-500' : 'text-slate-500'}`} />

@@ -321,7 +321,7 @@ export default function AppointmentListPage() {
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <Typography variant="caption" fontWeight={700} color="text.primary">
-                                                                        {apt.patientName || apt.patientDetails?.fullName || `Patient #${apt.patientId?.slice(-6)}`}
+                                                                        {apt.patientName || apt.patientDetails?.fullName || `Patient #${apt.patientId?.slice(-6)?.toUpperCase()}`}
                                                                     </Typography>
                                                                     <span className="text-xs text-slate-400">
                                                                         ID: #{apt.patientId?.slice(-6)}

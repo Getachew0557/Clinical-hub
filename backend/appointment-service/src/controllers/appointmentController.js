@@ -52,27 +52,31 @@ export const createAppointment = async (req, res) => {
             // Fetch Doctor and Patient names for better messages
             const [docRes, patRes] = await Promise.all([
                 axios.get(`${doctorUrl}/${doctorId}`, authHeader).catch(() => ({ data: { fullName: 'Doctor' } })),
-                axios.get(`${patientUrl}/${resolvedPatientId}`, authHeader).catch(() => ({ data: { fullName: 'Patient' } }))
+                axios.get(`${patientUrl}/${resolvedPatientId}`, authHeader).catch(() => ({ data: { fullName: null } }))
             ]);
 
             const doctorName = docRes.data.fullName || 'Doctor';
-            const patientName = patRes.data.fullName || 'Patient';
+            // Patient name: try profile fullName, then fall back to auth user name via patientId
+            const patientName = patRes.data.fullName || patRes.data.name || req.user.fullName || 'Patient';
+
+            const isVideo = (type || 'clinic') === 'video';
+            const typeLabel = isVideo ? 'Video Consultation' : 'Clinic Appointment';
 
             // Notify Patient
             await axios.post(notifyUrl, {
                 userId: resolvedPatientId,
-                title: 'Appointment Booked',
-                message: `Your appointment with ${doctorName} is confirmed for ${appointmentDate} at ${appointmentTime}.`,
-                type: 'info',
+                title: `${typeLabel} Booked`,
+                message: `Your ${typeLabel.toLowerCase()} with Dr. ${doctorName} is scheduled for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
+                type: 'Success',
                 link: '/appointments'
             }, authHeader).catch(err => console.error('Patient Notification Error:', err.message));
 
             // Notify Doctor
             await axios.post(notifyUrl, {
                 userId: doctorId,
-                title: 'New Appointment',
-                message: `New booking received from ${patientName} for ${appointmentDate} at ${appointmentTime}.`,
-                type: 'info',
+                title: `New ${typeLabel}`,
+                message: `${patientName} has booked a ${typeLabel.toLowerCase()} for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
+                type: 'Info',
                 link: '/appointments'
             }, authHeader).catch(err => console.error('Doctor Notification Error:', err.message));
 
@@ -251,9 +255,17 @@ export const getAllAppointments = async (req, res) => {
         // ─── Enrich with Patient Names ───
         const authHeader = { headers: { Authorization: req.headers.authorization } };
         const patientUrl = process.env.PATIENT_SERVICE_URL;
+        const authUrl = process.env.AUTH_SERVICE_URL;
 
         const patientsRes = await axios.get(patientUrl, authHeader).catch(() => ({ data: { patients: [] } }));
         const patientsList = patientsRes.data.patients || [];
+
+        // Fallback: fetch auth users to resolve names for patients without profiles
+        let authUsersList = [];
+        try {
+            const authRes = await axios.get(`${authUrl}`, authHeader);
+            authUsersList = Array.isArray(authRes.data) ? authRes.data : [];
+        } catch { /* ignore */ }
 
         // Also fetch doctor names for Admin/Receptionist
         let doctorsList = [];
@@ -268,15 +280,18 @@ export const getAllAppointments = async (req, res) => {
                 p.userId === apt.patientId || p.id === apt.patientId ||
                 String(p.userId) === String(apt.patientId) || String(p.id) === String(apt.patientId)
             );
+            // Fallback to auth user if no patient profile
+            const authUser = !patient ? authUsersList.find(u => String(u.id) === String(apt.patientId)) : null;
             const doctor = doctorsList.find(d =>
                 d.userId === apt.doctorId || d.id === apt.doctorId ||
                 String(d.userId) === String(apt.doctorId) || String(d.id) === String(apt.doctorId)
             );
+            const authDoctor = !doctor ? authUsersList.find(u => String(u.id) === String(apt.doctorId)) : null;
             return {
                 ...apt.toJSON(),
-                patientName: patient ? (patient.fullName || patient.name) : null,
-                doctorName: doctor ? (doctor.fullName || doctor.name) : null,
-                patientDetails: patient || null
+                patientName: patient?.fullName || authUser?.fullName || null,
+                doctorName: doctor?.fullName || authDoctor?.fullName || null,
+                patientDetails: patient || (authUser ? { userId: authUser.id, fullName: authUser.fullName, email: authUser.email } : null)
             };
         });
 
@@ -323,6 +338,7 @@ export const getMyAppointments = async (req, res) => {
             const authHeader = { headers: { Authorization: req.headers.authorization } };
             const patientUrl = process.env.PATIENT_SERVICE_URL;
             const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+            const authUrl = process.env.AUTH_SERVICE_URL;
 
             const [patientsRes, doctorsRes] = await Promise.all([
                 axios.get(patientUrl, authHeader).catch(() => ({ data: { patients: [] } })),
@@ -331,20 +347,29 @@ export const getMyAppointments = async (req, res) => {
             const patientsList = patientsRes.data.patients || [];
             const doctorsList = doctorsRes.data.doctors || doctorsRes.data.records || [];
 
+            // Fallback: auth users for patients without profiles
+            let authUsersList = [];
+            try {
+                const authRes = await axios.get(`${authUrl}`, authHeader);
+                authUsersList = Array.isArray(authRes.data) ? authRes.data : [];
+            } catch { /* ignore */ }
+
             const enriched = appointments.map(apt => {
                 const patient = patientsList.find(p =>
                     p.id === apt.patientId || p.userId === apt.patientId ||
                     String(p.id) === String(apt.patientId) || String(p.userId) === String(apt.patientId)
                 );
+                const authUser = !patient ? authUsersList.find(u => String(u.id) === String(apt.patientId)) : null;
                 const doctor = doctorsList.find(d =>
                     d.userId === apt.doctorId || d.id === apt.doctorId ||
                     String(d.userId) === String(apt.doctorId) || String(d.id) === String(apt.doctorId)
                 );
+                const authDoctor = !doctor ? authUsersList.find(u => String(u.id) === String(apt.doctorId)) : null;
                 return {
                     ...apt.toJSON(),
-                    patientName: patient ? (patient.fullName || patient.name) : null,
-                    doctorName: doctor ? (doctor.fullName || doctor.name) : null,
-                    patientDetails: patient || null
+                    patientName: patient?.fullName || authUser?.fullName || null,
+                    doctorName: doctor?.fullName || authDoctor?.fullName || null,
+                    patientDetails: patient || (authUser ? { userId: authUser.id, fullName: authUser.fullName, email: authUser.email } : null)
                 };
             });
             return res.status(200).json({ count: appointments.length, appointments: enriched });
@@ -461,24 +486,48 @@ export const updateAppointmentStatus = async (req, res) => {
             const authHeader = { headers: { Authorization: req.headers.authorization } };
             const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
             if (notifyUrl) {
+                const isVideo = appointment.type === 'video';
+
                 // Notify Patient about status change
                 await axios.post(notifyUrl, {
                     userId: appointment.patientId,
                     title: 'Appointment Status Updated',
-                    message: `Your appointment status has changed to: ${status}.`,
-                    type: status === 'Cancelled' ? 'error' : 'info',
-                    link: '/appointments'
+                    message: `Your ${isVideo ? 'video consultation' : 'appointment'} status has changed to: ${status}.`,
+                    type: status === 'Cancelled' ? 'Error' : status === 'Confirmed' ? 'Success' : 'Info',
+                    link: status === 'Confirmed' && isVideo ? `/video/${appointment.id}` : '/appointments'
                 }, authHeader).catch(err => console.error('Patient Status Notify Error:', err.message));
+
+                // If Confirmed video appointment — remind patient to join
+                if (status === 'Confirmed' && isVideo) {
+                    await axios.post(notifyUrl, {
+                        userId: appointment.patientId,
+                        title: '📹 Video Consultation Ready',
+                        message: `Your video consultation is confirmed. Click to join when ready.`,
+                        type: 'Info',
+                        link: `/video/${appointment.id}`
+                    }, authHeader).catch(() => {});
+                }
 
                 // If Cancelled, notify Doctor too
                 if (status === 'Cancelled') {
                     await axios.post(notifyUrl, {
                         userId: appointment.doctorId,
                         title: 'Appointment Cancelled',
-                        message: `The appointment for patient ID ${appointment.patientId.slice(-6)} has been cancelled.`,
-                        type: 'warning',
+                        message: `An appointment scheduled for ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been cancelled.`,
+                        type: 'Warning',
                         link: '/appointments'
                     }, authHeader).catch(err => console.error('Doctor Cancel Notify Error:', err.message));
+                }
+
+                // If Completed — notify patient
+                if (status === 'Completed') {
+                    await axios.post(notifyUrl, {
+                        userId: appointment.patientId,
+                        title: 'Consultation Completed',
+                        message: `Your ${isVideo ? 'video consultation' : 'appointment'} has been completed. An invoice has been generated.`,
+                        type: 'Success',
+                        link: '/billing'
+                    }, authHeader).catch(() => {});
                 }
             }
         } catch (err) {
@@ -541,13 +590,23 @@ export const approveAppointment = async (req, res) => {
             const authHeader = { headers: { Authorization: req.headers.authorization } };
             const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
             if (notifyUrl) {
+                const isVideo = appointment.type === 'video';
                 await axios.post(notifyUrl, {
                     userId: appointment.patientId,
-                    title: 'Appointment Approved',
-                    message: 'Your appointment has been approved by the clinic administration.',
-                    type: 'success',
-                    link: '/appointments'
+                    title: 'Appointment Approved ✓',
+                    message: `Your ${isVideo ? 'video consultation' : 'appointment'} on ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been approved by the clinic.`,
+                    type: 'Success',
+                    link: isVideo ? `/video/${appointment.id}` : '/appointments'
                 }, authHeader).catch(err => console.error('Approval Notify Error:', err.message));
+
+                // Notify doctor too
+                await axios.post(notifyUrl, {
+                    userId: appointment.doctorId,
+                    title: 'Appointment Approved',
+                    message: `An appointment for ${appointment.appointmentDate} at ${appointment.appointmentTime?.slice(0,5)} has been approved and is now visible to you.`,
+                    type: 'Info',
+                    link: '/appointments'
+                }, authHeader).catch(() => {});
             }
         } catch (err) {
             console.error('Approval Notification Trigger Failed:', err.message);

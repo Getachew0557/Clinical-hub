@@ -52,7 +52,7 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
 
   // For Patient role, patientName is their own name — use it directly
   // For staff, it comes enriched from backend
-  const displayName = patientName || (role === 'Patient' ? null : 'Unknown Patient');
+  const displayName = patientName || (role === 'Patient' ? null : `Patient #${String(patientId || id).slice(-6).toUpperCase()}`);
 
   const actions  = getActions(role, status);
   const showJoin = shouldShowJoinButton(status, isVideo);

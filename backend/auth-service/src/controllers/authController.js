@@ -33,23 +33,49 @@ export const register = async (req, res) => {
         const user = await User.create({ fullName, email, password, role: finalRole });
 
         // Always create a patient profile for Patient role — directly via HTTP to patient-service
-        // This is more reliable than the event bus (which requires INTERNAL_EVENT_SUBSCRIBERS to be set)
         if (finalRole === 'Patient') {
             const patientServiceUrl = process.env.PATIENT_SERVICE_URL;
             if (patientServiceUrl) {
-                // Fire-and-forget — don't block the registration response
                 const baseUrl = patientServiceUrl.replace('/api/patients', '');
                 axios.post(`${baseUrl}/api/internal/events`, {
                     routingKey: 'user.registered',
                     data: { userId: user.id, fullName: user.fullName, email: user.email }
                 }).catch(err => console.warn('[Auth] Could not notify patient-service:', err.message));
             }
-
-            // Also publish via event bus (fallback)
             if (!['Admin', 'Receptionist'].includes(req.user?.role)) {
                 publishEvent('user.registered', {
                     userId: user.id, fullName: user.fullName, email: user.email
                 }).catch(() => {});
+            }
+        }
+
+        // Send welcome notification to the new user
+        const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
+        if (notifyUrl) {
+            const isAdminCreated = req.user && ['Admin', 'Receptionist'].includes(req.user.role);
+            axios.post(notifyUrl, {
+                userId: user.id,
+                title: 'Welcome to Biruh Tena!',
+                message: isAdminCreated
+                    ? `Your ${finalRole} account has been created. You can now log in with your credentials.`
+                    : `Welcome, ${user.fullName}! Your patient account is ready. You can now book appointments.`,
+                type: 'Success',
+                link: '/dashboard'
+            }).catch(() => {});
+
+            // Also notify admins about new registration
+            if (!isAdminCreated && finalRole === 'Patient') {
+                // Get all admin users and notify them
+                const adminUsers = await User.findAll({ where: { role: 'Admin' } });
+                adminUsers.forEach(admin => {
+                    axios.post(notifyUrl, {
+                        userId: admin.id,
+                        title: 'New Patient Registered',
+                        message: `${user.fullName} (${user.email}) has self-registered as a patient.`,
+                        type: 'Info',
+                        link: '/patients'
+                    }).catch(() => {});
+                });
             }
         }
 
