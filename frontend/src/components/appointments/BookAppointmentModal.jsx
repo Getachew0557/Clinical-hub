@@ -82,7 +82,19 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
             setDoctors(drData.doctors || []);
             if (isStaff) {
                 const ptData = await patientService.getAllPatients();
-                setPatients(ptData.patients || []);
+                let patientList = ptData.patients || [];
+
+                // If patient profiles are empty, fall back to auth users with role=Patient
+                if (patientList.length === 0) {
+                    try {
+                        const authData = await import('../../api/auth.service.js').then(m => m.default.getAllUsers());
+                        const patientUsers = (Array.isArray(authData) ? authData : [])
+                            .filter(u => u.role === 'Patient')
+                            .map(u => ({ id: u.id, userId: u.id, fullName: u.fullName, email: u.email }));
+                        patientList = patientUsers;
+                    } catch { /* ignore */ }
+                }
+                setPatients(patientList);
             }
         } catch (err) {
             console.error('Error loading booking data:', err);
@@ -112,11 +124,18 @@ export default function BookAppointmentModal({ open, onClose, onSuccess }) {
         e.preventDefault();
         setLoading(true);
         try {
-            // Use FormData to support file upload
-            const fd = new FormData();
-            Object.entries(formData).forEach(([k, v]) => { if (v) fd.append(k, v); });
-            if (attachmentFile) fd.append('attachment', attachmentFile);
-            await appointmentService.createAppointmentWithFile(fd);
+            if (attachmentFile) {
+                // Only use FormData when there's actually a file to upload
+                const fd = new FormData();
+                Object.entries(formData).forEach(([k, v]) => { if (v !== '' && v != null) fd.append(k, v); });
+                fd.append('attachment', attachmentFile);
+                await appointmentService.createAppointmentWithFile(fd);
+            } else {
+                // Plain JSON — avoids empty-string fields that fail backend validation
+                const payload = {};
+                Object.entries(formData).forEach(([k, v]) => { if (v !== '' && v != null) payload[k] = v; });
+                await appointmentService.createAppointment(payload);
+            }
             onSuccess();
             onClose();
         } catch (err) {

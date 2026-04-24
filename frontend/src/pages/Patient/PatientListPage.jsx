@@ -89,6 +89,20 @@ export default function PatientListPage() {
             } else {
                 const data = await patientService.getAllPatients();
                 patientData = data.patients || [];
+
+                // Also pull Patient-role users from auth-service who may not have a profile yet
+                // (self-registered patients before the event bus fix)
+                try {
+                    const authData = await import('../../api/auth.service.js').then(m => m.default.getAllUsers());
+                    const authPatients = (Array.isArray(authData) ? authData : [])
+                        .filter(u => u.role === 'Patient');
+                    // Merge: add auth users that don't already have a patient profile
+                    const existingUserIds = new Set(patientData.map(p => p.userId));
+                    const missing = authPatients
+                        .filter(u => !existingUserIds.has(u.id))
+                        .map(u => ({ id: u.id, userId: u.id, fullName: u.fullName, email: u.email, isActive: true }));
+                    patientData = [...patientData, ...missing];
+                } catch { /* ignore */ }
             }
 
             console.log('Fetched Patients:', patientData);

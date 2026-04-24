@@ -32,14 +32,25 @@ export const register = async (req, res) => {
 
         const user = await User.create({ fullName, email, password, role: finalRole });
 
-        // EVENT: If self-registration, publish 'user.registered' event.
-        // This decouples Auth from Patient and Notification services.
-        if (finalRole === 'Patient' && !['Admin', 'Receptionist'].includes(req.user?.role)) {
-            await publishEvent('user.registered', {
-                userId: user.id,
-                fullName: user.fullName,
-                email: user.email
-            });
+        // Always create a patient profile for Patient role — directly via HTTP to patient-service
+        // This is more reliable than the event bus (which requires INTERNAL_EVENT_SUBSCRIBERS to be set)
+        if (finalRole === 'Patient') {
+            const patientServiceUrl = process.env.PATIENT_SERVICE_URL;
+            if (patientServiceUrl) {
+                // Fire-and-forget — don't block the registration response
+                const baseUrl = patientServiceUrl.replace('/api/patients', '');
+                axios.post(`${baseUrl}/api/internal/events`, {
+                    routingKey: 'user.registered',
+                    data: { userId: user.id, fullName: user.fullName, email: user.email }
+                }).catch(err => console.warn('[Auth] Could not notify patient-service:', err.message));
+            }
+
+            // Also publish via event bus (fallback)
+            if (!['Admin', 'Receptionist'].includes(req.user?.role)) {
+                publishEvent('user.registered', {
+                    userId: user.id, fullName: user.fullName, email: user.email
+                }).catch(() => {});
+            }
         }
 
         res.status(201).json({
