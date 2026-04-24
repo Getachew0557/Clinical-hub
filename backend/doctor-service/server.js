@@ -4,6 +4,7 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import DoctorProfile from './src/models/DoctorProfile.js';
@@ -11,6 +12,9 @@ import doctorRoutes from './src/routes/doctorRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Ensure uploads directory exists (required by multer)
+fs.mkdirSync(path.join(__dirname, 'uploads'), { recursive: true });
 
 const app = express();
 
