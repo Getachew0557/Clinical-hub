@@ -34,7 +34,7 @@ router.post('/seed-admin', async (req, res) => {
 
         admin = await User.create({
             fullName: 'System Admin',
-            email: 'admin@ras.dental',
+            email: 'admin@gmail.com',
             password: 'Admin@1234',
             role: 'Admin'
         });

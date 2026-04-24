@@ -10,7 +10,7 @@ import User from './src/models/User.js';
 
 const ADMIN = {
     fullName: 'Admin',
-    email:    'admin@ras.dental',
+    email:    'admin@gmail.com',
     password: 'Admin@1234',
     role:     'Admin'
 };
