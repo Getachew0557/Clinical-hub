@@ -83,27 +83,28 @@ export default function useStatusDashboard({ type, role, userId } = {}) {
   }, 30000);
 
   /**
-   * Optimistically update a single appointment's status, call the API,
-   * and revert on failure.
+   * Update a single appointment's status, then re-fetch to get
+   * enriched data (patientName, confirmedByName, confirmedAt).
    */
   const handleStatusChange = useCallback(async (id, newStatus) => {
+    // Optimistic update for instant UI feedback
     const previousAppointments = appointments;
     const previousCounts = counts;
-
-    // Optimistic update
     const updated = applyStatusUpdate(appointments, id, newStatus);
     setAppointments(updated);
     setCounts(buildCounts(updated));
 
     try {
       await appointmentService.updateStatus(id, newStatus);
+      // Re-fetch to get server-enriched data (patientName, confirmedByName, confirmedAt)
+      await fetchAppointments();
     } catch (err) {
       // Revert on failure
       setAppointments(previousAppointments);
       setCounts(previousCounts);
-      throw err; // Let the card display the inline error
+      throw err;
     }
-  }, [appointments, counts, buildCounts]);
+  }, [appointments, counts, buildCounts, fetchAppointments]);
 
   return {
     appointments,

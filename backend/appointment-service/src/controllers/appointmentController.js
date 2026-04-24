@@ -80,6 +80,23 @@ export const createAppointment = async (req, res) => {
                 link: '/appointments'
             }, authHeader).catch(err => console.error('Doctor Notification Error:', err.message));
 
+            // Notify all Admins and Receptionists about new booking
+            try {
+                const authUrl = process.env.AUTH_SERVICE_URL;
+                const usersRes = await axios.get(`${authUrl}`, authHeader);
+                const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
+                const staffUsers = allUsers.filter(u => u.role === 'Admin' || u.role === 'Receptionist');
+                await Promise.all(staffUsers.map(staff =>
+                    axios.post(notifyUrl, {
+                        userId: staff.id,
+                        title: `New ${typeLabel} Request`,
+                        message: `${patientName} has requested a ${typeLabel.toLowerCase()} for ${appointmentDate} at ${appointmentTime.slice(0,5)}. Pending your approval.`,
+                        type: 'Warning',
+                        link: '/appointments'
+                    }, authHeader).catch(() => {})
+                ));
+            } catch { /* non-fatal */ }
+
         } catch (notifyError) {
             console.error('Core Notification Logic Error:', notifyError.message);
         }

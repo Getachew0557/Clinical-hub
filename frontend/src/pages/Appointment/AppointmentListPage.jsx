@@ -110,10 +110,9 @@ export default function AppointmentListPage() {
     const handleUpdateStatus = async (newStatus) => {
         if (!selectedApt) return;
         try {
-            await appointmentService.updateStatus(selectedApt.id, newStatus);
-            setAppointments(prev => prev.map(a =>
-                a.id === selectedApt.id ? { ...a, status: newStatus } : a
-            ));
+            const result = await appointmentService.updateStatus(selectedApt.id, newStatus);
+            // Re-fetch to get enriched data (patientName, confirmedByName, confirmedAt)
+            await fetchAppointments();
             handleMenuClose();
             fetchStatusCounts();
         } catch (err) {
@@ -125,9 +124,7 @@ export default function AppointmentListPage() {
         if (!selectedApt) return;
         try {
             await appointmentService.approveAppointment(selectedApt.id);
-            setAppointments(prev => prev.map(a =>
-                a.id === selectedApt.id ? { ...a, isAdminApproved: true } : a
-            ));
+            await fetchAppointments();
             handleMenuClose();
             fetchStatusCounts();
         } catch (err) {
