@@ -15,7 +15,7 @@ router.patch('/change-password', protect, changePassword);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
-// One-time seed endpoint — creates admin if none exists
+// One-time seed endpoint — creates admin if none exists, or resets admin password
 // Protected by a seed secret key
 router.post('/seed-admin', async (req, res) => {
     try {
@@ -24,15 +24,18 @@ router.post('/seed-admin', async (req, res) => {
             return res.status(403).json({ message: 'Invalid seed key' });
         }
 
-        const existing = await User.findOne({ where: { role: 'Admin' } });
-        if (existing) {
-            return res.status(200).json({ message: 'Admin already exists', email: existing.email });
+        let admin = await User.findOne({ where: { role: 'Admin' } });
+        if (admin) {
+            // Reset password to the canonical value
+            admin.password = 'Admin@1234';
+            await admin.save();
+            return res.status(200).json({ message: 'Admin password reset', email: admin.email });
         }
 
-        const admin = await User.create({
+        admin = await User.create({
             fullName: 'System Admin',
             email: 'admin@ras.dental',
-            password: 'adminPassword123',
+            password: 'Admin@1234',
             role: 'Admin'
         });
 
