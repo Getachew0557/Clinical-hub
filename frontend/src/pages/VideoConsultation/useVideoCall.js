@@ -54,21 +54,21 @@ export default function useVideoCall(roomId) {
             stream.getTracks().forEach((track) => pc.addTrack(track, stream));
         }
 
-        // Create a stable remote MediaStream and keep a ref to it
-        const remote = new MediaStream();
-        remoteStreamRef.current = remote;
-        setRemoteStream(remote);
-
+        // Don't pre-create an empty remote stream — wait for actual tracks
+        // This prevents the video element from getting an empty srcObject first
         pc.ontrack = (event) => {
             console.log('[Video] Received remote track:', event.track.kind);
-            // Use event.streams[0] which is the complete stream from the remote peer
             if (event.streams && event.streams[0]) {
+                // Use the complete stream from the remote peer
                 remoteStreamRef.current = event.streams[0];
-                // Force React re-render with the actual stream from the peer
                 setRemoteStream(event.streams[0]);
             } else {
-                // Fallback: manually add track
+                // Fallback: build stream from individual tracks
+                if (!remoteStreamRef.current) {
+                    remoteStreamRef.current = new MediaStream();
+                }
                 remoteStreamRef.current.addTrack(event.track);
+                // Create a new MediaStream reference to trigger React re-render
                 setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
             }
         };

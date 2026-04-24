@@ -96,20 +96,33 @@ export default function VideoConsultationPage() {
         if (node && localStream) node.srcObject = localStream;
     }, [localStream]);
 
-    // Remote video — keep a stable DOM ref + update srcObject via effect
+    // Remote video — stable ref, srcObject managed entirely in useEffect
     const remoteVideoNodeRef = useRef(null);
-    const remoteVideoRef = useCallback((node) => {
+    const remoteVideoRef = (node) => {
         remoteVideoNodeRef.current = node;
-        if (node && remoteStream) {
-            node.srcObject = remoteStream;
-            node.play().catch(() => {}); // handle autoplay policy
-        }
-    }, [remoteStream]);
+    };
 
     useEffect(() => {
-        if (remoteVideoNodeRef.current && remoteStream) {
-            remoteVideoNodeRef.current.srcObject = remoteStream;
-            remoteVideoNodeRef.current.play().catch(() => {});
+        const videoEl = remoteVideoNodeRef.current;
+        if (!videoEl || !remoteStream) return;
+
+        // Only update srcObject if it actually changed
+        if (videoEl.srcObject !== remoteStream) {
+            videoEl.srcObject = remoteStream;
+        }
+
+        // Ensure audio is not muted and volume is up
+        videoEl.muted = false;
+        videoEl.volume = 1.0;
+
+        // Play — required after srcObject assignment
+        const playPromise = videoEl.play();
+        if (playPromise !== undefined) {
+            playPromise.catch((err) => {
+                // Autoplay blocked — user interaction needed
+                // The video will still play once the user interacts with the page
+                console.warn('[Video] Remote autoplay blocked:', err.message);
+            });
         }
     }, [remoteStream]);
 
