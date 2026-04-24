@@ -48,46 +48,46 @@ app.use((req, res) => {
 // ─── Startup ──────────────────────────────────────────────────────────────
 const PORT = process.env.DOCTOR_PORT || 5010;
 
-const startServer = async () => {
-  try {
-    await ensureDatabaseExists();
-    await sequelize.authenticate();
-    console.log('Database connected successfully.');
+const connectDB = async () => {
+  await ensureDatabaseExists();
+  await sequelize.authenticate();
+  console.log('Database connected successfully.');
 
-    await sequelize.sync();
-    console.log('Database models synced.');
+  await sequelize.sync();
+  console.log('Database models synced.');
 
-    // ── Add new columns if they don't exist (safe migration) ──────────────
-    const qi = sequelize.getQueryInterface();
-    const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
+  // ── Add new columns if they don't exist (safe migration) ──────────────
+  const qi = sequelize.getQueryInterface();
+  const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
 
-    const newColumns = {
-        videoFee:           'DECIMAL(10,2) NULL',
-        serviceTypes:       'JSON NULL',
-        slotDuration:       'INT NOT NULL DEFAULT 30',
-        breakStart:         'TIME NULL',
-        breakEnd:           'TIME NULL',
-        languages:          'JSON NULL',
-        education:          'JSON NULL',
-        workExperience:     'JSON NULL',
-        awards:             'JSON NULL',
-        maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
-    };
+  const newColumns = {
+      videoFee:           'DECIMAL(10,2) NULL',
+      serviceTypes:       'JSON NULL',
+      slotDuration:       'INT NOT NULL DEFAULT 30',
+      breakStart:         'TIME NULL',
+      breakEnd:           'TIME NULL',
+      languages:          'JSON NULL',
+      education:          'JSON NULL',
+      workExperience:     'JSON NULL',
+      awards:             'JSON NULL',
+      maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
+  };
 
-    for (const [col, definition] of Object.entries(newColumns)) {
-        if (!tableDesc[col]) {
-            await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
-            console.log(`Added column: ${col}`);
-        }
-    }
-
-    app.listen(PORT, () => {
-      console.log(`doctor-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Unable to start doctor-service:', error);
-    process.exit(1);
+  for (const [col, definition] of Object.entries(newColumns)) {
+      if (!tableDesc[col]) {
+          await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
+          console.log(`Added column: ${col}`);
+      }
   }
+  console.log('doctor-service fully ready.');
 };
 
-startServer();
+// Start HTTP server FIRST so gateway can reach it immediately
+app.listen(PORT, () => {
+  console.log(`doctor-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  // Connect DB after server is listening
+  connectDB().catch(err => {
+    console.error('DB connection failed, retrying in 15s:', err.message);
+    setTimeout(() => connectDB().catch(console.error), 15000);
+  });
+});

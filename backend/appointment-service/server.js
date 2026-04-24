@@ -29,22 +29,20 @@ app.use((req, res) => {
 // ─── Startup ──────────────────────────────────────────────────────────────
 const PORT = process.env.APPT_PORT || 5003;
 
-const startServer = async () => {
-  try {
-    await ensureDatabaseExists();
-    await sequelize.authenticate();
-    console.log('Database connected successfully.');
-
-    await sequelize.sync({ alter: true });
-    console.log('Database models synced.');
-
-    app.listen(PORT, () => {
-      console.log(`appointment-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Unable to start appointment-service:', error);
-    process.exit(1);
-  }
+const connectDB = async () => {
+  await ensureDatabaseExists();
+  await sequelize.authenticate();
+  console.log('Database connected successfully.');
+  await sequelize.sync({ alter: true });
+  console.log('Database models synced.');
+  console.log('appointment-service fully ready.');
 };
 
-startServer();
+// Start HTTP server FIRST so gateway can reach it immediately
+app.listen(PORT, () => {
+  console.log(`appointment-service running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  connectDB().catch(err => {
+    console.error('DB connection failed, retrying in 15s:', err.message);
+    setTimeout(() => connectDB().catch(console.error), 15000);
+  });
+});
