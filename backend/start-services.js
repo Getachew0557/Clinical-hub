@@ -31,10 +31,10 @@ for (const svc of services_with_uploads) {
 const gateway = { name: 'api-gateway', mem: 50, color: '\x1b[36m' };
 
 const services = [
-  { name: 'auth-service',        mem: 100, color: '\x1b[35m', delay: 3000,  port: { AUTH_PORT: '5001' }   },
-  { name: 'patient-service',     mem: 150, color: '\x1b[34m', delay: 6000,  port: { PATIENT_PORT: '5002' } },
-  { name: 'appointment-service', mem: 150, color: '\x1b[32m', delay: 9000,  port: { APPT_PORT: '5003' }   },
-  { name: 'doctor-service',      mem: 150, color: '\x1b[37m', delay: 12000, port: { DOCTOR_PORT: '5010' } },
+  { name: 'auth-service',        mem: 100, color: '\x1b[35m', delay: 2000,  port: { AUTH_PORT: '5001' }   },
+  { name: 'patient-service',     mem: 150, color: '\x1b[34m', delay: 4000,  port: { PATIENT_PORT: '5002' } },
+  { name: 'appointment-service', mem: 150, color: '\x1b[32m', delay: 6000,  port: { APPT_PORT: '5003' }   },
+  { name: 'doctor-service',      mem: 150, color: '\x1b[37m', delay: 8000,  port: { DOCTOR_PORT: '5010' } },
 ];
 
 const RESET = '\x1b[0m';
