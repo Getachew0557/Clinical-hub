@@ -57,6 +57,15 @@ const connectDB = async () => {
   console.log('Database connected successfully.');
   await sequelize.sync();
   console.log('Database models synced.');
+
+  // Safe column additions — add missing columns without dropping data
+  const qi = sequelize.getQueryInterface();
+  const payCols = await qi.describeTable('Payments').catch(() => ({}));
+  if (!payCols.rawData) {
+    await sequelize.query("ALTER TABLE `Payments` ADD COLUMN `rawData` TEXT NULL;").catch(() => {});
+    console.log('Added column: Payments.rawData');
+  }
+
   connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
   subscribeToEvent('patient_service_registration', 'user.registered', handleUserRegistered);
   console.log('patient-service fully ready.');
