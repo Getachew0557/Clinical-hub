@@ -377,6 +377,25 @@ export default function AppointmentListPage() {
                                                     </Typography>
                                                 </div>
                                             )}
+
+                                            {/* Confirmed by / confirmed at */}
+                                            {['Confirmed', 'In Progress', 'Completed'].includes(apt.status) && apt.confirmedAt && (
+                                                <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-xl border border-blue-100">
+                                                    <CheckCircle size={13} className="text-blue-500 shrink-0" />
+                                                    <div>
+                                                        <Typography variant="caption" sx={{ fontWeight: 700, color: '#1d4ed8', display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                            Confirmed by
+                                                        </Typography>
+                                                        <Typography variant="caption" sx={{ color: '#1e40af', fontWeight: 600 }}>
+                                                            {apt.confirmedByName || 'Staff'}
+                                                            <span style={{ color: '#93c5fd', fontWeight: 400, marginLeft: 6 }}>
+                                                                · {new Date(apt.confirmedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                {' '}{new Date(apt.confirmedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </Typography>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </CardContent>

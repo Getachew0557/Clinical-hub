@@ -124,6 +124,24 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
             <span className="text-xs line-clamp-2 text-slate-600">{reason}</span>
           </div>
         )}
+
+        {/* Confirmed by / confirmed at — shown for Confirmed, In Progress, Completed */}
+        {['Confirmed', 'In Progress', 'Completed'].includes(status) && appointment.confirmedAt && (
+          <div className="flex items-center gap-1.5 mt-1 px-2 py-1.5 bg-blue-50 rounded-lg border border-blue-100">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-500 shrink-0"><path d="M20 6 9 17l-5-5"/></svg>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">Confirmed</span>
+              <span className="text-[11px] text-blue-700 font-medium truncate">
+                {appointment.confirmedByName || 'Staff'}
+                <span className="text-blue-400 font-normal ml-1">
+                  · {new Date(appointment.confirmedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {' '}
+                  {new Date(appointment.confirmedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Action buttons ── */}

@@ -438,6 +438,22 @@ export const updateAppointmentStatus = async (req, res) => {
 
         const previousStatus = appointment.status;
         appointment.status = status;
+
+        // Track who confirmed and when
+        if (status === 'Confirmed' && previousStatus !== 'Confirmed') {
+            appointment.confirmedAt = new Date();
+            appointment.confirmedBy = req.user.id;
+            // Fetch confirmer's name from auth-service
+            try {
+                const authUrl = process.env.AUTH_SERVICE_URL;
+                const authHeader = { headers: { Authorization: req.headers.authorization } };
+                const meRes = await axios.get(`${authUrl}/me`, authHeader);
+                appointment.confirmedByName = meRes.data?.fullName || null;
+            } catch {
+                appointment.confirmedByName = null;
+            }
+        }
+
         await appointment.save();
 
         // ─── TRIGGER NOTIFICATIONS ON STATUS CHANGE ───

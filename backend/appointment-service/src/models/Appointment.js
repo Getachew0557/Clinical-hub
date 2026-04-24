@@ -48,6 +48,21 @@ const Appointment = sequelize.define('Appointment', {
         defaultValue: false,
         comment: 'Must be true for Doctors to see/confirm the appointment'
     },
+    confirmedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'Timestamp when the appointment was confirmed'
+    },
+    confirmedBy: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        comment: 'UUID of the user who confirmed the appointment'
+    },
+    confirmedByName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Full name of the user who confirmed (denormalized for display)'
+    },
     type: {
         type: DataTypes.ENUM('clinic', 'video'),
         defaultValue: 'clinic',
