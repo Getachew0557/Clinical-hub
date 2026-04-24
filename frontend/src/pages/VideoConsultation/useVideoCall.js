@@ -2,8 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { mapIceStateToStatus, RTC_CONFIG } from './videoUtils';
 
-// Connect directly to the notification service for WebSocket signaling
-const SIGNALING_URL = import.meta.env.VITE_API_SIGNALING_URL || 'http://localhost:5008';
+// The gateway proxies /socket.io → appointment-service (port 5003)
+// Use the gateway base URL (same origin as the API)
+const SIGNALING_URL = import.meta.env.VITE_API_GATEWAY_URL
+  ? import.meta.env.VITE_API_GATEWAY_URL.replace('/api', '')
+  : (import.meta.env.VITE_API_SIGNALING_URL || 'http://localhost:5050');
 
 export default function useVideoCall(roomId) {
     const [localStream, setLocalStream] = useState(null);

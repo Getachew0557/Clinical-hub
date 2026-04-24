@@ -69,23 +69,31 @@ export function validateMessageLength(message) {
 }
 
 /**
- * WebRTC configuration with public STUN servers.
- * TURN servers are needed when both peers are behind symmetric NAT.
+ * WebRTC configuration with public STUN + TURN servers.
+ * TURN is required when both peers are behind symmetric NAT (common in mobile/corporate networks).
  */
 export const RTC_CONFIG = {
     iceServers: [
+        // Google STUN
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        // Free public TURN server for development (openrelay)
+        // Cloudflare STUN
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        // Free TURN — Metered (reliable free tier)
         {
-            urls: 'turn:openrelay.metered.ca:80',
+            urls: [
+                'turn:a.relay.metered.ca:80',
+                'turn:a.relay.metered.ca:80?transport=tcp',
+                'turn:a.relay.metered.ca:443',
+                'turn:a.relay.metered.ca:443?transport=tcp',
+            ],
             username: 'openrelayproject',
             credential: 'openrelayproject',
         },
+        // Backup TURN — Open Relay
         {
-            urls: 'turn:openrelay.metered.ca:443',
+            urls: 'turn:openrelay.metered.ca:80',
             username: 'openrelayproject',
             credential: 'openrelayproject',
         },
@@ -96,4 +104,5 @@ export const RTC_CONFIG = {
         },
     ],
     iceCandidatePoolSize: 10,
+    iceTransportPolicy: 'all',
 };
