@@ -5,28 +5,32 @@ import { useTranslation } from 'react-i18next';
 import {
     LayoutDashboard, Users, CalendarDays, FileText, Receipt,
     Package, BarChart3, ChevronLeft, ChevronRight,
-    X, Stethoscope, UserCog, Home, ShieldCheck, Video
+    X, Stethoscope, UserCog, Home, ShieldCheck, Video, ClipboardList, Bell, Pill, UserCheck
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 // ── Role-based nav items ──────────────────────────────────────────────────────
 const NAV_BY_ROLE = {
     Admin: [
-        { to: '/dashboard',     icon: LayoutDashboard, labelKey: 'sidebar.dashboard',     end: true },
-        { to: '/patients',      icon: Users,           labelKey: 'sidebar.patients' },
-        { to: '/doctors',       icon: Stethoscope,     labelKey: 'sidebar.doctors' },
-        { to: '/receptionists', icon: ShieldCheck,     labelKey: 'sidebar.receptionists' },
-        { to: '/appointments',  icon: CalendarDays,    labelKey: 'sidebar.appointments' },
-        { to: '/emr',           icon: FileText,        labelKey: 'sidebar.medicalRecords' },
-        { to: '/billing',       icon: Receipt,         labelKey: 'sidebar.billing' },
-        { to: '/inventory',     icon: Package,         labelKey: 'sidebar.inventory' },
-        { to: '/reports',       icon: BarChart3,       labelKey: 'sidebar.reports' },
-        { to: '/settings',      icon: UserCog,         labelKey: 'sidebar.settings' },
+        { to: '/dashboard',       icon: LayoutDashboard, labelKey: 'sidebar.dashboard',       end: true },
+        { to: '/user-management', icon: UserCheck,       labelKey: 'sidebar.userManagement' },
+        { to: '/patients',        icon: Users,           labelKey: 'sidebar.patients' },
+        { to: '/doctors',         icon: Stethoscope,     labelKey: 'sidebar.doctors' },
+        { to: '/receptionists',   icon: ShieldCheck,     labelKey: 'sidebar.receptionists' },
+        { to: '/appointments',    icon: CalendarDays,    labelKey: 'sidebar.appointments' },
+        { to: '/emr',             icon: FileText,        labelKey: 'sidebar.medicalRecords' },
+        { to: '/admin-billing',   icon: Receipt,         labelKey: 'sidebar.billing' },
+        { to: '/inventory',       icon: Package,         labelKey: 'sidebar.inventory' },
+        { to: '/reports',         icon: BarChart3,       labelKey: 'sidebar.reports' },
+        { to: '/audit-log',       icon: ClipboardList,   labelKey: 'sidebar.auditLog' },
+        { to: '/broadcast',       icon: Bell,            labelKey: 'sidebar.broadcast' },
+        { to: '/settings',        icon: UserCog,         labelKey: 'sidebar.settings' },
     ],
     Doctor: [
         { to: '/dashboard',          icon: LayoutDashboard, labelKey: 'sidebar.dashboard',          end: true },
         { to: '/appointments',       icon: CalendarDays,    labelKey: 'sidebar.myAppointments' },
         { to: '/video-consultations',icon: Video,           labelKey: 'sidebar.videoConsultations' },
+        { to: '/prescriptions',      icon: Pill,            labelKey: 'sidebar.prescriptions' },
         { to: '/emr',                icon: FileText,        labelKey: 'sidebar.medicalRecords' },
         { to: '/patients',           icon: Users,           labelKey: 'sidebar.myPatients' },
         { to: '/settings',           icon: UserCog,         labelKey: 'sidebar.settings' },
@@ -42,6 +46,7 @@ const NAV_BY_ROLE = {
     ],
     Patient: [
         { to: '/dashboard',          icon: Home,        labelKey: 'sidebar.myPortal',          end: true },
+        { to: '/find-doctor',        icon: Stethoscope, labelKey: 'sidebar.findDoctor' },
         { to: '/appointments',       icon: CalendarDays,labelKey: 'sidebar.bookings' },
         { to: '/video-consultations',icon: Video,       labelKey: 'sidebar.videoConsultations' },
         { to: '/emr',                icon: FileText,    labelKey: 'sidebar.myRecords' },

@@ -36,6 +36,13 @@ import VideoConsultationsList from './pages/VideoConsultation/VideoConsultations
 import StatusDashboard from './pages/Appointment/StatusDashboard';
 import VideoStatusDashboard from './pages/VideoConsultation/VideoStatusDashboard';
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
+import AdminBillingPage from './pages/Admin/AdminBillingPage';
+import AuditLogPage from './pages/Admin/AuditLogPage';
+import BroadcastPage from './pages/Admin/BroadcastPage';
+import PrescriptionsPage from './pages/Doctor/PrescriptionsPage';
+import UserManagementPage from './pages/Admin/UserManagementPage';
+import FindDoctorPage from './pages/Patient/FindDoctorPage';
+import FindDoctorPage from './pages/Patient/FindDoctorPage';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -264,12 +271,19 @@ const App = () => (
         >
           <Route path="/dashboard" element={<DashboardRouter />} />
           <Route path="/doctors" element={<RoleGuard allowedRoles={['Admin','Doctor','Receptionist']}><DoctorListPage /></RoleGuard>} />
+          <Route path="/find-doctor" element={<FindDoctorPage />} />
           <Route path="/appointments" element={<StatusDashboard />} />
           <Route path="/patients" element={<PatientListPage />} />
           <Route path="/emr" element={<RoleGuard allowedRoles={['Admin','Doctor','Patient']}><PatientEMRPage /></RoleGuard>} />
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/inventory" element={<RoleGuard allowedRoles={['Admin','Receptionist']}><InventoryListPage /></RoleGuard>} />
           <Route path="/reports" element={<RoleGuard allowedRoles={['Admin']}><ReportsPage /></RoleGuard>} />
+          <Route path="/admin-billing" element={<RoleGuard allowedRoles={['Admin','Receptionist']}><AdminBillingPage /></RoleGuard>} />
+          <Route path="/audit-log" element={<RoleGuard allowedRoles={['Admin']}><AuditLogPage /></RoleGuard>} />
+          <Route path="/broadcast" element={<RoleGuard allowedRoles={['Admin']}><BroadcastPage /></RoleGuard>} />
+          <Route path="/prescriptions" element={<RoleGuard allowedRoles={['Doctor']}><PrescriptionsPage /></RoleGuard>} />
+          <Route path="/user-management" element={<RoleGuard allowedRoles={['Admin']}><UserManagementPage /></RoleGuard>} />
+          <Route path="/find-doctor" element={<FindDoctorPage />} />
           <Route path="/receptionists" element={<RoleGuard allowedRoles={['Admin']}><ReceptionistListPage /></RoleGuard>} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />

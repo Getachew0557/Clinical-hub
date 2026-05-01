@@ -500,6 +500,30 @@ export default function PatientEMRPage() {
                                                             <span style={{ fontWeight: 700 }}>#{record.doctorId?.slice(-6) || 'Unknown'}</span>
                                                         </Typography>
                                                     </Box>
+
+                                                    {/* Prescriptions */}
+                                                    {record.prescriptions && record.prescriptions.length > 0 && (
+                                                        <Box sx={{ p: 2, bgcolor: '#f0fdf4', borderRadius: 3, border: '1px solid #bbf7d0' }}>
+                                                            <Typography variant="caption" fontWeight={800} sx={{ color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', mb: 1.5 }}>
+                                                                💊 Prescriptions ({record.prescriptions.length})
+                                                            </Typography>
+                                                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 1 }}>
+                                                                {record.prescriptions.map((rx, i) => (
+                                                                    <Box key={i} sx={{ p: 1.5, bgcolor: 'white', borderRadius: 2, border: '1px solid #d1fae5' }}>
+                                                                        <Typography variant="body2" fontWeight={800} sx={{ color: '#065f46' }}>{rx.medication}</Typography>
+                                                                        <Typography variant="caption" color="text.secondary">
+                                                                            {rx.dosage} · {rx.frequency} · {rx.duration}
+                                                                        </Typography>
+                                                                        {rx.instructions && (
+                                                                            <Typography variant="caption" sx={{ display: 'block', color: '#6b7280', fontStyle: 'italic', mt: 0.5 }}>
+                                                                                {rx.instructions}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Box>
+                                                                ))}
+                                                            </Box>
+                                                        </Box>
+                                                    )}
                                                 </Box>
                                             </CardContent>
                                         </Card>
@@ -615,6 +639,91 @@ export default function PatientEMRPage() {
                                             </Box>
                                         </Box>
                                     )}
+                                </Box>
+
+                                {/* ── Prescriptions ── */}
+                                <Box>
+                                    <Box className="flex items-center justify-between mb-2">
+                                        <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>
+                                            Prescriptions
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            startIcon={<Plus size={14} />}
+                                            onClick={() => setFormData(prev => ({
+                                                ...prev,
+                                                prescriptions: [...(prev.prescriptions || []), { medication: '', dosage: '', frequency: '', duration: '', instructions: '' }]
+                                            }))}
+                                            sx={{ borderRadius: 2, textTransform: 'none' }}
+                                        >
+                                            Add Medicine
+                                        </Button>
+                                    </Box>
+                                    {(formData.prescriptions || []).length === 0 && (
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                                            No prescriptions added yet.
+                                        </Typography>
+                                    )}
+                                    {(formData.prescriptions || []).map((rx, idx) => (
+                                        <Box key={idx} sx={{ p: 2, mb: 1.5, border: '1px solid #e2e8f0', borderRadius: 3, bgcolor: '#f8fafc' }}>
+                                            <Box className="flex justify-between items-center mb-2">
+                                                <Typography variant="caption" fontWeight={800} color="primary">Prescription #{idx + 1}</Typography>
+                                                <IconButton size="small" onClick={() => setFormData(prev => ({
+                                                    ...prev,
+                                                    prescriptions: prev.prescriptions.filter((_, i) => i !== idx)
+                                                }))}>
+                                                    <Trash2 size={14} className="text-red-500" />
+                                                </IconButton>
+                                            </Box>
+                                            <Grid container spacing={1.5}>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField size="small" fullWidth label="Medication" placeholder="e.g. Amoxicillin 500mg"
+                                                        value={rx.medication}
+                                                        onChange={e => {
+                                                            const updated = [...formData.prescriptions];
+                                                            updated[idx] = { ...updated[idx], medication: e.target.value };
+                                                            setFormData(prev => ({ ...prev, prescriptions: updated }));
+                                                        }} />
+                                                </Grid>
+                                                <Grid item xs={6} sm={3}>
+                                                    <TextField size="small" fullWidth label="Dosage" placeholder="e.g. 1 tablet"
+                                                        value={rx.dosage}
+                                                        onChange={e => {
+                                                            const updated = [...formData.prescriptions];
+                                                            updated[idx] = { ...updated[idx], dosage: e.target.value };
+                                                            setFormData(prev => ({ ...prev, prescriptions: updated }));
+                                                        }} />
+                                                </Grid>
+                                                <Grid item xs={6} sm={3}>
+                                                    <TextField size="small" fullWidth label="Frequency" placeholder="e.g. 3x daily"
+                                                        value={rx.frequency}
+                                                        onChange={e => {
+                                                            const updated = [...formData.prescriptions];
+                                                            updated[idx] = { ...updated[idx], frequency: e.target.value };
+                                                            setFormData(prev => ({ ...prev, prescriptions: updated }));
+                                                        }} />
+                                                </Grid>
+                                                <Grid item xs={6} sm={3}>
+                                                    <TextField size="small" fullWidth label="Duration" placeholder="e.g. 7 days"
+                                                        value={rx.duration}
+                                                        onChange={e => {
+                                                            const updated = [...formData.prescriptions];
+                                                            updated[idx] = { ...updated[idx], duration: e.target.value };
+                                                            setFormData(prev => ({ ...prev, prescriptions: updated }));
+                                                        }} />
+                                                </Grid>
+                                                <Grid item xs={12} sm={9}>
+                                                    <TextField size="small" fullWidth label="Instructions" placeholder="e.g. Take after meals"
+                                                        value={rx.instructions}
+                                                        onChange={e => {
+                                                            const updated = [...formData.prescriptions];
+                                                            updated[idx] = { ...updated[idx], instructions: e.target.value };
+                                                            setFormData(prev => ({ ...prev, prescriptions: updated }));
+                                                        }} />
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    ))}
                                 </Box>
                             </Box>
                         </DialogContent>

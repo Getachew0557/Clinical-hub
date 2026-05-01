@@ -247,5 +247,10 @@
   "sidebar.clinicHours": "Clinic Hours",
   "sidebar.weekdayHours": "Mon - Fri: 8:00 AM - 8:00 PM",
   "sidebar.saturdayHours": "Sat: 9:00 AM - 4:00 PM",
-  "sidebar.roleAccess": "{{role}} Portal"
+  "sidebar.roleAccess": "{{role}} Portal",
+  "sidebar.auditLog": "Audit Log",
+  "sidebar.broadcast": "Broadcast",
+  "sidebar.prescriptions": "Prescriptions",
+  "sidebar.userManagement": "User Management",
+  "sidebar.findDoctor": "Find a Doctor"
 }

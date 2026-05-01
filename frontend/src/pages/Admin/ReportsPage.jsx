@@ -253,6 +253,32 @@ export default function ReportsPage() {
                                 <Typography variant="caption" color="text.secondary">PNG format @ 2x scale</Typography>
                             </Box>
                         </MenuItem>
+                        <MenuItem onClick={() => {
+                            // CSV export of current tab data
+                            const tabData = [
+                                detailedData.patients,
+                                detailedData.medications,
+                                detailedData.billings,
+                                detailedData.appointments,
+                                detailedData.doctors
+                            ][activeTab - 1] || [];
+                            if (tabData.length === 0) { alert('Switch to a data tab first (Patient Registry, etc.)'); handleExportClose(); return; }
+                            const headers = Object.keys(tabData[0] || {});
+                            const rows = tabData.map(row => headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(','));
+                            const csv = [headers.join(','), ...rows].join('\n');
+                            const blob = new Blob([csv], { type: 'text/csv' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a'); a.href = url;
+                            a.download = `report_${new Date().toISOString().split('T')[0]}.csv`;
+                            a.click(); URL.revokeObjectURL(url);
+                            handleExportClose();
+                        }} sx={{ gap: 1.5, py: 1.5 }}>
+                            <Download size={16} className="text-green-600" />
+                            <Box>
+                                <Typography variant="body2" fontWeight={700}>Export CSV</Typography>
+                                <Typography variant="caption" color="text.secondary">Current tab data as spreadsheet</Typography>
+                            </Box>
+                        </MenuItem>
                     </Menu>
                 </Box>
             </Box>

@@ -11,6 +11,12 @@ import {
 } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
 
+const API_BILLING = import.meta.env.VITE_API_BILLING_URL;
+const getAuthHeader = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const statusColors = {
     Pending:      { bg: '#fffbeb', text: '#d97706' },
     'In Progress':{ bg: '#f0fdf4', text: '#059669' },
@@ -46,13 +52,20 @@ export default function PatientPortalDashboard() {
     const fetchPatientData = async () => {
         try {
             setLoading(true);
-            // getMyAppointments works for all roles; finance summary is staff-only so catch gracefully
             const myApts = await appointmentService.getMyAppointments().catch(() => ({ appointments: [] }));
-
             const allApts = myApts.appointments || [];
             setAppointments(allApts);
+
+            // Fetch real pending bills
+            let pendingBills = 0;
+            try {
+                const billRes = await fetch(`${API_BILLING}/invoices/${user?.id}`, { headers: getAuthHeader() });
+                if (billRes.ok) {
+                    const bills = await billRes.json();
+                    pendingBills = (Array.isArray(bills) ? bills : []).filter(b => b.status === 'Pending').length;
+                }
+            } catch { /* non-fatal */ }
             
-            // Find next upcoming appointment (use appointmentDate not date)
             const upcoming = allApts
                 .filter(a => a.appointmentDate >= new Date().toISOString().split('T')[0] && a.status !== 'Cancelled')
                 .sort((a, b) => {
@@ -61,13 +74,12 @@ export default function PatientPortalDashboard() {
                     return da.localeCompare(db);
                 })[0];
 
-            // Find last completed appointment
             const lastCompleted = allApts
                 .filter(a => a.status === 'Completed')
                 .sort((a, b) => b.appointmentDate?.localeCompare(a.appointmentDate))[0];
 
             setSummary({
-                pendingBills: 0,
+                pendingBills,
                 lastCheckup: lastCompleted ? lastCompleted.appointmentDate : 'Never',
                 nextAppointment: upcoming ? `${upcoming.appointmentDate} ${upcoming.appointmentTime?.slice(0,5) || ''}` : 'None'
             });
@@ -122,13 +134,13 @@ export default function PatientPortalDashboard() {
                             cursor: 'pointer',
                             '&:hover': { transform: 'translateY(-4px)', transition: '0.3s' }
                         }}
-                        onClick={() => navigate('/appointments')}
+                        onClick={() => navigate('/find-doctor')}
                     >
                         <CardContent className="p-6">
                             <PlusCircle size={32} className="mb-4 text-blue-100" />
-                            <Typography variant="h6" fontWeight={800}>Book New Appointment</Typography>
+                            <Typography variant="h6" fontWeight={800}>Find a Doctor & Book</Typography>
                             <Typography variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
-                                Select a doctor and pick a time slot that works for you.
+                                Browse specialists, check availability, and pick clinic or video.
                             </Typography>
                             <Box className="flex items-center gap-1 mt-4 font-bold text-sm">
                                 Get Started <ArrowRight size={16} />

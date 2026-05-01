@@ -3,15 +3,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-    Menu, Bell, Search, LogOut, Settings, ChevronDown, User,
+    Menu, Bell, LogOut, Settings, ChevronDown, User,
 } from 'lucide-react';
 import {
     Avatar, Badge, IconButton, Tooltip,
-    Menu as MuiMenu, MenuItem, ListItemIcon, Divider, InputBase, Typography,
+    Menu as MuiMenu, MenuItem, ListItemIcon, Divider, Typography,
 } from '@mui/material';
 import { logout } from '../../store/slices/authSlice';
 import NotificationsMenu from './NotificationsMenu';
 import LanguageSwitcher from '../common/LanguageSwitcher';
+import GlobalSearch from '../common/GlobalSearch';
 import doctorService from '../../api/doctor.service';
 import patientService from '../../api/patient.service';
 import { getDoctorPhotoUrl, getAuthPhotoUrl } from '../../utils/cn';
@@ -86,14 +87,7 @@ export default function TopBar({ onMenuClick }) {
                 </div>
 
                 {/* Search bar */}
-                <div className="hidden md:flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 min-w-[260px]">
-                    <Search className="h-4 w-4 text-slate-400 shrink-0" />
-                    <InputBase
-                        placeholder={t('common.searchPlaceholder')}
-                        sx={{ flex: 1, color: '#334155' }}
-                        inputProps={{ 'aria-label': 'search' }}
-                    />
-                </div>
+                <GlobalSearch />
             </div>
 
             {/* Right: Language + Notifications + User */}

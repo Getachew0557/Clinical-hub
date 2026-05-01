@@ -129,3 +129,5 @@ node_modules/*
 .FullName
 frontend-react-typscript/
 planning.md
+
+health-nexus/*
