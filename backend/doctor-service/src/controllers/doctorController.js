@@ -206,14 +206,32 @@ export const updateDoctorProfile = async (req, res) => {
             if (doctor.userId !== userId) {
                 return res.status(403).json({ message: 'Not authorized to edit this profile' });
             }
-            // Doctor-editable fields only
-            const { phone, bio, workingDays, workingHoursStart, workingHoursEnd, consultationFee } = req.body;
+            // Doctor-editable fields
+            const {
+                phone, bio,
+                workingDays, workingHoursStart, workingHoursEnd,
+                consultationFee, videoFee,
+                serviceTypes, slotDuration,
+                breakStart, breakEnd
+            } = req.body;
+
+            const parseJSON = (val) => {
+                if (!val) return undefined;
+                if (typeof val === 'string') { try { return JSON.parse(val); } catch { return val; } }
+                return val;
+            };
+
             if (phone !== undefined) doctor.phone = phone;
             if (bio !== undefined) doctor.bio = bio;
-            if (workingDays !== undefined) doctor.workingDays = workingDays;
+            if (workingDays !== undefined) doctor.workingDays = parseJSON(workingDays);
             if (workingHoursStart !== undefined) doctor.workingHoursStart = workingHoursStart;
             if (workingHoursEnd !== undefined) doctor.workingHoursEnd = workingHoursEnd;
             if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
+            if (videoFee !== undefined) doctor.videoFee = videoFee;
+            if (serviceTypes !== undefined) doctor.serviceTypes = parseJSON(serviceTypes);
+            if (slotDuration !== undefined) doctor.slotDuration = slotDuration;
+            if (breakStart !== undefined) doctor.breakStart = breakStart;
+            if (breakEnd !== undefined) doctor.breakEnd = breakEnd;
             if (req.file) doctor.profilePhoto = `uploads/${req.file.filename}`;
 
         } else {

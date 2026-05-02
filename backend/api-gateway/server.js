@@ -68,6 +68,13 @@ const socketProxy = createProxyMiddleware({
 
 app.use('/socket.io', socketProxy);
 
+// Proxy /uploads/appt-* → appointment-service (attachment files)
+app.use('/uploads', createProxyMiddleware({
+  target: APPT_BASE_URL,
+  changeOrigin: true,
+  proxyTimeout: 30000,
+}));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({

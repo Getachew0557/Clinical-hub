@@ -79,7 +79,9 @@ export const createAppointment = async (req, res) => {
             type: type || 'clinic',
             createdBy: req.user.id,
             isAdminApproved: ['Admin', 'Receptionist', 'Doctor'].includes(req.user.role),
-            attachmentUrl: req.file ? (req.file.path || req.file.secure_url || req.file.url) : null,
+            attachmentUrl: req.file
+                ? `uploads/${req.file.filename}`
+                : null,
             patientName: resolvedPatientName,
             doctorName: resolvedDoctorName,
         });

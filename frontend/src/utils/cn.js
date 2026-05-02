@@ -11,14 +11,12 @@ export function cn(...inputs) {
  */
 export function getDoctorPhotoUrl(profilePhoto) {
     if (!profilePhoto) return null;
-    // Already a full URL (Cloudinary, http, https)
     if (profilePhoto.startsWith('http://') || profilePhoto.startsWith('https://')) {
         return profilePhoto;
     }
-    // Relative path — serve from doctor-service static files
     const base = import.meta.env.VITE_DOCTOR_SERVICE_URL || 'http://localhost:5010';
-    const path = profilePhoto.startsWith('/') ? profilePhoto : `/${profilePhoto}`;
-    return `${base}${path}`;
+    const clean = profilePhoto.startsWith('/') ? profilePhoto : `/${profilePhoto}`;
+    return `${base}${clean}`;
 }
 
 export function getAuthPhotoUrl(profilePhoto) {
@@ -26,7 +24,24 @@ export function getAuthPhotoUrl(profilePhoto) {
     if (profilePhoto.startsWith('http://') || profilePhoto.startsWith('https://')) {
         return profilePhoto;
     }
-    const base = import.meta.env.VITE_API_AUTH_URL?.replace('/api/auth', '') || 'http://localhost:5001';
-    const path = profilePhoto.startsWith('/') ? profilePhoto : `/${profilePhoto}`;
-    return `${base}${path}`;
+    // Use dedicated base URL env var; fall back to stripping /api/auth from the auth URL
+    const base =
+        import.meta.env.VITE_API_AUTH_BASE_URL ||
+        (import.meta.env.VITE_API_AUTH_URL?.replace(/\/api\/auth$/, '')) ||
+        'http://localhost:5001';
+    const clean = profilePhoto.startsWith('/') ? profilePhoto : `/${profilePhoto}`;
+    return `${base}${clean}`;
+}
+
+export function getAppointmentAttachmentUrl(attachmentUrl) {
+    if (!attachmentUrl) return null;
+    if (attachmentUrl.startsWith('http://') || attachmentUrl.startsWith('https://')) {
+        return attachmentUrl;
+    }
+    // Attachments are served by the appointment-service, proxied through the gateway
+    const base =
+        import.meta.env.VITE_API_GATEWAY_URL?.replace(/\/api$/, '') ||
+        'http://localhost:5050';
+    const clean = attachmentUrl.startsWith('/') ? attachmentUrl : `/${attachmentUrl}`;
+    return `${base}${clean}`;
 }

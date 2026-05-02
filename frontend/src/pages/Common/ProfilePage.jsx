@@ -26,6 +26,7 @@ export default function ProfilePage() {
 
     const [doctorForm, setDoctorForm] = useState({
         phone: '', bio: '', workingHoursStart: '', workingHoursEnd: '', consultationFee: '',
+        videoFee: '', slotDuration: 30, breakStart: '', breakEnd: '',
         workingDays: [], serviceTypes: ['clinic', 'video'],
     });
 
@@ -47,6 +48,10 @@ export default function ProfilePage() {
                         workingHoursStart: p?.workingHoursStart || '',
                         workingHoursEnd: p?.workingHoursEnd || '',
                         consultationFee: p?.consultationFee || '',
+                        videoFee: p?.videoFee || '',
+                        slotDuration: p?.slotDuration || 30,
+                        breakStart: p?.breakStart || '',
+                        breakEnd: p?.breakEnd || '',
                         workingDays: Array.isArray(p?.workingDays) ? p.workingDays : (p?.workingDays ? JSON.parse(p.workingDays) : []),
                         serviceTypes: Array.isArray(p?.serviceTypes) ? p.serviceTypes : (p?.serviceTypes ? JSON.parse(p.serviceTypes) : ['clinic', 'video']),
                     });
@@ -351,6 +356,26 @@ export default function ProfilePage() {
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
                                                     <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Video Fee (ETB)</Typography>
+                                                    </Box>
+                                                    <TextField name="videoFee"
+                                                        type="number" fullWidth
+                                                        placeholder="Leave blank to use clinic fee"
+                                                        value={doctorForm.videoFee}
+                                                        onChange={(e) => setDoctorForm({ ...doctorForm, videoFee: e.target.value })} />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Slot Duration (minutes)</Typography>
+                                                    </Box>
+                                                    <TextField name="slotDuration"
+                                                        type="number" fullWidth
+                                                        placeholder="30"
+                                                        value={doctorForm.slotDuration}
+                                                        onChange={(e) => setDoctorForm({ ...doctorForm, slotDuration: e.target.value })} />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Box sx={{ mb: 0.75 }}>
                                                         <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Working Hours Start</Typography>
                                                     </Box>
                                                     <TextField name="workingHoursStart"
@@ -366,6 +391,26 @@ export default function ProfilePage() {
                                                         type="time" fullWidth
                                                         value={doctorForm.workingHoursEnd}
                                                         onChange={(e) => setDoctorForm({ ...doctorForm, workingHoursEnd: e.target.value })} />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Break Start</Typography>
+                                                    </Box>
+                                                    <TextField name="breakStart"
+                                                        type="time" fullWidth
+                                                        helperText="Optional lunch/break start"
+                                                        value={doctorForm.breakStart}
+                                                        onChange={(e) => setDoctorForm({ ...doctorForm, breakStart: e.target.value })} />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Box sx={{ mb: 0.75 }}>
+                                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, mb: 0.5, display: 'block' }}>Break End</Typography>
+                                                    </Box>
+                                                    <TextField name="breakEnd"
+                                                        type="time" fullWidth
+                                                        helperText="Optional lunch/break end"
+                                                        value={doctorForm.breakEnd}
+                                                        onChange={(e) => setDoctorForm({ ...doctorForm, breakEnd: e.target.value })} />
                                                 </Grid>
                                                 <Grid item xs={12}>
                                                     <Box sx={{ mb: 0.75 }}>
