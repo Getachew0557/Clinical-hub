@@ -2,8 +2,13 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const DATABASE_URL = process.env.DATABASE_URL;
+let DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) { console.error('[DB] DATABASE_URL not set!'); process.exit(1); }
+
+// Auto-fix unencoded @ in password
+if (DATABASE_URL.includes('Abc@12212729')) {
+    DATABASE_URL = DATABASE_URL.replace('Abc@12212729', 'Abc%4012212729');
+}
 
 export const ensureDatabaseExists = async () => {
     console.log('[DB] Supabase PostgreSQL — skipping database creation.');
