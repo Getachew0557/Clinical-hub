@@ -30,11 +30,12 @@ const sendNotification = async (req, userId, title, message, link, type = 'info'
 
 export const getAllInvoices = async (req, res) => {
     try {
-        const { doctorId, patientId, status } = req.query;
+        const { doctorId, patientId, status, appointmentId } = req.query;
         let where = {};
         if (doctorId) where.doctorId = doctorId;
         if (patientId) where.patientId = patientId;
         if (status) where.status = status;
+        if (appointmentId) where.appointmentId = appointmentId;
 
         const invoices = await Invoice.findAll({
             where,
@@ -50,6 +51,12 @@ export const getAllInvoices = async (req, res) => {
 export const getPatientInvoices = async (req, res) => {
     try {
         const { patientId } = req.params;
+
+        // Ownership check: Patient can only see their own invoices
+        if (req.user.role === 'Patient' && req.user.id !== patientId) {
+            return res.status(403).json({ message: 'Not authorized to view these invoices' });
+        }
+
         const invoices = await Invoice.findAll({
             where: { patientId },
             include: [{ model: Payment, as: 'payments' }],
@@ -81,6 +88,16 @@ export const processPayment = async (req, res) => {
 
         const invoice = await Invoice.findByPk(invoiceId);
         if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+        // Ownership check: Patient can only pay their own invoices
+        if (req.user.role === 'Patient' && req.user.id !== invoice.patientId) {
+            return res.status(403).json({ message: 'Not authorized to pay this invoice' });
+        }
+
+        // Idempotency: don't double-pay
+        if (invoice.status === 'Paid') {
+            return res.status(400).json({ message: 'Invoice is already paid' });
+        }
 
         let transactionRef = `SIM-${Date.now()}`;
         let paymentIntent = null;

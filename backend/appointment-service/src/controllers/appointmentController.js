@@ -610,19 +610,42 @@ export const updateAppointmentStatus = async (req, res) => {
                 const authHeader = { headers: { Authorization: req.headers.authorization } };
                 const doctorUrl = process.env.DOCTOR_SERVICE_URL;
 
-                // Fetch doctor's actual consultation fee
+                // Fetch doctor's actual consultation fee (use videoFee for video appointments)
                 let consultationFee = 150.00;
                 try {
                     const docRes = await axios.get(`${doctorUrl}/${appointment.doctorId}`, authHeader);
-                    consultationFee = parseFloat(docRes.data.consultationFee) || 150.00;
+                    const doc = docRes.data;
+                    if (appointment.type === 'video' && doc.videoFee) {
+                        consultationFee = parseFloat(doc.videoFee) || 150.00;
+                    } else {
+                        consultationFee = parseFloat(doc.consultationFee) || 150.00;
+                    }
                 } catch { /* use default */ }
 
-                await axios.post(billingUrl, {
-                    appointmentId: appointment.id,
-                    patientId: appointment.patientId,
-                    doctorId: appointment.doctorId,
-                    amount: consultationFee,
-                    description: `Clinical Consultation - ${appointment.reason || 'Routine Checkup'}`,
+                // Duplicate guard — check if an invoice already exists for this appointment
+                const checkRes = await axios.get(billingUrl, {
+                    ...authHeader,
+                    params: { appointmentId: appointment.id }
+                }).catch(() => ({ data: [] }));
+                const existing = Array.isArray(checkRes.data) ? checkRes.data : [];
+                if (existing.some(inv => inv.appointmentId === appointment.id)) {
+                    console.log(`Invoice already exists for appointment ${appointment.id} — skipping auto-invoice`);
+                } else {
+                    const typeLabel = appointment.type === 'video' ? 'Video Consultation' : 'Clinic Consultation';
+                    await axios.post(billingUrl, {
+                        appointmentId: appointment.id,
+                        patientId: appointment.patientId,
+                        doctorId: appointment.doctorId,
+                        amount: consultationFee,
+                        description: `${typeLabel} - ${appointment.reason || 'Routine Checkup'}`,
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                    }, authHeader);
+                    console.log(`Auto-invoice generated for completed appointment ${appointment.id} — ETB ${consultationFee}`);
+                }
+            } catch (err) {
+                console.error('Failed to generate auto-invoice:', err.message);
+            }
+        }cription: `Clinical Consultation - ${appointment.reason || 'Routine Checkup'}`,
                     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
                 }, authHeader);
                 console.log(`Auto-invoice generated for completed appointment ${appointment.id} — ETB ${consultationFee}`);

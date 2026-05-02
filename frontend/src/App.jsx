@@ -42,6 +42,9 @@ import BroadcastPage from './pages/Admin/BroadcastPage';
 import PrescriptionsPage from './pages/Doctor/PrescriptionsPage';
 import UserManagementPage from './pages/Admin/UserManagementPage';
 import FindDoctorPage from './pages/Patient/FindDoctorPage';
+import appointmentService from './api/appointment.service';
+import { Card, CardContent, CircularProgress, Box, Typography, Button, Chip } from '@mui/material';
+import { Video as VideoIcon } from 'lucide-react';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -230,6 +233,137 @@ const DashboardRouter = () => {
   return <DashboardPage />;
 };
 
+// ── Patient Video Consultations — shows patient's own video appointments ──
+const PatientVideoConsultations = () => {
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const [appointments, setAppointments] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    appointmentService.getMyAppointments()
+      .then(data => {
+        const all = data.appointments || [];
+        setAppointments(all.filter(a => a.type === 'video'));
+      })
+      .catch(() => setAppointments([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 256 }}>
+        <CircularProgress size={36} />
+      </Box>
+    );
+  }
+
+  const active = appointments.filter(a => ['Confirmed', 'In Progress'].includes(a.status));
+  const past   = appointments.filter(a => a.status === 'Completed');
+
+  return (
+    <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
+      <Box className="flex flex-col gap-6">
+        <Box className="flex items-center gap-3">
+          <Box sx={{ w: 40, h: 40, bgcolor: '#f0fdfa', borderRadius: 3, p: 1.25, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <VideoIcon className="text-teal-600 w-5 h-5" />
+          </Box>
+          <Box>
+            <Typography variant="h5" color="text.primary">My Video Consultations</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+              Your scheduled and past video appointments
+            </Typography>
+          </Box>
+        </Box>
+
+        {appointments.length === 0 ? (
+          <Card elevation={0} sx={{ border: '1px dashed #e2e8f0', borderRadius: 4 }}>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 10, gap: 2 }}>
+              <VideoIcon size={48} className="text-slate-300" />
+              <Typography variant="body1" fontWeight={600} color="text.secondary">No video consultations yet</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 320 }}>
+                Book a video consultation with a doctor to get started.
+              </Typography>
+              <Button variant="contained" sx={{ borderRadius: 3, mt: 1 }} onClick={() => navigate('/find-doctor')}>
+                Find a Doctor
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {active.length > 0 && (
+              <Box>
+                <Typography variant="overline" color="text.secondary" sx={{ mb: 2, display: 'block' }}>Active Sessions</Typography>
+                <Box className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {active.map(apt => (
+                    <Card key={apt.id} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, '&:hover': { borderColor: '#0d9488', boxShadow: '0 4px 12px rgba(13,148,136,0.1)' }, transition: 'all 0.2s' }}>
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Chip
+                            label={apt.status === 'In Progress' ? '🔴 Live' : '📹 Ready'}
+                            size="small"
+                            sx={{ bgcolor: apt.status === 'In Progress' ? '#f0fdf4' : '#eff6ff', color: apt.status === 'In Progress' ? '#059669' : '#2563eb', fontWeight: 800 }}
+                          />
+                          <VideoIcon size={18} className="text-teal-500" />
+                        </Box>
+                        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+                          Dr. {apt.doctorName || 'Doctor'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                          {apt.appointmentDate} at {apt.appointmentTime?.slice(0, 5)}
+                        </Typography>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          size="small"
+                          onClick={() => navigate(`/video/${apt.id}`)}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          {apt.status === 'In Progress' ? 'Rejoin Session' : 'Join Session'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {past.length > 0 && (
+              <Box>
+                <Typography variant="overline" color="text.secondary" sx={{ mb: 2, display: 'block' }}>Past Sessions</Typography>
+                <Box className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {past.map(apt => (
+                    <Card key={apt.id} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, opacity: 0.8 }}>
+                      <CardContent sx={{ p: 3 }}>
+                        <Chip label="✅ Completed" size="small" sx={{ bgcolor: '#f8fafc', color: '#64748b', fontWeight: 700, mb: 2 }} />
+                        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+                          Dr. {apt.doctorName || 'Doctor'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {apt.appointmentDate} at {apt.appointmentTime?.slice(0, 5)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+// ── Video Consultations Router — Doctor/Admin/Receptionist see status dashboard, Patient sees their video appointments ──
+const VideoConsultationsRouter = () => {
+  const { user } = useSelector((state) => state.auth);
+  if (user?.role === 'Patient') {
+    return <PatientVideoConsultations />;
+  }
+  return <VideoStatusDashboard />;
+};
+
 // ── App ──────────────────────────────────────────────────
 const App = () => (
   <ThemeProvider theme={theme}>
@@ -286,7 +420,11 @@ const App = () => (
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/book/:doctorId" element={<BookingPage />} />
-          <Route path="/video-consultations" element={<RoleGuard allowedRoles={['Doctor', 'Admin', 'Receptionist']}><VideoStatusDashboard /></RoleGuard>} />
+          <Route path="/video-consultations" element={
+    <RoleGuard allowedRoles={['Doctor', 'Admin', 'Receptionist', 'Patient']}>
+        <VideoConsultationsRouter />
+    </RoleGuard>
+} />
         </Route>
 
         {/* Fallback */}
