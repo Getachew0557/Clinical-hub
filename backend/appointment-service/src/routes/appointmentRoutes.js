@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect, authorize } from '../middlewares/authMiddleware.js';
+import upload from '../middlewares/uploadMiddleware.js';
 import {
     createAppointment,
     getAllAppointments,
@@ -15,8 +16,8 @@ import {
 
 const router = express.Router();
 
-// Create: any authenticated user
-router.post('/', protect, createAppointment);
+// Create: any authenticated user — optional file attachment
+router.post('/', protect, upload.single('attachment'), createAppointment);
 
 // My appointments: any authenticated user sees their own
 router.get('/my', protect, getMyAppointments);

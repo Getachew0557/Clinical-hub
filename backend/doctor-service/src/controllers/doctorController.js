@@ -37,7 +37,7 @@ export const createDoctorProfile = async (req, res) => {
         if (existingEmail) return res.status(409).json({ message: 'A doctor with this email already exists' });
         if (existingLicense) return res.status(409).json({ message: 'A doctor with this license number already exists' });
 
-        const profilePhoto = req.file ? req.file.path.replace(/\\/g, '/') : null;
+        const profilePhoto = req.file ? `uploads/${req.file.filename}` : null;
 
         // Parse JSON fields if sent as strings
         const parseJSON = (val) => {
@@ -96,7 +96,12 @@ export const getPublicDoctors = async (req, res) => {
         const doctors = await DoctorProfile.findAll({
             where,
             order: [['fullName', 'ASC']],
-            attributes: ['id', 'fullName', 'specialization', 'experience', 'qualification', 'bio', 'profilePhoto', 'consultationFee', 'rating', 'reviewsCount', 'isActive']
+            attributes: [
+                'id', 'fullName', 'specialization', 'experience', 'qualification', 'bio',
+                'profilePhoto', 'consultationFee', 'videoFee', 'rating', 'reviewsCount',
+                'isActive', 'serviceTypes', 'workingDays', 'workingHoursStart', 'workingHoursEnd',
+                'slotDuration', 'breakStart', 'breakEnd', 'maxPatientsPerHour', 'languages'
+            ]
         });
 
         res.status(200).json({ count: doctors.length, doctors });
@@ -209,7 +214,7 @@ export const updateDoctorProfile = async (req, res) => {
             if (workingHoursStart !== undefined) doctor.workingHoursStart = workingHoursStart;
             if (workingHoursEnd !== undefined) doctor.workingHoursEnd = workingHoursEnd;
             if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
-            if (req.file) doctor.profilePhoto = req.file.path.replace(/\\/g, '/');
+            if (req.file) doctor.profilePhoto = `uploads/${req.file.filename}`;
 
         } else {
             // Admin — full update
@@ -254,7 +259,7 @@ export const updateDoctorProfile = async (req, res) => {
             if (workExperience !== undefined) doctor.workExperience = parseJSON(workExperience);
             if (awards !== undefined) doctor.awards = parseJSON(awards);
             if (isActive !== undefined) doctor.isActive = isActive;
-            if (req.file) doctor.profilePhoto = req.file.path.replace(/\\/g, '/');
+            if (req.file) doctor.profilePhoto = `uploads/${req.file.filename}`;
         }
 
         await doctor.save();

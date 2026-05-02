@@ -47,11 +47,19 @@ const authService = {
 
     updateMe: async (userData) => {
         const token = localStorage.getItem('token');
+        const isFormData = userData instanceof FormData;
         const response = await axios.patch(`${API_URL}/me`, userData, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                // Let browser set Content-Type for FormData (includes boundary)
+                ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+            }
         });
         if (response.data.user) {
-            localStorage.setItem('user', JSON.stringify(response.data.user));
+            // Merge into localStorage so Redux rehydrates correctly on next load
+            const stored = JSON.parse(localStorage.getItem('user') || '{}');
+            const merged = { ...stored, ...response.data.user };
+            localStorage.setItem('user', JSON.stringify(merged));
         }
         return response.data;
     },

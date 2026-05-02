@@ -109,7 +109,8 @@ export const login = async (req, res) => {
                 id: user.id,
                 fullName: user.fullName,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                profilePhoto: user.profilePhoto || null
             },
             token: generateToken(user.id, user.role)
         });
@@ -154,9 +155,8 @@ export const updateMe = async (req, res) => {
         if (email) user.email = email;
         
         if (req.file) {
-            user.profilePhoto = req.file.path.replace(/\\/g, '/').split('uploads/').pop();
-            // Just the filename or relative path from uploads
-            user.profilePhoto = `uploads/${user.profilePhoto}`;
+            // Store just the filename — served at /uploads/<filename>
+            user.profilePhoto = `uploads/${req.file.filename}`;
         }
 
         await user.save();

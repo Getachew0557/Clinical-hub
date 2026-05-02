@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import authService from '../../api/auth.service';
 import doctorService from '../../api/doctor.service';
 import { getDoctorPhotoUrl, getAuthPhotoUrl } from '../../utils/cn';
+import { updateUser } from '../../store/slices/authSlice';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 export default function ProfilePage() {
@@ -59,7 +60,8 @@ export default function ProfilePage() {
         e.preventDefault();
         setLoading(true); setErrorMsg(''); setSuccessMsg('');
         try {
-            await authService.updateMe(profileData);
+            const result = await authService.updateMe(profileData);
+            if (result?.user) dispatch(updateUser(result.user));
             setSuccessMsg('Name updated successfully!');
         } catch (err) {
             setErrorMsg(err.response?.data?.message || 'Failed to update');
@@ -110,14 +112,14 @@ export default function ProfilePage() {
         try {
             const formData = new FormData();
             formData.append('profilePhoto', file);
-            await authService.updateMe(formData);
+            const result = await authService.updateMe(formData);
+            // Update Redux + localStorage so avatar refreshes immediately without reload
+            if (result?.user?.profilePhoto) {
+                dispatch(updateUser({ profilePhoto: result.user.profilePhoto }));
+            }
             setSuccessMsg('Profile photo updated successfully!');
-            // Page will re-render as authService.updateMe updates localStorage which redux should pick up 
-            // depending on implementation, but standard here is manual refresh or redux dispatch.
-            // For now, let's assume updateMe updates the local user object.
-            setTimeout(() => window.location.reload(), 1000); 
         } catch (err) {
-            setErrorMsg('Failed to upload photo');
+            setErrorMsg('Failed to upload photo. Please try a JPEG or PNG under 5MB.');
         } finally {
             setPhotoLoading(false);
         }

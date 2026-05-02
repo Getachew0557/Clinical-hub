@@ -45,6 +45,11 @@ export const authSlice = createSlice({
             state.isError = false;
             state.message = '';
         },
+        updateUser: (state, action) => {
+            // Merge partial user fields (e.g. profilePhoto, fullName) into state
+            state.user = { ...state.user, ...action.payload };
+            localStorage.setItem('user', JSON.stringify(state.user));
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -86,5 +91,5 @@ export const authSlice = createSlice({
 });
 
 
-export const { reset } = authSlice.actions;
+export const { reset, updateUser } = authSlice.actions;
 export default authSlice.reducer;

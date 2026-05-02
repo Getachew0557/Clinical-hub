@@ -97,9 +97,11 @@ export default function PatientListPage() {
                     const authPatients = (Array.isArray(authData) ? authData : [])
                         .filter(u => u.role === 'Patient');
                     // Merge: add auth users that don't already have a patient profile
-                    const existingUserIds = new Set(patientData.map(p => p.userId));
+                    // Check both userId AND email to prevent duplicates
+                    const existingUserIds = new Set(patientData.map(p => p.userId).filter(Boolean));
+                    const existingEmails  = new Set(patientData.map(p => p.email).filter(Boolean));
                     const missing = authPatients
-                        .filter(u => !existingUserIds.has(u.id))
+                        .filter(u => !existingUserIds.has(u.id) && !existingEmails.has(u.email))
                         .map(u => ({ id: u.id, userId: u.id, fullName: u.fullName, email: u.email, isActive: true }));
                     patientData = [...patientData, ...missing];
                 } catch { /* ignore */ }

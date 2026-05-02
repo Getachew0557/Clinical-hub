@@ -34,6 +34,8 @@ const BookingPage = () => {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
 
+    const [attachmentFile, setAttachmentFile] = useState(null);
+
     useEffect(() => {
         fetchDoctor();
     }, [doctorId]);
@@ -81,13 +83,25 @@ const BookingPage = () => {
         setError('');
 
         try {
-            await appointmentService.createAppointment({
-                doctorId,
-                appointmentDate: selectedDate,
-                appointmentTime: selectedTime.timeValue,
-                reason,
-                type: consultationType
-            });
+            if (attachmentFile) {
+                // Use FormData when a file is attached
+                const fd = new FormData();
+                fd.append('doctorId', doctorId);
+                fd.append('appointmentDate', selectedDate);
+                fd.append('appointmentTime', selectedTime.timeValue);
+                fd.append('reason', reason);
+                fd.append('type', consultationType);
+                fd.append('attachment', attachmentFile);
+                await appointmentService.createAppointmentWithFile(fd);
+            } else {
+                await appointmentService.createAppointment({
+                    doctorId,
+                    appointmentDate: selectedDate,
+                    appointmentTime: selectedTime.timeValue,
+                    reason,
+                    type: consultationType
+                });
+            }
             setSuccess(true);
             setTimeout(() => navigate('/dashboard'), 3000);
         } catch (err) {
@@ -309,6 +323,30 @@ const BookingPage = () => {
                                         placeholder="e.g., Routine checkup, follow-up visit..."
                                         className="w-full p-6 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-none min-h-[120px]"
                                     />
+                                </div>
+
+                                {/* Attachment (optional) */}
+                                <div>
+                                    <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                                        Attachment <span className="text-slate-300 font-medium normal-case tracking-normal">(optional — image or PDF)</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer w-full p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl hover:border-teal-400 transition-all">
+                                        <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,application/pdf"
+                                            className="hidden"
+                                            onChange={(e) => setAttachmentFile(e.target.files[0] || null)}
+                                        />
+                                        <span className="text-sm font-bold text-slate-500">
+                                            {attachmentFile ? attachmentFile.name : 'Click to upload a file'}
+                                        </span>
+                                        {attachmentFile && (
+                                            <button type="button" onClick={() => setAttachmentFile(null)}
+                                                className="ml-auto text-xs text-red-400 font-bold hover:text-red-600">
+                                                Remove
+                                            </button>
+                                        )}
+                                    </label>
                                 </div>
 
                                 {error && (
