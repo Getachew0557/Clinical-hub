@@ -49,36 +49,33 @@ const connectDB = async () => {
   await sequelize.sync();
   console.log('Database models synced.');
 
-  // Safe column additions for production DB
+  // Safe column additions for production DB (PostgreSQL syntax)
   const qi = sequelize.getQueryInterface();
   const cols = await qi.describeTable('Users').catch(() => ({}));
   if (!cols.profilePhoto) {
-    await sequelize.query("ALTER TABLE `Users` ADD COLUMN `profilePhoto` VARCHAR(255) NULL;").catch(() => {});
+    await sequelize.query('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "profilePhoto" VARCHAR(255) NULL;').catch(() => {});
     console.log('Added column: profilePhoto');
   }
   if (!cols.resetPasswordToken) {
-    await sequelize.query("ALTER TABLE `Users` ADD COLUMN `resetPasswordToken` VARCHAR(255) NULL;").catch(() => {});
+    await sequelize.query('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255) NULL;').catch(() => {});
     console.log('Added column: resetPasswordToken');
   }
   if (!cols.resetPasswordExpires) {
-    await sequelize.query("ALTER TABLE `Users` ADD COLUMN `resetPasswordExpires` DATETIME NULL;").catch(() => {});
+    await sequelize.query('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" TIMESTAMP NULL;').catch(() => {});
     console.log('Added column: resetPasswordExpires');
   }
 
   connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
   console.log('auth-service fully ready.');
 
-  // ─── DB Keep-Alive ─────────────────────────────────────────────────────
-  // Aiven free tier closes idle connections after ~5 min.
-  // Run a lightweight SELECT 1 every 4 minutes to keep the pool warm.
+  // DB Keep-Alive — Supabase keeps connections alive but ping anyway
   setInterval(async () => {
     try {
       await sequelize.query('SELECT 1');
-      console.log('[DB KeepAlive] ping ok');
     } catch (err) {
       console.warn('[DB KeepAlive] ping failed:', err.message);
     }
-  }, 4 * 60 * 1000); // every 4 minutes
+  }, 4 * 60 * 1000);
 };
 
 // Start HTTP server FIRST — gateway can reach it immediately

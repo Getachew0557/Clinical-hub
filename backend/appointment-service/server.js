@@ -120,15 +120,15 @@ const connectDB = async () => {
   await sequelize.sync({ alter: true });
   console.log('Database models synced.');
 
-  // Safe column additions for existing DB
+  // Safe column additions (PostgreSQL syntax)
   const qi = sequelize.getQueryInterface();
   const cols = await qi.describeTable('Appointments').catch(() => ({}));
   if (!cols.patientName) {
-    await sequelize.query("ALTER TABLE `Appointments` ADD COLUMN `patientName` VARCHAR(255) NULL;").catch(() => {});
+    await sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientName" VARCHAR(255) NULL;').catch(() => {});
     console.log('Added column: Appointments.patientName');
   }
   if (!cols.doctorName) {
-    await sequelize.query("ALTER TABLE `Appointments` ADD COLUMN `doctorName` VARCHAR(255) NULL;").catch(() => {});
+    await sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "doctorName" VARCHAR(255) NULL;').catch(() => {});
     console.log('Added column: Appointments.doctorName');
   }
 

@@ -1,51 +1,26 @@
-﻿import { Sequelize } from 'sequelize';
-import mysql from 'mysql2/promise';
+﻿/**
+ * Supabase PostgreSQL connection
+ * Set DATABASE_URL in Render env:
+ * postgresql://postgres:Abc@12212729@db.tbiowvujbypfwzfwgehm.supabase.co:5432/postgres
+ */
+import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
-const { DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT, DB_SSL } = process.env;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-const sslConfig = DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
-
+// No-op for Supabase — database always exists
 export const ensureDatabaseExists = async () => {
-    if (DB_SSL === 'true') {
-        console.log(`Using existing database "${DB_NAME}" (SSL mode).`);
-        return;
-    }
-    try {
-        const connection = await mysql.createConnection({
-            host: DB_HOST,
-            port: parseInt(DB_PORT) || 3306,
-            user: DB_USER,
-            password: DB_PASS,
-            ...sslConfig
-        });
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;`);
-        await connection.end();
-        console.log(`Database "${DB_NAME}" ensured.`);
-    } catch (error) {
-        console.error('Error ensuring database exists:', error);
-        throw error;
-    }
+    console.log('[DB] Supabase PostgreSQL — skipping database creation.');
 };
 
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
-    host: DB_HOST,
-    port: parseInt(DB_PORT) || 3306,
-    dialect: 'mysql',
+const sequelize = new Sequelize(DATABASE_URL, {
+    dialect: 'postgres',
     logging: false,
     dialectOptions: {
-        ...sslConfig,
-        connectTimeout: 60000,  // 60s connect timeout for Aiven SSL
+        ssl: { require: true, rejectUnauthorized: false }
     },
-    pool: {
-        max: 2,        // Keep low for free tier memory
-        min: 0,
-        acquire: 60000, // 60s acquire timeout (Aiven SSL is slow)
-        idle: 10000,
-        evict: 10000
-    }
+    pool: { max: 3, min: 0, acquire: 30000, idle: 10000 }
 });
 
 export default sequelize;

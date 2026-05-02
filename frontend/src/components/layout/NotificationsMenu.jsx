@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Bell, CheckCircle, Info, AlertTriangle, XCircle, MoreVertical, Trash2
@@ -9,12 +9,16 @@ import {
 } from '@mui/material';
 import notificationService from '../../api/notification.service';
 import { formatDistanceToNow } from 'date-fns';
+import { useSelector } from 'react-redux';
+import supabase from '../../lib/supabase';
 
 export default function NotificationsMenu() {
     const navigate = useNavigate();
+    const { user } = useSelector(s => s.auth);
     const [anchorEl, setAnchorEl] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(false);
+    const channelRef = useRef(null);
 
     const open = Boolean(anchorEl);
 
@@ -34,18 +38,45 @@ export default function NotificationsMenu() {
         // Initial fetch
         fetchNotifications();
 
-        // Poll every 15 seconds for new notifications
-        const interval = setInterval(fetchNotifications, 15000);
+        // ── Supabase Real-time subscription ──────────────────────────────
+        // Listen for new rows in the Notifications table for this user
+        if (user?.id) {
+            const channel = supabase
+                .channel(`notifications:${user.id}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'Notifications',
+                        filter: `userId=eq.${user.id}`
+                    },
+                    (payload) => {
+                        console.log('[Realtime] New notification:', payload.new?.title);
+                        // Prepend new notification instantly — no polling needed
+                        setNotifications(prev => [payload.new, ...prev]);
+                    }
+                )
+                .subscribe((status) => {
+                    console.log('[Realtime] Notification channel:', status);
+                });
 
-        // Also refresh when window regains focus
+            channelRef.current = channel;
+        }
+
+        // Fallback polling every 30s (in case real-time isn't available)
+        const interval = setInterval(fetchNotifications, 30000);
         const onFocus = () => fetchNotifications();
         window.addEventListener('focus', onFocus);
 
         return () => {
             clearInterval(interval);
             window.removeEventListener('focus', onFocus);
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+            }
         };
-    }, []);
+    }, [user?.id]);
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);

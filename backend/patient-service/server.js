@@ -58,11 +58,11 @@ const connectDB = async () => {
   await sequelize.sync();
   console.log('Database models synced.');
 
-  // Safe column additions — add missing columns without dropping data
+  // Safe column additions (PostgreSQL syntax)
   const qi = sequelize.getQueryInterface();
   const payCols = await qi.describeTable('Payments').catch(() => ({}));
   if (!payCols.rawData) {
-    await sequelize.query("ALTER TABLE `Payments` ADD COLUMN `rawData` TEXT NULL;").catch(() => {});
+    await sequelize.query('ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "rawData" TEXT NULL;').catch(() => {});
     console.log('Added column: Payments.rawData');
   }
 

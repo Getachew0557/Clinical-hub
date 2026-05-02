@@ -56,7 +56,7 @@ const connectDB = async () => {
   await sequelize.sync();
   console.log('Database models synced.');
 
-  // ── Add new columns if they don't exist (safe migration) ──────────────
+  // Safe column additions (PostgreSQL syntax)
   const qi = sequelize.getQueryInterface();
   const tableDesc = await qi.describeTable('DoctorProfiles').catch(() => ({}));
 
@@ -75,7 +75,7 @@ const connectDB = async () => {
 
   for (const [col, definition] of Object.entries(newColumns)) {
       if (!tableDesc[col]) {
-          await sequelize.query(`ALTER TABLE \`DoctorProfiles\` ADD COLUMN \`${col}\` ${definition};`);
+          await sequelize.query(`ALTER TABLE "DoctorProfiles" ADD COLUMN IF NOT EXISTS "${col}" ${definition};`).catch(() => {});
           console.log(`Added column: ${col}`);
       }
   }
