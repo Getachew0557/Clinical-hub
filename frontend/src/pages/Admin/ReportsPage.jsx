@@ -64,7 +64,9 @@ export default function ReportsPage() {
                 reportService.getDetailedBillings(),
                 reportService.getDetailedAppointments(),
                 reportService.getDoctorPerformance(),
-                reportService.getDetailedDoctors()
+                reportService.getDetailedDoctors(),
+                // Prefetch financial summary (used by KPIs)
+                reportService.getFinanceSummary().catch(() => null),
             ]);
 
             setStats({
@@ -101,7 +103,7 @@ export default function ReportsPage() {
             alert('Report saved to backend successfully!');
         } catch (err) {
             console.error('Save error:', err);
-            alert('Failed to save report to backend');
+            alert(`Failed to save report: ${err?.response?.data?.message || err.message}`);
         } finally {
             setSaving(false);
         }

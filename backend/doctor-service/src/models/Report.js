@@ -12,7 +12,7 @@ const Report = sequelize.define('Report', {
         allowNull: false
     },
     type: {
-        type: DataTypes.ENUM('Appointment', 'Financial', 'Inventory', 'Patient'),
+        type: DataTypes.ENUM('Appointment', 'Financial', 'Inventory', 'Patient', 'Detailed'),
         allowNull: false
     },
     data: {

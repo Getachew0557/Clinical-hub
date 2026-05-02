@@ -54,8 +54,12 @@ Object.entries(services).forEach(([path, target]) => {
 });
 
 // Socket.IO proxy for video signaling (appointment-service)
+// Note: target must be the base URL only (no path suffix)
+const APPT_BASE_URL = (process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003')
+  .replace(/\/api\/appointments.*$/, '');
+
 const socketProxy = createProxyMiddleware({
-  target: process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
+  target: APPT_BASE_URL,
   ws: true,
   changeOrigin: true,
   proxyTimeout: 30000,

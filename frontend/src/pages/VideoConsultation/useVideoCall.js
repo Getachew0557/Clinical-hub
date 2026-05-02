@@ -3,10 +3,15 @@ import { io } from 'socket.io-client';
 import { mapIceStateToStatus, RTC_CONFIG } from './videoUtils';
 
 // The gateway proxies /socket.io → appointment-service (port 5003)
-// Use the gateway base URL (same origin as the API)
-const SIGNALING_URL = import.meta.env.VITE_API_GATEWAY_URL
-  ? import.meta.env.VITE_API_GATEWAY_URL.replace('/api', '')
-  : (import.meta.env.VITE_API_SIGNALING_URL || 'http://localhost:5050');
+// Priority: VITE_API_SIGNALING_URL (explicit) → strip /api from gateway URL → localhost fallback
+const SIGNALING_URL = (() => {
+  const signaling = import.meta.env.VITE_API_SIGNALING_URL;
+  const gateway   = import.meta.env.VITE_API_GATEWAY_URL;
+  if (signaling && !signaling.includes('localhost')) return signaling;
+  if (gateway   && !gateway.includes('localhost'))   return gateway.replace(/\/api$/, '');
+  // Local dev fallback
+  return signaling || (gateway ? gateway.replace(/\/api$/, '') : 'http://localhost:5050');
+})();
 
 export default function useVideoCall(roomId) {
     const [localStream, setLocalStream] = useState(null);
