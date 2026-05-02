@@ -36,39 +36,7 @@ export const createAppointment = async (req, res) => {
             return res.status(400).json({ message: 'doctorId, appointmentDate, appointmentTime, and reason are required' });
         }
 
-        // ─── Resolve names upfront and store denormalized ──────────────────
-        const authHeader = { headers: { Authorization: req.headers.authorization } };
-        const doctorUrl  = process.env.DOCTOR_SERVICE_URL;
-        const patientUrl = process.env.PATIENT_SERVICE_URL;
-        const authUrl    = process.env.AUTH_SERVICE_URL;
-        const notifyUrl  = process.env.NOTIFICATION_SERVICE_URL;
-
-        const [docRes, patRes] = await Promise.all([
-            axios.get(`${doctorUrl}/${doctorId}`, authHeader).catch(() => ({ data: {} })),
-            axios.get(`${patientUrl}/${resolvedPatientId}`, authHeader).catch(() => ({ data: {} }))
-        ]);
-
-        const resolvedDoctorName = docRes.data.fullName || null;
-        let resolvedPatientName = patRes.data.fullName || null;
-
-        // If patient profile not found, get name from auth /me (works when patient is the requester)
-        if (!resolvedPatientName && req.user.role === 'Patient') {
-            try {
-                const meRes = await axios.get(`${authUrl}/me`, authHeader);
-                resolvedPatientName = meRes.data?.fullName || null;
-            } catch { /* ignore */ }
-        }
-
-        // If still null (admin booking for patient), look up from auth users list
-        if (!resolvedPatientName) {
-            try {
-                const usersRes = await axios.get(`${authUrl}`, authHeader);
-                const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
-                const found = allUsers.find(u => String(u.id) === String(resolvedPatientId));
-                resolvedPatientName = found?.fullName || null;
-            } catch { /* ignore */ }
-        }
-
+        // ─── Save appointment immediately — don't block on service calls ──
         const appointment = await Appointment.create({
             patientId: resolvedPatientId,
             doctorId,
@@ -79,60 +47,102 @@ export const createAppointment = async (req, res) => {
             type: type || 'clinic',
             createdBy: req.user.id,
             isAdminApproved: ['Admin', 'Receptionist', 'Doctor'].includes(req.user.role),
-            attachmentUrl: req.file
-                ? `uploads/${req.file.filename}`
-                : null,
-            patientName: resolvedPatientName,
-            doctorName: resolvedDoctorName,
+            attachmentUrl: req.file ? `uploads/${req.file.filename}` : null,
+            patientName: null,  // enriched async below
+            doctorName: null,
         });
 
-        // ─── NOTIFICATIONS ─────────────────────────────────────────────────
-        try {
-            const patientName = resolvedPatientName || `Patient #${resolvedPatientId.slice(-6).toUpperCase()}`;
-            const doctorName  = resolvedDoctorName  || 'Doctor';
-            const isVideo     = (type || 'clinic') === 'video';
-            const typeLabel   = isVideo ? 'Video Consultation' : 'Clinic Appointment';
-
-            // → Patient
-            await notify(notifyUrl, {
-                userId: resolvedPatientId,
-                title: `${typeLabel} Booked`,
-                message: `Your ${typeLabel.toLowerCase()} with Dr. ${doctorName} is scheduled for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
-                type: 'Success',
-                link: '/appointments'
-            });
-
-            // → Doctor
-            await notify(notifyUrl, {
-                userId: doctorId,
-                title: `New ${typeLabel}`,
-                message: `${patientName} has booked a ${typeLabel.toLowerCase()} for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
-                type: 'Info',
-                link: '/appointments'
-            });
-
-            // → All Admins & Receptionists
-            try {
-                const usersRes = await axios.get(`${authUrl}`, authHeader);
-                const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
-                await Promise.all(
-                    allUsers
-                        .filter(u => u.role === 'Admin' || u.role === 'Receptionist')
-                        .map(staff => notify(notifyUrl, {
-                            userId: staff.id,
-                            title: `📋 New ${typeLabel} Request`,
-                            message: `${patientName} has requested a ${typeLabel.toLowerCase()} with Dr. ${doctorName} on ${appointmentDate} at ${appointmentTime.slice(0,5)}. Tap to review.`,
-                            type: 'Warning',
-                            link: '/appointments'
-                        }))
-                );
-            } catch { /* non-fatal */ }
-
-        } catch (notifyError) {
-            console.error('Notification Error:', notifyError.message);
-        }
-
+        // ─── Respond immediately so the client isn't waiting ──────────────
         res.status(201).json({ message: 'Appointment created successfully', appointment });
+
+        // ─── Background: enrich names + send notifications (non-blocking) ─
+        const authHeader = { headers: { Authorization: req.headers.authorization } };
+        const doctorUrl  = process.env.DOCTOR_SERVICE_URL;
+        const patientUrl = process.env.PATIENT_SERVICE_URL;
+        const authUrl    = process.env.AUTH_SERVICE_URL;
+        const notifyUrl  = process.env.NOTIFICATION_SERVICE_URL;
+
+        // Use a short timeout for background calls — don't hang forever
+        const bgAxios = axios.create({ timeout: 15000 });
+
+        (async () => {
+            try {
+                // Resolve names
+                const [docRes, patRes] = await Promise.all([
+                    bgAxios.get(`${doctorUrl}/${doctorId}`, authHeader).catch(() => ({ data: {} })),
+                    bgAxios.get(`${patientUrl}/${resolvedPatientId}`, authHeader).catch(() => ({ data: {} }))
+                ]);
+
+                let resolvedDoctorName = docRes.data.fullName || null;
+                let resolvedPatientName = patRes.data.fullName || null;
+
+                if (!resolvedPatientName && req.user.role === 'Patient') {
+                    try {
+                        const meRes = await bgAxios.get(`${authUrl}/me`, authHeader);
+                        resolvedPatientName = meRes.data?.fullName || null;
+                    } catch { /* ignore */ }
+                }
+
+                if (!resolvedPatientName) {
+                    try {
+                        const usersRes = await bgAxios.get(`${authUrl}`, authHeader);
+                        const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
+                        const found = allUsers.find(u => String(u.id) === String(resolvedPatientId));
+                        resolvedPatientName = found?.fullName || null;
+                    } catch { /* ignore */ }
+                }
+
+                // Update appointment with resolved names
+                if (resolvedDoctorName || resolvedPatientName) {
+                    await appointment.update({
+                        doctorName: resolvedDoctorName,
+                        patientName: resolvedPatientName,
+                    }).catch(() => {});
+                }
+
+                // Send notifications
+                if (notifyUrl) {
+                    const patientName = resolvedPatientName || `Patient #${resolvedPatientId.slice(-6).toUpperCase()}`;
+                    const doctorName  = resolvedDoctorName  || 'Doctor';
+                    const isVideo     = (type || 'clinic') === 'video';
+                    const typeLabel   = isVideo ? 'Video Consultation' : 'Clinic Appointment';
+
+                    await notify(notifyUrl, {
+                        userId: resolvedPatientId,
+                        title: `${typeLabel} Booked`,
+                        message: `Your ${typeLabel.toLowerCase()} with Dr. ${doctorName} is scheduled for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
+                        type: 'Success',
+                        link: '/appointments'
+                    });
+                    await notify(notifyUrl, {
+                        userId: doctorId,
+                        title: `New ${typeLabel}`,
+                        message: `${patientName} has booked a ${typeLabel.toLowerCase()} for ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
+                        type: 'Info',
+                        link: '/appointments'
+                    });
+
+                    try {
+                        const usersRes = await bgAxios.get(`${authUrl}`, authHeader);
+                        const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
+                        await Promise.all(
+                            allUsers
+                                .filter(u => u.role === 'Admin' || u.role === 'Receptionist')
+                                .map(staff => notify(notifyUrl, {
+                                    userId: staff.id,
+                                    title: `📋 New ${typeLabel} Request`,
+                                    message: `${patientName} has requested a ${typeLabel.toLowerCase()} with Dr. ${doctorName} on ${appointmentDate} at ${appointmentTime.slice(0,5)}.`,
+                                    type: 'Warning',
+                                    link: '/appointments'
+                                }))
+                        );
+                    } catch { /* non-fatal */ }
+                }
+            } catch (bgErr) {
+                console.error('[Background] Appointment enrichment failed:', bgErr.message);
+            }
+        })();
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -34,9 +34,8 @@ Object.entries(services).forEach(([path, target]) => {
   app.use(path, createProxyMiddleware({
     target,
     changeOrigin: true,
-    // Don't rewrite — let http-proxy-middleware handle path forwarding naturally
-    proxyTimeout: 60000,
-    timeout: 60000,
+    proxyTimeout: 120000,  // 2 min — covers Render cold start (up to 60s) + request processing
+    timeout: 120000,
     onProxyReq: (proxyReq, req) => {
       console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${target}`);
     },
