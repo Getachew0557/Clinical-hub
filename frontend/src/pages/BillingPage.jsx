@@ -39,11 +39,12 @@ const BillingPage = () => {
             });
             setInvoices(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            console.error('Billing fetch error:', err.response?.status, err.message);
-            if (err.response?.status === 401) {
+            const status = err.response?.status;
+            console.error('Billing fetch error:', status, err.message);
+            if (status === 504 || status === 503 || !err.response) {
+                setError('cold');
+            } else if (status === 401) {
                 setError('Session expired. Please log in again.');
-            } else if (err.response?.status === 403) {
-                setError('Access denied.');
             } else {
                 setError('Failed to load invoices. Please try again later.');
             }
@@ -98,8 +99,21 @@ const BillingPage = () => {
                 </Box>
 
                 {error && (
-                    <Alert severity="error" icon={<AlertCircle size={20} />} sx={{ borderRadius: 3 }}>
-                        {error}
+                    <Alert
+                        severity={error === 'cold' ? 'warning' : 'error'}
+                        icon={<AlertCircle size={20} />}
+                        sx={{ borderRadius: 3 }}
+                        action={
+                            error === 'cold' ? (
+                                <Button color="inherit" size="small" onClick={fetchInvoices}>
+                                    Retry
+                                </Button>
+                            ) : null
+                        }
+                    >
+                        {error === 'cold'
+                            ? 'The billing service is starting up (Render free tier). Please wait a moment and click Retry.'
+                            : error}
                     </Alert>
                 )}
 

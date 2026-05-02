@@ -28,18 +28,18 @@ export default function NotificationsMenu() {
             const data = await notificationService.getMyNotifications();
             setNotifications(data.notifications || []);
         } catch (error) {
-            console.error('Failed to fetch notifications:', error);
+            // Silently fail — notification errors must never block the UI
+            console.warn('Notifications unavailable (service may be cold):', error?.response?.status || error.message);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        // Initial fetch
-        fetchNotifications();
+        // Delay initial fetch by 3s so it doesn't compete with critical page data
+        const initialTimer = setTimeout(() => fetchNotifications(), 3000);
 
         // ── Supabase Real-time subscription ──────────────────────────────
-        // Listen for new rows in the Notifications table for this user
         if (user?.id) {
             const channel = supabase
                 .channel(`notifications:${user.id}`)
@@ -53,7 +53,6 @@ export default function NotificationsMenu() {
                     },
                     (payload) => {
                         console.log('[Realtime] New notification:', payload.new?.title);
-                        // Prepend new notification instantly — no polling needed
                         setNotifications(prev => [payload.new, ...prev]);
                     }
                 )
@@ -64,12 +63,13 @@ export default function NotificationsMenu() {
             channelRef.current = channel;
         }
 
-        // Fallback polling every 30s (in case real-time isn't available)
-        const interval = setInterval(fetchNotifications, 30000);
+        // Poll every 60s (relaxed — real-time handles instant updates)
+        const interval = setInterval(fetchNotifications, 60000);
         const onFocus = () => fetchNotifications();
         window.addEventListener('focus', onFocus);
 
         return () => {
+            clearTimeout(initialTimer);
             clearInterval(interval);
             window.removeEventListener('focus', onFocus);
             if (channelRef.current) {
