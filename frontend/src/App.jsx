@@ -42,7 +42,6 @@ import BroadcastPage from './pages/Admin/BroadcastPage';
 import PrescriptionsPage from './pages/Doctor/PrescriptionsPage';
 import UserManagementPage from './pages/Admin/UserManagementPage';
 import FindDoctorPage from './pages/Patient/FindDoctorPage';
-import FindDoctorPage from './pages/Patient/FindDoctorPage';
 
 // ── MUI Theme ────────────────────────────────────────────
 const theme = createTheme({
@@ -283,7 +282,6 @@ const App = () => (
           <Route path="/broadcast" element={<RoleGuard allowedRoles={['Admin']}><BroadcastPage /></RoleGuard>} />
           <Route path="/prescriptions" element={<RoleGuard allowedRoles={['Doctor']}><PrescriptionsPage /></RoleGuard>} />
           <Route path="/user-management" element={<RoleGuard allowedRoles={['Admin']}><UserManagementPage /></RoleGuard>} />
-          <Route path="/find-doctor" element={<FindDoctorPage />} />
           <Route path="/receptionists" element={<RoleGuard allowedRoles={['Admin']}><ReceptionistListPage /></RoleGuard>} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
