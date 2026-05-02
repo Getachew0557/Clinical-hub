@@ -34,8 +34,8 @@ Object.entries(services).forEach(([path, target]) => {
   app.use(path, createProxyMiddleware({
     target,
     changeOrigin: true,
-    pathRewrite: (pathStr, req) => req.originalUrl,
-    proxyTimeout: 60000,   // 60s — Aiven SSL connection can be slow
+    // Don't rewrite — let http-proxy-middleware handle path forwarding naturally
+    proxyTimeout: 60000,
     timeout: 60000,
     onProxyReq: (proxyReq, req) => {
       console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${target}`);
