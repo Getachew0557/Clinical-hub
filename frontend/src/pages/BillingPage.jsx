@@ -27,18 +27,26 @@ const BillingPage = () => {
     }, [user]);
 
     const fetchInvoices = async () => {
-        if (!user?.id) return;
+        if (!user?.id) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             setError(null);
-            // Fetch invoices scoped to this patient
             const res = await axios.get(`${API_URL}/invoices/${user.id}`, {
                 headers: getAuthHeader()
             });
             setInvoices(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            console.error('Billing fetch error:', err);
-            setError('Failed to load invoices. Please try again later.');
+            console.error('Billing fetch error:', err.response?.status, err.message);
+            if (err.response?.status === 401) {
+                setError('Session expired. Please log in again.');
+            } else if (err.response?.status === 403) {
+                setError('Access denied.');
+            } else {
+                setError('Failed to load invoices. Please try again later.');
+            }
         } finally {
             setLoading(false);
         }
