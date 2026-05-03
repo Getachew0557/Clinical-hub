@@ -75,8 +75,7 @@ const Appointment = sequelize.define('Appointment', {
     },
     type: {
         type: DataTypes.ENUM('clinic', 'video'),
-        defaultValue: 'clinic',
-        comment: 'clinic = in-person visit, video = online video consultation'
+        defaultValue: 'clinic'
     },
     attachmentUrl: {
         type: DataTypes.STRING,

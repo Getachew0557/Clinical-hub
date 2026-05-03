@@ -77,10 +77,16 @@ export const getPatientInvoices = async (req, res) => {
 export const createInvoice = async (req, res) => {
     try {
         const { patientId, doctorId, appointmentId, amount, description, dueDate } = req.body;
-        const invoice = await Invoice.create({ patientId, doctorId, appointmentId, amount, description, dueDate });
+        const numericAmount = Number(amount);
+        const status = numericAmount === 0 ? 'Paid' : 'Pending';
+        const invoice = await Invoice.create({ patientId, doctorId, appointmentId, amount: numericAmount, description, dueDate, status });
 
         // Trigger Notification
-        sendNotification(req, patientId, 'New Invoice', `A new invoice of ETB ${amount} has been generated for ${description}.`, '/billing', 'Warning');
+        if (numericAmount > 0) {
+            sendNotification(req, patientId, 'New Invoice', `A new invoice of ETB ${numericAmount} has been generated for ${description}.`, '/billing', 'Warning');
+        } else {
+            sendNotification(req, patientId, 'Free Consultation', `A free consultation session has been confirmed. No payment is required.`, '/appointments', 'Success');
+        }
 
         res.status(201).json(invoice);
     } catch (error) {

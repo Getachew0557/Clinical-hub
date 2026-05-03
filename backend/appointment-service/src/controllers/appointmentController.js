@@ -635,6 +635,28 @@ export const updateAppointmentStatus = async (req, res) => {
                     }
                 } catch { /* use default */ }
 
+                // Free follow-up check (within 5 days)
+                try {
+                    const fiveDaysAgo = moment(appointment.appointmentDate).subtract(5, 'days').format('YYYY-MM-DD');
+                    const recentAppts = await Appointment.findAll({
+                        where: {
+                            patientId: appointment.patientId,
+                            doctorId: appointment.doctorId,
+                            status: 'Completed',
+                            id: { [Op.ne]: appointment.id },
+                            appointmentDate: {
+                                [Op.gte]: fiveDaysAgo,
+                                [Op.lte]: appointment.appointmentDate
+                            }
+                        }
+                    });
+                    if (recentAppts.length > 0) {
+                        consultationFee = 0;
+                    }
+                } catch (e) {
+                    console.error('Failed to check recent appointments:', e.message);
+                }
+
                 // Duplicate guard — check if an invoice already exists for this appointment
                 const checkRes = await axios.get(billingUrl, {
                     ...authHeader,
@@ -681,7 +703,22 @@ export const approveAppointment = async (req, res) => {
             return res.status(404).json({ message: 'Appointment not found' });
         }
 
+        const previousStatus = appointment.status;
         appointment.isAdminApproved = true;
+        appointment.status = 'Confirmed';
+        
+        // Track who confirmed
+        appointment.confirmedAt = new Date();
+        appointment.confirmedBy = req.user.id;
+        try {
+            const authUrl = process.env.AUTH_SERVICE_URL;
+            const authHeader = { headers: { Authorization: req.headers.authorization } };
+            const meRes = await axios.get(`${authUrl}/me`, authHeader);
+            appointment.confirmedByName = meRes.data?.fullName || null;
+        } catch {
+            appointment.confirmedByName = null;
+        }
+
         await appointment.save();
 
         // ─── TRIGGER NOTIFICATION ON APPROVAL ───
@@ -712,6 +749,66 @@ export const approveAppointment = async (req, res) => {
             }
         } catch (err) {
             console.error('Approval Notification Trigger Failed:', err.message);
+        }
+
+        // ─── AUTOMATION: Auto-Invoice on Approval (Confirmed for Video) ───
+        if (appointment.type === 'video' && previousStatus !== 'Confirmed') {
+            try {
+                const billingUrl = `${process.env.BILLING_SERVICE_URL}/invoices`;
+                const authHeader = { headers: { Authorization: req.headers.authorization } };
+                const doctorUrl = process.env.DOCTOR_SERVICE_URL;
+
+                let consultationFee = 150.00;
+                try {
+                    const docRes = await axios.get(`${doctorUrl}/${appointment.doctorId}`, authHeader);
+                    const doc = docRes.data;
+                    consultationFee = parseFloat(doc.videoFee) || 150.00;
+                } catch { /* use default */ }
+
+                // Free follow-up check (within 5 days)
+                try {
+                    const fiveDaysAgo = moment(appointment.appointmentDate).subtract(5, 'days').format('YYYY-MM-DD');
+                    const recentAppts = await Appointment.findAll({
+                        where: {
+                            patientId: appointment.patientId,
+                            doctorId: appointment.doctorId,
+                            status: 'Completed',
+                            id: { [Op.ne]: appointment.id },
+                            appointmentDate: {
+                                [Op.gte]: fiveDaysAgo,
+                                [Op.lte]: appointment.appointmentDate
+                            }
+                        }
+                    });
+                    if (recentAppts.length > 0) {
+                        consultationFee = 0;
+                    }
+                } catch (e) {
+                    console.error('Failed to check recent appointments:', e.message);
+                }
+
+                const checkRes = await axios.get(billingUrl, {
+                    ...authHeader,
+                    params: { appointmentId: appointment.id }
+                }).catch(() => ({ data: [] }));
+                const existing = Array.isArray(checkRes.data) ? checkRes.data : [];
+                
+                if (existing.some(inv => inv.appointmentId === appointment.id)) {
+                    console.log(`Invoice already exists for appointment ${appointment.id} — skipping auto-invoice`);
+                } else {
+                    await axios.post(billingUrl, {
+                        appointmentId: appointment.id,
+                        patientId: appointment.patientId,
+                        doctorId: appointment.doctorId,
+                        amount: consultationFee,
+                        description: `Video Consultation - ${appointment.reason || 'Routine Checkup'}`,
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                    }, authHeader);
+                    console.log(`Auto-invoice generated for approved video appointment ${appointment.id}`);
+                }
+            } catch (err) {
+                console.error('Failed to generate auto-invoice on approve:', err.message);
+            }
         }
 
         res.status(200).json({
