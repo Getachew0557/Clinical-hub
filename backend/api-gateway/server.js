@@ -30,23 +30,27 @@ const services = {
 };
 
 // Setup HTTP proxies with longer timeout for cold starts
-Object.entries(services).forEach(([path, target]) => {
-  app.use(path, createProxyMiddleware({
+// IMPORTANT: Express strips the matched prefix before passing to middleware.
+// e.g. app.use('/api/billing', ...) → proxy receives '/invoices' not '/api/billing/invoices'
+// pathRewrite restores the full original path so downstream services receive the correct URL.
+Object.entries(services).forEach(([mountPath, target]) => {
+  app.use(mountPath, createProxyMiddleware({
     target,
     changeOrigin: true,
-    proxyTimeout: 120000,  // 2 min — covers Render cold start (up to 60s) + request processing
+    // Restore the full original URL path (Express strips the mount prefix)
+    pathRewrite: (_path, req) => req.originalUrl,
+    proxyTimeout: 120000,
     timeout: 120000,
-    onProxyReq: (proxyReq, req) => {
-      console.log(`[Proxy] ${req.method} ${req.originalUrl} -> ${target}`);
-    },
-    onError: (err, req, res) => {
-      console.error(`[Proxy Error] ${req.originalUrl}: ${err.message}`);
-      if (!res.headersSent) {
-        res.status(503).json({
-          error: 'Service Unavailable',
-          message: 'The service is starting up, please retry in a moment.',
-          path: req.originalUrl
-        });
+    on: {
+      error: (err, req, res) => {
+        console.error(`[Proxy Error] ${req.originalUrl}: ${err.message}`);
+        if (!res.headersSent) {
+          res.status(503).json({
+            error: 'Service Unavailable',
+            message: 'The service is starting up, please retry in a moment.',
+            path: req.originalUrl
+          });
+        }
       }
     }
   }));
