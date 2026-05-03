@@ -5,8 +5,8 @@
 import axios from 'axios';
 
 const BASE_URL = 'https://clinical-hub.onrender.com/api';
-const ADMIN_EMAIL = 'admin@ras.dental';
-const ADMIN_PASS = 'adminPassword123';
+const ADMIN_EMAIL = 'admin@gmail.com';
+const ADMIN_PASS = 'Abc@1221';
 
 // Give Render time to wake up
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));

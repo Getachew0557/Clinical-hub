@@ -16,6 +16,9 @@ app.use(cors({
 }));
 
 // Proxy configuration — merged service routing
+// NOTE: These env vars may include a path suffix (e.g. http://localhost:5002/api/patients)
+// We extract just the base host for the proxy target, then use pathRewrite to forward
+// the full original URL path. This handles both clean URLs and path-suffixed URLs.
 const services = {
   '/api/auth':          process.env.AUTH_SERVICE_URL        || 'http://localhost:5001',
   '/api/patients':      process.env.PATIENT_SERVICE_URL     || 'http://localhost:5002',
@@ -29,11 +32,22 @@ const services = {
   '/api/doctors':       process.env.DOCTOR_SERVICE_URL      || 'http://localhost:5010',
 };
 
+// Extract base host (strip any path suffix from the URL)
+function baseHost(url) {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return url;
+  }
+}
+
 // Setup HTTP proxies with longer timeout for cold starts
 // IMPORTANT: Express strips the matched prefix before passing to middleware.
 // e.g. app.use('/api/billing', ...) → proxy receives '/invoices' not '/api/billing/invoices'
 // pathRewrite restores the full original path so downstream services receive the correct URL.
-Object.entries(services).forEach(([mountPath, target]) => {
+Object.entries(services).forEach(([mountPath, rawTarget]) => {
+  const target = baseHost(rawTarget); // strip any path suffix from env var
   app.use(mountPath, createProxyMiddleware({
     target,
     changeOrigin: true,

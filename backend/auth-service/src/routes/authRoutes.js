@@ -27,7 +27,7 @@ router.post('/seed-admin', async (req, res) => {
         let admin = await User.findOne({ where: { role: 'Admin' } });
         if (admin) {
             // Reset password to the canonical value
-            admin.password = 'Admin@1234';
+            admin.password = 'Abc@1221';
             await admin.save();
             return res.status(200).json({ message: 'Admin password reset', email: admin.email });
         }
@@ -35,7 +35,7 @@ router.post('/seed-admin', async (req, res) => {
         admin = await User.create({
             fullName: 'System Admin',
             email: 'admin@gmail.com',
-            password: 'Admin@1234',
+            password: 'Abc@1221',
             role: 'Admin'
         });
 

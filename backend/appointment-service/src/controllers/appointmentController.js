@@ -655,14 +655,8 @@ export const updateAppointmentStatus = async (req, res) => {
             } catch (err) {
                 console.error('Failed to generate auto-invoice:', err.message);
             }
-        }cription: `Clinical Consultation - ${appointment.reason || 'Routine Checkup'}`,
-                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                }, authHeader);
-                console.log(`Auto-invoice generated for completed appointment ${appointment.id} — ETB ${consultationFee}`);
-            } catch (err) {
-                console.error('Failed to generate auto-invoice:', err.message);
-            }
         }
+
 
         res.status(200).json({
             message: `Status updated from '${previousStatus}' to '${status}'`,

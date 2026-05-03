@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:5050/api'; // API Gateway
-const ADMIN_EMAIL = 'admin@ras.dental';
-const ADMIN_PASS = 'adminPassword123';
+const ADMIN_EMAIL = 'admin@gmail.com';
+const ADMIN_PASS = 'Abc@1221';
 
 async function seed() {
     console.log('--- STARTING FOOLPROOF MASTER SEED (3 ENTRIES PER TABLE) ---');

@@ -11,7 +11,7 @@ import User from './src/models/User.js';
 const ADMIN = {
     fullName: 'Admin',
     email:    'admin@gmail.com',
-    password: 'Admin@1234',
+    password: 'Abc@1221',
     role:     'Admin'
 };
 
