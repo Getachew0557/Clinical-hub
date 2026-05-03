@@ -92,9 +92,10 @@ const authService = {
 
     // Google OAuth — sends the ID token from Google to our backend for verification
     googleAuth: async (idToken) => {
-        const response = await axios.post(`${API_URL}/google`, { idToken }, {
-            withCredentials: true, // receive httpOnly refresh token cookie
-        });
+        // Note: no withCredentials — the access token comes in the response body.
+        // The httpOnly refresh token cookie is set by the auth-service but may not
+        // propagate through the gateway proxy; the access token is sufficient.
+        const response = await axios.post(`${API_URL}/google`, { idToken });
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));

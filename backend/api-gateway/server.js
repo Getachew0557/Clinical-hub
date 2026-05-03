@@ -30,17 +30,18 @@ const ALLOWED_ORIGINS = process.env.NODE_ENV === 'production'
   ? ['https://bruhtena.vercel.app', 'https://clinical-hub.onrender.com']
   : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'];
 
-// Allow all origins (Vercel frontend + any client)
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow requests with no origin (mobile apps, curl, Render health checks)
     if (!origin) return cb(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    // In development, allow any localhost port
+    if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost')) return cb(null, true);
     cb(new Error(`CORS: origin ${origin} not allowed`));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
+  optionsSuccessStatus: 204,
 }));
 
 // Proxy configuration — merged service routing
