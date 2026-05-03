@@ -140,6 +140,12 @@ const DoctorProfile = sequelize.define('DoctorProfile', {
         allowNull: true,
         comment: 'Relative file path to uploaded photo'
     },
+    hospitals: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        comment: 'List of hospitals the doctor is associated with'
+    },
     isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true

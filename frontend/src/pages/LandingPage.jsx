@@ -4,12 +4,14 @@ import {
   Stethoscope, Menu, X, Star, Heart, Shield, Activity,
   Eye, Baby, ChevronRight, ArrowRight, MapPin, Phone,
   Mail, Instagram, Facebook, Twitter, ChevronDown, AlertCircle,
-  RefreshCw, Zap, FileText, Network, Calendar
+  RefreshCw, Zap, FileText, Network, Calendar, Building2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { CircularProgress } from '@mui/material';
 import doctorService from '../api/doctor.service';
+import hospitalService from '../api/hospital.service';
 import heroImg from '../assets/clinic-hero.png';
 import GeminiChatbot from '../components/common/GeminiChatbot';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
@@ -163,6 +165,8 @@ export default function LandingPage() {
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [doctorError, setDoctorError] = useState(null);
+  const [hospitals, setHospitals] = useState([]);
+  const [loadingHospitals, setLoadingHospitals] = useState(true);
 
   // FAQ state
   const [openFaq, setOpenFaq] = useState(null);
@@ -177,10 +181,23 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Initial doctor fetch
+  // Initial data fetch
   useEffect(() => {
     fetchDoctors('', '');
+    fetchHospitals();
   }, []);
+
+  const fetchHospitals = async () => {
+    try {
+      setLoadingHospitals(true);
+      const data = await hospitalService.getAllHospitals();
+      setHospitals(data);
+    } catch (err) {
+      console.error('Fetch hospitals error:', err);
+    } finally {
+      setLoadingHospitals(false);
+    }
+  };
 
   const fetchDoctors = useCallback(async (searchVal, specialtyVal) => {
     try {
@@ -816,7 +833,53 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          8. ABOUT TECH
+          8. HOSPITAL NETWORK
+      ══════════════════════════════════════════════════════════════ */}
+      <section id="hospitals" className="py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
+              {t('hospitals.network')}
+            </span>
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">
+              {t('hospitals.networkDesc')}
+            </h2>
+          </div>
+
+          {loadingHospitals ? (
+            <div className="flex justify-center py-12"><CircularProgress /></div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {hospitals.map((hosp, i) => (
+                <motion.div
+                  key={hosp.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="group p-6 rounded-[2.5rem] bg-slate-50 border border-slate-100 hover:border-teal-200 hover:bg-white hover:shadow-2xl hover:shadow-teal-900/5 transition-all duration-300"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    {hosp.logo ? (
+                      <img src={getDoctorPhotoUrl(hosp.logo)} alt={hosp.name} className="w-10 h-10 object-contain" />
+                    ) : (
+                      <Building2 className="text-teal-600 w-8 h-8" />
+                    )}
+                  </div>
+                  <h3 className="text-lg font-extrabold text-slate-900 mb-2">{hosp.name}</h3>
+                  <p className="text-slate-500 text-sm mb-4 line-clamp-2">{hosp.description || 'Modern clinical site equipped with the latest medical technology.'}</p>
+                  <div className="flex items-center gap-2 text-teal-600 text-xs font-bold">
+                    <MapPin size={14} /> {hosp.address || 'Addis Ababa, ET'}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════
+          9. ABOUT TECH
       ══════════════════════════════════════════════════════════════ */}
       <section id="about" className="py-28 bg-slate-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">

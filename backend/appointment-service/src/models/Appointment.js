@@ -82,6 +82,11 @@ const Appointment = sequelize.define('Appointment', {
         type: DataTypes.STRING,
         allowNull: true,
         comment: 'Optional file attachment (image/PDF) uploaded by patient'
+    },
+    hospitalName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Name of the hospital selected for clinic visits'
     }
 });
 

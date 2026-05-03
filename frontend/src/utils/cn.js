@@ -57,3 +57,15 @@ export function getAppointmentAttachmentUrl(attachmentUrl) {
     const clean = attachmentUrl.startsWith('/') ? attachmentUrl : `/${attachmentUrl}`;
     return `${base}${clean}`;
 }
+
+export function getBillingProofUrl(proofUrl) {
+    if (!proofUrl) return null;
+    if (proofUrl.startsWith('http://') || proofUrl.startsWith('https://')) {
+        return proofUrl;
+    }
+    const base =
+        import.meta.env.VITE_API_PATIENT_URL?.replace(/\/api\/patients$/, '') ||
+        'http://localhost:5002';
+    const clean = proofUrl.startsWith('/') ? proofUrl : `/${proofUrl}`;
+    return `${base}${clean}`;
+}

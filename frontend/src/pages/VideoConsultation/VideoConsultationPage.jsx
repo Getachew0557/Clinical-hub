@@ -6,10 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Mic, MicOff, Video, VideoOff, PhoneOff,
     MessageSquare, Send, X, Loader2,
-    AlertCircle, CameraOff, Users
+    AlertCircle, CameraOff, Users, Bell, ExternalLink
 } from 'lucide-react';
 import { Typography } from '@mui/material';
 import appointmentService from '../../api/appointment.service';
+import billingService from '../../api/billing.service';
+import notificationService from '../../api/notification.service';
 import useVideoCall from './useVideoCall';
 import { isVideoEligible } from './videoUtils';
 
@@ -38,6 +40,7 @@ export default function VideoConsultationPage() {
     const [accessError, setAccessError] = useState(null);
     const [loadingAppt, setLoadingAppt] = useState(true);
     const [chatInput, setChatInput] = useState('');
+    const [notifying, setNotifying] = useState(false);
     const chatEndRef = useRef(null);
 
     const {
@@ -80,9 +83,33 @@ export default function VideoConsultationPage() {
                 } else if (!isVideoEligible(appt.status)) {
                     setAccessError('not-eligible');
                 } else {
-                    setAppointment(appt);
+                    // Check payment status — non-blocking: if billing service is unavailable,
+                    // allow the session to proceed (don't gate video on a cold service)
+                    try {
+                        const invoices = await billingService.getAllInvoices({ appointmentId: roomId });
+                        const isPaid = invoices.some(inv => inv.status === 'Paid');
+                        const hasPendingPayment = invoices.some(inv =>
+                            inv.payments && inv.payments.some(p => p.status === 'Pending')
+                        );
+
+                        if (isPaid) {
+                            setAppointment(appt);
+                        } else if (hasPendingPayment) {
+                            setAccessError('pending_review');
+                        } else if (invoices.length === 0) {
+                            // No invoice yet — allow join (invoice may not be created yet)
+                            setAppointment(appt);
+                        } else {
+                            setAccessError('unpaid');
+                        }
+                    } catch (billingErr) {
+                        // Billing service unavailable (cold start / 504) — allow video to proceed
+                        console.warn('[Video] Billing check failed, allowing session:', billingErr.message);
+                        setAppointment(appt);
+                    }
                 }
-            } catch {
+            } catch (err) {
+                console.error(err);
                 setAccessError('not-found');
             } finally {
                 setLoadingAppt(false);
@@ -136,6 +163,26 @@ export default function VideoConsultationPage() {
 
     const handleEndCall = () => { endCall(); navigate('/appointments'); };
 
+    const handleSendPaymentReminder = async () => {
+        if (!roomId || !appointment) return;
+        try {
+            setNotifying(true);
+            await notificationService.createNotification({
+                userId: appointment.patientId,
+                title: 'Payment Required for Video Session',
+                message: `Your doctor is ready to start the video session. Please complete your payment to join.`,
+                type: 'Warning',
+                link: '/billing'
+            });
+            alert('Payment reminder sent to patient.');
+        } catch (err) {
+            console.error('Failed to send reminder:', err);
+            alert('Failed to send reminder.');
+        } finally {
+            setNotifying(false);
+        }
+    };
+
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!chatInput.trim() || chatInput.length > 1000) return;
@@ -154,16 +201,51 @@ export default function VideoConsultationPage() {
     );
 
     if (accessError) {
-        const msg = { denied: 'Access Denied', 'not-found': 'Not Found', 'not-eligible': 'Session Not Active' }[accessError];
+        const errorDetails = {
+            denied: { title: 'Access Denied', msg: 'You are not authorized to join this session.' },
+            'not-found': { title: 'Not Found', msg: 'This appointment record could not be found.' },
+            'not-eligible': { title: 'Session Not Active', msg: 'This video session is not in a startable state.' },
+            unpaid: { 
+                title: 'Payment Required', 
+                msg: user?.role === 'Doctor' 
+                    ? 'The patient has not paid the consultation fee yet. Please ask them to pay before starting.' 
+                    : 'Please pay your consultation fee to join the video session.' 
+            },
+            pending_review: {
+                title: 'Payment Under Review',
+                msg: user?.role === 'Doctor'
+                    ? 'The patient has submitted their payment proof and it is awaiting admin approval.'
+                    : 'Your payment receipt is currently being reviewed by the clinic admin. You can join once it is approved.'
+            }
+        };
+        const activeError = errorDetails[accessError] || { title: 'Error', msg: 'Something went wrong.' };
+
         return (
             <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-slate-800 rounded-3xl p-10 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                    <Typography variant="h5" color="text.primary" sx={{ mb: 3 }}>{msg}</Typography>
-                    <button onClick={() => navigate('/dashboard')}
-                        className="px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700">
-                        Go to Dashboard
-                    </button>
+                <div className="max-w-md w-full bg-slate-800 rounded-3xl p-10 text-center border border-slate-700 shadow-2xl">
+                    <AlertCircle className={`w-12 h-12 ${accessError === 'unpaid' ? 'text-amber-400' : 'text-red-400'} mx-auto mb-4`} />
+                    <Typography variant="h5" color="text.primary" sx={{ mb: 2, fontWeight: 800 }}>{activeError.title}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>{activeError.msg}</Typography>
+                    <div className="flex flex-col gap-3">
+                        {accessError === 'unpaid' && (
+                            user?.role === 'Patient' ? (
+                                <button onClick={() => navigate('/billing')}
+                                    className="w-full px-8 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-teal-900/20">
+                                    <ExternalLink size={18} /> Pay & Join Now
+                                </button>
+                            ) : (
+                                <button onClick={handleSendPaymentReminder} disabled={notifying}
+                                    className="w-full px-8 py-3 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-900/20 disabled:opacity-60">
+                                    {notifying ? <Loader2 size={18} className="animate-spin" /> : <Bell size={18} />} 
+                                    Notify Patient to Pay
+                                </button>
+                            )
+                        )}
+                        <button onClick={() => navigate('/video-consultations')}
+                            className="w-full px-8 py-3 bg-slate-700/50 text-white rounded-xl font-bold hover:bg-slate-700 transition-all border border-slate-600/50">
+                            Return to Consultations
+                        </button>
+                    </div>
                 </div>
             </div>
         );

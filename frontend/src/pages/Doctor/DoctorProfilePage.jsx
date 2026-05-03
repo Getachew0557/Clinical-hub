@@ -315,6 +315,9 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
     const [booking, setBooking] = useState(false);
     const [bookingError, setBookingError] = useState('');
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [selectedHospital, setSelectedHospital] = useState('');
+
+    const doctorHospitals = doctor?.hospitals ? (Array.isArray(doctor.hospitals) ? doctor.hospitals : (() => { try { return JSON.parse(doctor.hospitals); } catch { return []; } })()) : [];
 
     // Staff patient selection
     const [patients, setPatients] = useState([]);
@@ -402,6 +405,7 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
                 appointmentTime: selectedTime.timeValue,
                 reason,
                 type: 'clinic',
+                hospitalName: selectedHospital,
             });
             setOpen(false);
             if (onBooked) onBooked();
@@ -414,6 +418,10 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
 
     const handleConfirm = () => {
         if (!selectedTime || !reason.trim()) return;
+        if (isClinic && doctorHospitals.length > 0 && !selectedHospital) {
+            setBookingError('Please select a hospital location.');
+            return;
+        }
         if (!user) {
             // Show inline auth modal — slot selection is preserved
             setShowAuthModal(true);
@@ -503,6 +511,25 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
                                 <Calendar size={16} className="text-amber-600" />
                                 <span className="font-black text-slate-800 text-sm">Select Date & Time</span>
                             </div>
+
+                            {/* Hospital Selection */}
+                            {isClinic && doctorHospitals.length > 0 && (
+                                <div className="mb-5">
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
+                                        Select Hospital
+                                    </label>
+                                    <select
+                                        value={selectedHospital}
+                                        onChange={(e) => setSelectedHospital(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all"
+                                    >
+                                        <option value="">-- Select a Hospital --</option>
+                                        {doctorHospitals.map((h, i) => (
+                                            <option key={i} value={h}>{h}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             {/* 7-Day Date Picker */}
                             <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">

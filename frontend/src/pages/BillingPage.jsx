@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
     Typography, Card, CardContent, Grid,
-    Box, Chip, CircularProgress, Alert, Divider, Button
+    Box, Chip, CircularProgress, Alert, Divider, Button,
+    Dialog, DialogTitle, DialogContent, DialogActions,
+    TextField, IconButton
 } from '@mui/material';
-import { Receipt, CreditCard, ChevronRight, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
-import axios from '../api/axiosInstance.js';
+import { 
+    Receipt, CreditCard, ChevronRight, AlertCircle, 
+    Clock, CheckCircle2, Upload, X, FileText, Camera
+} from 'lucide-react';
+import billingService from '../api/billing.service.js';
 
 const API_URL = import.meta.env.VITE_API_BILLING_URL;
 
@@ -18,7 +23,12 @@ const BillingPage = () => {
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [processing, setProcessing] = useState(null); // invoiceId being processed
+    const [processing, setProcessing] = useState(null); 
+    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [proofFile, setProofFile] = useState(null);
+    const [proofPreview, setProofPreview] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     const { user } = useSelector((state) => state.auth);
 
@@ -34,42 +44,53 @@ const BillingPage = () => {
         try {
             setLoading(true);
             setError(null);
-            const res = await axios.get(`${API_URL}/invoices/${user.id}`, {
-                headers: getAuthHeader()
-            });
-            setInvoices(Array.isArray(res.data) ? res.data : []);
+            const data = await billingService.getPatientInvoices(user.id);
+            setInvoices(Array.isArray(data) ? data : []);
         } catch (err) {
             const status = err.response?.status;
             console.error('Billing fetch error:', status, err.message);
-            if (status === 504 || status === 503 || !err.response) {
-                setError('cold');
-            } else if (status === 401) {
-                setError('Session expired. Please log in again.');
-            } else {
-                setError('Failed to load invoices. Please try again later.');
-            }
+            setError('Failed to load invoices. Please try again later.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handlePayment = async (invoiceId, amount) => {
+    const handleOpenUpload = (invoice) => {
+        setSelectedInvoice(invoice);
+        setProofFile(null);
+        setProofPreview(null);
+        setUploadDialogOpen(true);
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setProofFile(file);
+            setProofPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleUploadProof = async () => {
+        if (!proofFile || !selectedInvoice) return;
         try {
-            setProcessing(invoiceId);
-            await axios.post(`${API_URL}/pay`, {
-                invoiceId,
-                amount,
-                method: 'Simulated'
-            }, { headers: getAuthHeader() });
-            // Optimistic update
-            setInvoices(prev =>
-                prev.map(inv => inv.id === invoiceId ? { ...inv, status: 'Paid' } : inv)
-            );
+            setUploading(true);
+            const formData = new FormData();
+            formData.append('proof', proofFile);
+            formData.append('invoiceId', selectedInvoice.id);
+            formData.append('amount', selectedInvoice.amount);
+            formData.append('method', 'Manual Transfer');
+
+            await billingService.submitProof(formData);
+            
+            // Refresh invoices to show updated status/payment records
+            fetchInvoices();
+            setUploadDialogOpen(false);
+            alert('Payment proof submitted successfully! Our team will review it shortly.');
         } catch (err) {
-            alert('Payment failed. Please try again.');
+            alert('Failed to upload proof. Please try again.');
             console.error(err);
         } finally {
-            setProcessing(null);
+            setUploading(false);
         }
     };
 
@@ -218,15 +239,22 @@ const BillingPage = () => {
                                                 </Typography>
 
                                                 {invoice.status !== 'Paid' && (
-                                                    <Button
-                                                        variant="contained"
-                                                        startIcon={processing === invoice.id ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <CreditCard size={16} />}
-                                                        onClick={() => handlePayment(invoice.id, invoice.amount)}
-                                                        disabled={processing === invoice.id}
-                                                        sx={{ borderRadius: 3, px: 3 }}
-                                                    >
-                                                        {processing === invoice.id ? 'Processing...' : 'Pay Now'}
-                                                    </Button>
+                                                    invoice.payments?.some(p => p.status === 'Pending') ? (
+                                                        <Box sx={{ bgcolor: '#fffbeb', px: 2, py: 1, borderRadius: 2, border: '1px dashed #d97706', textAlign: 'center' }}>
+                                                            <Typography variant="caption" color="#d97706" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                                <Clock size={14} /> Under Review
+                                                            </Typography>
+                                                        </Box>
+                                                    ) : (
+                                                        <Button
+                                                            variant="contained"
+                                                            startIcon={<Camera size={18} />}
+                                                            onClick={() => handleOpenUpload(invoice)}
+                                                            sx={{ borderRadius: 3, px: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
+                                                        >
+                                                            Upload Receipt
+                                                        </Button>
+                                                    )
                                                 )}
 
                                                 {invoice.status === 'Paid' && (
@@ -247,6 +275,81 @@ const BillingPage = () => {
                     )}
                 </Grid>
             </Box>
+
+            {/* Upload Proof Dialog */}
+            <Dialog 
+                open={uploadDialogOpen} 
+                onClose={() => setUploadDialogOpen(false)}
+                PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle className="flex justify-between items-center">
+                    <Typography variant="h6" fontWeight={800}>Submit Payment Proof</Typography>
+                    <IconButton onClick={() => setUploadDialogOpen(false)}><X size={20} /></IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Please upload a photo of your bank receipt or mobile money confirmation.
+                    </Typography>
+
+                    <Box 
+                        onClick={() => document.getElementById('proof-input').click()}
+                        sx={{ 
+                            border: '2px dashed #e2e8f0', 
+                            borderRadius: 3, 
+                            p: 3, 
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            bgcolor: '#f8fafc',
+                            '&:hover': { borderColor: '#0d9488', bgcolor: '#f0fdfa' },
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {proofPreview ? (
+                            <img src={proofPreview} alt="Receipt" className="max-h-40 mx-auto rounded-lg shadow-sm" />
+                        ) : (
+                            <Box className="flex flex-col items-center gap-2">
+                                <Upload size={32} className="text-slate-400" />
+                                <Typography variant="caption" fontWeight={600} color="text.secondary">
+                                    Click to browse or take photo
+                                </Typography>
+                            </Box>
+                        )}
+                        <input 
+                            id="proof-input" 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleFileChange} 
+                        />
+                    </Box>
+
+                    {selectedInvoice && (
+                        <Box sx={{ mt: 3, p: 2, bgcolor: '#f1f5f9', borderRadius: 2 }}>
+                            <div className="flex justify-between items-center text-sm mb-1">
+                                <span className="text-slate-500">Invoice ID:</span>
+                                <span className="font-bold">#{selectedInvoice.id?.slice(-8).toUpperCase()}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-500">Total Amount:</span>
+                                <span className="font-bold text-teal-600">ETB {parseFloat(selectedInvoice.amount).toLocaleString()}</span>
+                            </div>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button onClick={() => setUploadDialogOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>Cancel</Button>
+                    <Button 
+                        onClick={handleUploadProof} 
+                        variant="contained" 
+                        disabled={!proofFile || uploading}
+                        sx={{ borderRadius: 2, px: 4, bgcolor: '#0d9488', fontWeight: 700 }}
+                    >
+                        {uploading ? <CircularProgress size={20} color="inherit" /> : 'Submit Proof'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

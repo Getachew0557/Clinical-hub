@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -8,10 +8,12 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
 import DoctorProfile from './src/models/DoctorProfile.js';
+import Hospital from './src/models/Hospital.js';
 import './src/models/InventoryItem.js';
 import './src/models/StockTransaction.js';
 import './src/models/Report.js';
 import doctorRoutes from './src/routes/doctorRoutes.js';
+import hospitalRoutes from './src/routes/hospitalRoutes.js';
 import inventoryRoutes from './src/routes/inventoryRoutes.js';
 import reportRoutes from './src/routes/reportRoutes.js';
 
@@ -32,6 +34,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/doctors', doctorRoutes);
+app.use('/api/hospitals', hospitalRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/reports', reportRoutes);
 
@@ -71,6 +74,7 @@ const connectDB = async () => {
       workExperience:     'JSON NULL',
       awards:             'JSON NULL',
       maxPatientsPerHour: 'INT NOT NULL DEFAULT 10',
+      hospitals:          'JSON NULL',
   };
 
   for (const [col, definition] of Object.entries(newColumns)) {

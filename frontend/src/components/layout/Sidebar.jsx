@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
     LayoutDashboard, Users, CalendarDays, FileText, Receipt,
     Package, BarChart3, ChevronLeft, ChevronRight,
-    X, Stethoscope, UserCog, Home, ShieldCheck, Video, ClipboardList, Bell, Pill, UserCheck
+    X, Stethoscope, UserCog, Home, ShieldCheck, Video, ClipboardList, Bell, Pill, UserCheck, Building2
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -17,6 +17,7 @@ const NAV_BY_ROLE = {
         { to: '/patients',        icon: Users,           labelKey: 'sidebar.patients' },
         { to: '/doctors',         icon: Stethoscope,     labelKey: 'sidebar.doctors' },
         { to: '/receptionists',   icon: ShieldCheck,     labelKey: 'sidebar.receptionists' },
+        { to: '/hospitals',       icon: Building2,       labelKey: 'sidebar.hospitals' },
         { to: '/appointments',    icon: CalendarDays,    labelKey: 'sidebar.appointments' },
         { to: '/emr',             icon: FileText,        labelKey: 'sidebar.medicalRecords' },
         { to: '/admin-billing',   icon: Receipt,         labelKey: 'sidebar.billing' },
@@ -39,6 +40,7 @@ const NAV_BY_ROLE = {
         { to: '/dashboard',    icon: LayoutDashboard, labelKey: 'sidebar.dashboard',    end: true },
         { to: '/patients',     icon: Users,           labelKey: 'sidebar.patients' },
         { to: '/doctors',      icon: Stethoscope,     labelKey: 'sidebar.doctors' },
+        { to: '/hospitals',    icon: Building2,       labelKey: 'sidebar.hospitals' },
         { to: '/appointments', icon: CalendarDays,    labelKey: 'sidebar.appointments' },
         { to: '/billing',      icon: Receipt,         labelKey: 'sidebar.billing' },
         { to: '/inventory',    icon: Package,         labelKey: 'sidebar.inventory' },

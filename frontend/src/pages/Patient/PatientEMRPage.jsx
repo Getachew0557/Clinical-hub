@@ -15,6 +15,7 @@ import patientService from '../../api/patient.service';
 import reportService from '../../api/report.service';
 import aiService from '../../api/ai.service';
 import appointmentService from '../../api/appointment.service';
+import billingService from '../../api/billing.service';
 import { useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { Sparkles, Brain, Lightbulb } from 'lucide-react';
@@ -180,7 +181,26 @@ export default function PatientEMRPage() {
         }
     };
 
-    const handleOpenModal = (record = null) => {
+    const handleOpenModal = async (record = null) => {
+        if (!record && isDoctor) {
+            // Check for pending invoices for this patient
+            try {
+                // targetId should be the userId (UUID used in auth and invoices)
+                const targetId = patient?.userId || patient?.id || patientId;
+                if (!targetId) return;
+
+                const invoices = await billingService.getPatientInvoices(targetId);
+                const hasPending = invoices.some(inv => inv.status === 'Pending');
+                if (hasPending) {
+                    const total = invoices.filter(i => i.status === 'Pending').reduce((acc, i) => acc + Number(i.amount), 0);
+                    alert(`ACCESS BLOCKED: This patient has pending invoices totaling ETB ${total}. Please ask them to pay before you can proceed with a new clinical entry or prescription.`);
+                    return; // STRICT BLOCK
+                }
+            } catch (err) {
+                console.error('Billing check failed:', err);
+            }
+        }
+
         if (record) {
             setEditingRecord(record);
             setFormData({
@@ -282,26 +302,72 @@ export default function PatientEMRPage() {
 
     return (
         <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 12 }}>
-            <Box className="flex flex-col gap-6">
-            <style>
+            <Box className="flex flex-col gap-6">            <style>
                 {`
                 @media print {
                     .no-print { display: none !important; }
-                    body { background: white !important; font-size: 11pt; }
-                    .MuiCard-root { border: none !important; border-bottom: 2px solid #f1f5f9 !important; border-radius: 0 !important; margin-bottom: 30px !important; }
+                    body { background: white !important; font-size: 11pt; color: #000; }
+                    .MuiCard-root { border: none !important; border-bottom: 1px solid #e2e8f0 !important; border-radius: 0 !important; margin-bottom: 20px !important; box-shadow: none !important; }
                     .MuiPaper-root { box-shadow: none !important; }
-                    .MuiAvatar-root { border: 1px solid #eee !important; }
-                    .MuiGrid-root { display: flex !important; flex-direction: row !important; }
-                    .patient-sidebar { width: 30% !important; max-width: 30% !important; flex-basis: 30% !important; }
-                    .timeline-grid { width: 68% !important; max-width: 68% !important; flex-basis: 68% !important; margin-left: 2% !important; }
+                    
+                    /* Letterhead */
+                    .print-header { 
+                        display: block !important; 
+                        text-align: center; 
+                        margin-bottom: 30px; 
+                        border-bottom: 3px double #3b82f6;
+                        padding-bottom: 20px;
+                    }
+                    .print-header h1 { font-size: 24pt; font-weight: 900; color: #1e3a8a; margin: 0; }
+                    .print-header p { font-size: 10pt; color: #64748b; margin: 2px 0; }
 
-                    /* Targeted printing logic (for single record) */
+                    /* Patient Summary in Print */
+                    .patient-sidebar { 
+                        width: 100% !important; 
+                        max-width: 100% !important; 
+                        flex-basis: 100% !important; 
+                        margin-bottom: 30px !important;
+                    }
+                    .patient-sidebar .MuiCardContent-root {
+                        flex-direction: row !important;
+                        justify-content: space-around !important;
+                        text-align: left !important;
+                        padding: 15px !important;
+                        background: #f8fafc !important;
+                        border-radius: 12px !important;
+                    }
+                    .patient-sidebar .MuiAvatar-root { width: 60px !important; height: 60px !important; }
+
+                    /* Content */
+                    .timeline-grid { width: 100% !important; max-width: 100% !important; flex-basis: 100% !important; margin-left: 0 !important; }
+                    .timeline-card .p-4.bg-slate-50 { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; }
+                    
+                    /* Signature Line */
+                    .signature-box {
+                        display: block !important;
+                        margin-top: 50px;
+                        border-top: 1px solid #94a3b8;
+                        width: 250px;
+                        text-align: center;
+                        padding-top: 10px;
+                        font-weight: 700;
+                        font-size: 10pt;
+                    }
+
                     body.printing-single .timeline-card:not(.printing-this) { display: none !important; }
-                    body.printing-single .patient-sidebar { display: block !important; width: 100% !important; }
-                    body.printing-single .timeline-grid { width: 100% !important; margin-left: 0 !important; }
                 }
+                .print-header, .signature-box { display: none; }
                 `}
             </style>
+            
+            {/* ── Print Letterhead ── */}
+            <div className="print-header">
+                <h1>BRIGHT HEALTH DENTAL CLINIC</h1>
+                <p>Advanced Clinical Diagnostic & Treatment Center</p>
+                <p>Bole Road, Addis Ababa, Ethiopia | +251 911 00 00 00</p>
+                <p className="font-bold mt-2">OFFICIAL MEDICAL REPORT</p>
+            </div>
+
             {/* ── Header ── */}
             <Box className="flex items-center gap-4">
                 <IconButton onClick={() => navigate(-1)} sx={{ bgcolor: 'white', border: '1px solid #e2e8f0' }}>
@@ -525,6 +591,11 @@ export default function PatientEMRPage() {
                                                         </Box>
                                                     )}
                                                 </Box>
+                                                
+                                                {/* Signature Box for Print */}
+                                                <div className="signature-box ml-auto mr-10 mb-10">
+                                                    Physician Signature & Stamp
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     ))

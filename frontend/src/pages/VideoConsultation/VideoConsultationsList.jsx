@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Video, CalendarDays, Clock, User, Loader2, CheckCircle, PlayCircle } from 'lucide-react';
-import { Typography, Card, CardContent, CircularProgress, Chip, Tabs, Tab } from '@mui/material';
+import { Video, CalendarDays, Clock, User, Loader2, CheckCircle, PlayCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Typography, Card, CardContent, CircularProgress, Chip, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button, Box } from '@mui/material';
 import { useSelector } from 'react-redux';
 import appointmentService from '../../api/appointment.service';
+import billingService from '../../api/billing.service';
+import notificationService from '../../api/notification.service';
 import { sortAppointments } from './videoUtils';
 
 const STATUS_TABS = ['Confirmed', 'In Progress', 'Completed'];
@@ -23,6 +25,9 @@ export default function VideoConsultationsList() {
     const [loading, setLoading] = useState(true);
     const [tabValue, setTabValue] = useState(0);
     const [updatingId, setUpdatingId] = useState(null);
+    const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+    const [selectedApt, setSelectedApt] = useState(null);
+    const [notifying, setNotifying] = useState(false);
 
     useEffect(() => {
         fetchAppointments();
@@ -31,19 +36,37 @@ export default function VideoConsultationsList() {
     const fetchAppointments = async () => {
         try {
             setLoading(true);
-            // getMyAppointments is scoped to the logged-in doctor's own appointments
             const data = await appointmentService.getMyAppointments();
             const all = data.appointments || [];
-            // Filter to video type only, in relevant statuses
+            
+            // Filter to video type only
             const videoApts = all.filter(a =>
                 a.type === 'video' &&
                 STATUS_TABS.includes(a.status)
             );
-            setAppointments(sortAppointments(videoApts));
 
-            // Debug: log all appointments to help diagnose if type field is missing
-            if (videoApts.length === 0 && all.length > 0) {
-                console.info('[VideoConsultations] No video appointments found. All appointments:', all.map(a => ({ id: a.id, type: a.type, status: a.status })));
+            // Fetch billing status for each video appointment
+            const enrichedApts = await Promise.all(videoApts.map(async (apt) => {
+                try {
+                    const invoices = await billingService.getAllInvoices({ appointmentId: apt.id });
+                    // Check if there is a 'Paid' invoice for this appointment
+                    const isPaid = invoices.some(inv => inv.status === 'Paid');
+                    const hasPending = invoices.some(inv => inv.status === 'Pending');
+                    return { 
+                        ...apt, 
+                        isPaid, 
+                        billingStatus: isPaid ? 'Paid' : hasPending ? 'Pending' : 'No Invoice' 
+                    };
+                } catch (err) {
+                    console.error(`Failed to fetch billing for apt ${apt.id}:`, err);
+                    return { ...apt, isPaid: false, billingStatus: 'Unknown' };
+                }
+            }));
+
+            setAppointments(sortAppointments(enrichedApts));
+
+            if (enrichedApts.length === 0 && all.length > 0) {
+                console.info('[VideoConsultations] No video appointments found.');
             }
         } catch (err) {
             console.error('Video consultations fetch error:', err);
@@ -54,6 +77,11 @@ export default function VideoConsultationsList() {
     };
 
     const handleStartConsultation = async (apt) => {
+        if (!apt.isPaid) {
+            setSelectedApt(apt);
+            setPaymentDialogOpen(true);
+            return;
+        }
         try {
             setUpdatingId(apt.id);
             if (apt.status === 'Confirmed') {
@@ -68,6 +96,27 @@ export default function VideoConsultationsList() {
             navigate(`/video/${apt.id}`); // navigate anyway
         } finally {
             setUpdatingId(null);
+        }
+    };
+
+    const handleSendPaymentReminder = async () => {
+        if (!selectedApt) return;
+        try {
+            setNotifying(true);
+            await notificationService.createNotification({
+                userId: selectedApt.patientId,
+                title: 'Payment Required for Video Session',
+                message: `Your doctor is ready to start the video session for ${selectedApt.appointmentDate} at ${selectedApt.appointmentTime}. Please complete your payment to join.`,
+                type: 'Warning',
+                link: '/billing'
+            });
+            alert('Payment reminder sent to patient.');
+            setPaymentDialogOpen(false);
+        } catch (err) {
+            console.error('Failed to send reminder:', err);
+            alert('Failed to send reminder.');
+        } finally {
+            setNotifying(false);
         }
     };
 
@@ -226,20 +275,20 @@ export default function VideoConsultationsList() {
                                         <button
                                             onClick={() => handleStartConsultation(apt)}
                                             disabled={isUpdating}
-                                            className="w-full py-3 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-teal-600/15 disabled:opacity-60"
+                                            className={`w-full py-3 ${apt.isPaid ? 'bg-teal-600 hover:bg-teal-700 shadow-teal-600/15' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/15'} text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-60`}
                                         >
                                             {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <PlayCircle size={16} />}
-                                            Start Video Session
+                                            {apt.isPaid ? 'Start Video Session' : 'Payment Pending'}
                                         </button>
                                     )}
                                     {/* In Progress: Rejoin + Complete */}
                                     {apt.status === 'In Progress' && (
                                         <>
                                             <button
-                                                onClick={() => navigate(`/video/${apt.id}`)}
-                                                className="w-full py-3 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-700 transition-all flex items-center justify-center gap-2 shadow-md"
+                                                onClick={() => apt.isPaid ? navigate(`/video/${apt.id}`) : (setSelectedApt(apt), setPaymentDialogOpen(true))}
+                                                className={`w-full py-3 ${apt.isPaid ? 'bg-teal-600 hover:bg-teal-700' : 'bg-amber-500 hover:bg-amber-600'} text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-60`}
                                             >
-                                                <Video size={16} /> Rejoin Session
+                                                <Video size={16} /> {apt.isPaid ? 'Rejoin Session' : 'Payment Pending'}
                                             </button>
                                             <button
                                                 onClick={() => handleComplete(apt)}
@@ -266,6 +315,64 @@ export default function VideoConsultationsList() {
                     );
                 })}
             </div>
+
+            {/* Payment Required Dialog */}
+            <Dialog 
+                open={paymentDialogOpen} 
+                onClose={() => setPaymentDialogOpen(false)}
+                PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogContent>
+                    <Box className="text-center py-4">
+                        <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="text-amber-500 w-8 h-8" />
+                        </div>
+                        <Typography variant="h6" fontWeight={800} gutterBottom>
+                            Payment Required
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                            {user?.role === 'Doctor'
+                                ? `The patient (${selectedApt?.patientName}) has not completed the payment for this consultation. You can notify them to pay now.`
+                                : "Your payment for this video consultation is not successful. Please complete the payment to join the session."
+                            }
+                        </Typography>
+
+                        <div className="flex flex-col gap-3">
+                            {user?.role === 'Doctor' ? (
+                                <Button 
+                                    variant="contained" 
+                                    fullWidth
+                                    onClick={handleSendPaymentReminder}
+                                    disabled={notifying}
+                                    sx={{ bgcolor: '#d97706', '&:hover': { bgcolor: '#b45309' }, borderRadius: 3, py: 1.5, fontWeight: 700 }}
+                                >
+                                    {notifying ? <CircularProgress size={20} color="inherit" /> : 'Notify Patient to Pay'}
+                                </Button>
+                            ) : (
+                                <Button 
+                                    variant="contained" 
+                                    fullWidth
+                                    startIcon={<ExternalLink size={18} />}
+                                    onClick={() => navigate('/billing')}
+                                    sx={{ bgcolor: '#0d9488', borderRadius: 3, py: 1.5, fontWeight: 700 }}
+                                >
+                                    Go to My Payments
+                                </Button>
+                            )}
+                            <Button 
+                                variant="text" 
+                                fullWidth
+                                onClick={() => setPaymentDialogOpen(false)}
+                                sx={{ color: 'text.secondary', fontWeight: 600 }}
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </Box>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

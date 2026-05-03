@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Lock, Shield, Save, Key, AlertCircle, CheckCircle2, Stethoscope, Phone, Clock, DollarSign, Camera } from 'lucide-react';
-import { Typography, Button, Card, CardContent, TextField, Grid, Avatar, Alert, CircularProgress, Box, IconButton, InputAdornment, Tooltip } from '@mui/material';
+import { User, Mail, Lock, Shield, Save, Key, AlertCircle, CheckCircle2, Stethoscope, Phone, Clock, DollarSign, Camera, Plus, Building2 } from 'lucide-react';
+import { Typography, Button, Card, CardContent, TextField, Grid, Avatar, Alert, CircularProgress, Box, IconButton, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import authService from '../../api/auth.service';
 import doctorService from '../../api/doctor.service';
+import hospitalService from '../../api/hospital.service';
 import { getDoctorPhotoUrl, getAuthPhotoUrl } from '../../utils/cn';
 import { updateUser } from '../../store/slices/authSlice';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -17,6 +18,8 @@ export default function ProfilePage() {
     const [photoLoading, setPhotoLoading] = useState(false);
     const [doctorSaving, setDoctorSaving] = useState(false);
     const [doctorLoading, setDoctorLoading] = useState(false);
+    const [hospitals, setHospitals] = useState([]);
+    const [hospitalSelectionOpen, setHospitalSelectionOpen] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
     const [doctorProfile, setDoctorProfile] = useState(null);
@@ -28,6 +31,7 @@ export default function ProfilePage() {
         phone: '', bio: '', workingHoursStart: '', workingHoursEnd: '', consultationFee: '',
         videoFee: '', slotDuration: 30, breakStart: '', breakEnd: '',
         workingDays: [], serviceTypes: ['clinic', 'video'],
+        hospitals: [],
     });
 
     const [passwords, setPasswords] = useState({
@@ -38,6 +42,7 @@ export default function ProfilePage() {
         if (user) setProfileData({ fullName: user.fullName });
         if (isDoctor) {
             setDoctorLoading(true);
+            fetchHospitals();
             doctorService.getMyProfile()
                 .then(data => {
                     const p = data?.doctor || data;
@@ -54,12 +59,22 @@ export default function ProfilePage() {
                         breakEnd: p?.breakEnd || '',
                         workingDays: Array.isArray(p?.workingDays) ? p.workingDays : (p?.workingDays ? JSON.parse(p.workingDays) : []),
                         serviceTypes: Array.isArray(p?.serviceTypes) ? p.serviceTypes : (p?.serviceTypes ? JSON.parse(p.serviceTypes) : ['clinic', 'video']),
+                        hospitals: Array.isArray(p?.hospitals) ? p.hospitals : (p?.hospitals ? JSON.parse(p.hospitals) : []),
                     });
                 })
                 .catch(() => {})
                 .finally(() => setDoctorLoading(false));
         }
     }, [user, isDoctor]);
+
+    const fetchHospitals = async () => {
+        try {
+            const data = await hospitalService.getAllHospitals();
+            setHospitals(data);
+        } catch (err) {
+            console.error('Failed to fetch hospitals:', err);
+        }
+    };
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
@@ -422,6 +437,34 @@ export default function ProfilePage() {
                                                         onChange={(e) => setDoctorForm({ ...doctorForm, bio: e.target.value })} />
                                                 </Grid>
                                                 <Grid item xs={12}>
+                                                    <Box className="flex items-center justify-between mb-2">
+                                                        <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>
+                                                            Associated Hospitals
+                                                        </Typography>
+                                                        <Button 
+                                                            size="small" 
+                                                            startIcon={<Plus size={14} />}
+                                                            onClick={() => setHospitalSelectionOpen(true)}
+                                                            sx={{ borderRadius: 2 }}
+                                                        >
+                                                            Select Hospital
+                                                        </Button>
+                                                    </Box>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {doctorForm.hospitals.length === 0 && (
+                                                            <Typography variant="caption" color="text.secondary">No hospitals added. Add at least one for clinic visits.</Typography>
+                                                        )}
+                                                        {doctorForm.hospitals.map((h, i) => (
+                                                            <Chip 
+                                                                key={i} 
+                                                                label={h} 
+                                                                onDelete={() => setDoctorForm({ ...doctorForm, hospitals: doctorForm.hospitals.filter((_, idx) => idx !== i) })}
+                                                                sx={{ borderRadius: 2, bgcolor: '#f0fdf4', color: '#15803d', fontWeight: 700 }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </Grid>
+                                                <Grid item xs={12}>
                                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5, fontWeight: 800, textTransform: 'uppercase', tracking: '0.05em' }}>
                                                         Working Days
                                                     </Typography>
@@ -539,6 +582,47 @@ export default function ProfilePage() {
                 </Grid>
             </Grid>
             </div>
+
+            {/* Hospital Selection Dialog */}
+            <Dialog open={hospitalSelectionOpen} onClose={() => setHospitalSelectionOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 4 } }}>
+                <DialogTitle>Select Associated Hospital</DialogTitle>
+                <DialogContent dividers>
+                    <Box className="flex flex-col gap-2">
+                        {hospitals.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                                No hospitals registered in the network.
+                            </Typography>
+                        ) : (
+                            hospitals.filter(h => !doctorForm.hospitals.includes(h.name)).map((h) => (
+                                <Box 
+                                    key={h.id} 
+                                    onClick={() => {
+                                        setDoctorForm({ ...doctorForm, hospitals: [...doctorForm.hospitals, h.name] });
+                                        setHospitalSelectionOpen(false);
+                                    }}
+                                    className="p-3 rounded-xl border border-slate-100 hover:border-teal-500 hover:bg-teal-50 cursor-pointer transition-all flex items-center gap-3"
+                                >
+                                    <Avatar src={getDoctorPhotoUrl(h.logo)} variant="rounded" sx={{ width: 40, height: 40 }}>
+                                        <Building2 />
+                                    </Avatar>
+                                    <Box>
+                                        <Typography variant="body2" fontWeight={700}>{h.name}</Typography>
+                                        <Typography variant="caption" color="text.secondary" noWrap>{h.address}</Typography>
+                                    </Box>
+                                </Box>
+                            ))
+                        )}
+                        {hospitals.filter(h => !doctorForm.hospitals.includes(h.name)).length === 0 && hospitals.length > 0 && (
+                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                                You have already added all available hospitals.
+                            </Typography>
+                        )}
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 2.5 }}>
+                    <Button onClick={() => setHospitalSelectionOpen(false)} color="inherit">Close</Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

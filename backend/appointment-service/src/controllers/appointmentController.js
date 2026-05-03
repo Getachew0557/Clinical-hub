@@ -487,7 +487,7 @@ export const getAppointmentById = async (req, res) => {
 
         const { role, id: userId } = req.user;
         const isOwner =
-            appointment.patientId === userId || appointment.doctorId === userId;
+            String(appointment.patientId) === String(userId) || String(appointment.doctorId) === String(userId);
 
         if (!['Admin', 'Receptionist'].includes(role) && !isOwner) {
             return res.status(403).json({ message: 'Not authorized to view this appointment' });
@@ -613,8 +613,11 @@ export const updateAppointmentStatus = async (req, res) => {
             console.error('Notification Trigger Failed:', err.message);
         }
 
-        // ─── AUTOMATION: Auto-Invoice on Completion ───
-        if (status === 'Completed' && previousStatus !== 'Completed') {
+        // ─── AUTOMATION: Auto-Invoice on Completion (or Confirmed for Video) ───
+        const shouldAutoInvoice = (status === 'Completed' && previousStatus !== 'Completed') ||
+                                  (status === 'Confirmed' && previousStatus !== 'Confirmed' && appointment.type === 'video');
+
+        if (shouldAutoInvoice) {
             try {
                 const billingUrl = `${process.env.BILLING_SERVICE_URL}/invoices`;
                 const authHeader = { headers: { Authorization: req.headers.authorization } };
@@ -650,7 +653,7 @@ export const updateAppointmentStatus = async (req, res) => {
                         description: `${typeLabel} - ${appointment.reason || 'Routine Checkup'}`,
                         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
                     }, authHeader);
-                    console.log(`Auto-invoice generated for completed appointment ${appointment.id} — ETB ${consultationFee}`);
+                    console.log(`Auto-invoice generated for appointment ${appointment.id} — ETB ${consultationFee}`);
                 }
             } catch (err) {
                 console.error('Failed to generate auto-invoice:', err.message);

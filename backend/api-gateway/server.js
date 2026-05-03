@@ -30,6 +30,7 @@ const services = {
   '/api/notifications': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5003',
   '/api/ai':            process.env.AI_SERVICE_URL          || 'http://localhost:5009',
   '/api/doctors':       process.env.DOCTOR_SERVICE_URL      || 'http://localhost:5010',
+  '/api/hospitals':     process.env.DOCTOR_SERVICE_URL      || 'http://localhost:5010',
 };
 
 // Extract base host (strip any path suffix from the URL)

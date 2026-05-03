@@ -399,9 +399,9 @@ export default function DashboardPage() {
                     <Table sx={{ minWidth: 650 }}>
                         <TableHead sx={{ bgcolor: '#f8fafc' }}>
                             <TableRow>
-                                <TableCell>Patient</TableCell>
+                                <TableCell>Patient / ID</TableCell>
                                 <TableCell>Service / Reason</TableCell>
-                                <TableCell>Time</TableCell>
+                                <TableCell>Time / Confirmed</TableCell>
                                 <TableCell>Status</TableCell>
                             </TableRow>
                         </TableHead>
@@ -418,7 +418,7 @@ export default function DashboardPage() {
                                                 </Avatar>
                                                 <Box>
                                                     <Typography variant="body2" fontWeight={600}>{row.patientName}</Typography>
-                                                    <Typography variant="caption" color="text.secondary">{row.type || 'Clinic Visit'}</Typography>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>ID: #{row.patientId?.slice(-6) || 'N/A'}</Typography>
                                                 </Box>
                                             </Box>
                                         </TableCell>
@@ -430,7 +430,12 @@ export default function DashboardPage() {
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="body2">{row.appointmentTime}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{row.appointmentDate?.split('T')[0]}</Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>{row.appointmentDate?.split('T')[0]}</Typography>
+                                            {row.status === 'Confirmed' && (
+                                                <Typography variant="caption" display="block" sx={{ color: 'emerald.600', fontWeight: 800 }}>
+                                                    Confirmed by Admin
+                                                </Typography>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <Chip 

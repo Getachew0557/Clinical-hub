@@ -36,6 +36,11 @@ const Payment = sequelize.define('Payment', {
     rawData: {
         type: DataTypes.TEXT,
         allowNull: true
+    },
+    proofUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Path to uploaded payment receipt/proof image'
     }
 }, {
     timestamps: true

@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_NOTIFICATION_URL;
 
@@ -28,6 +28,13 @@ const notificationService = {
 
     markAllRead: async () => {
         const response = await notifyAxios.patch(`${API_URL}/read-all`, {}, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    createNotification: async (payload) => {
+        const response = await notifyAxios.post(API_URL, payload, {
             headers: getAuthHeader()
         });
         return response.data;

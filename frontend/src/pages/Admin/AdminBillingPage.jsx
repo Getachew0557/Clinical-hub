@@ -3,17 +3,16 @@ import {
     Typography, Card, CardContent, Box, Button, Chip,
     CircularProgress, Alert, TextField, InputAdornment,
     Tabs, Tab, Table, TableBody, TableCell, TableContainer,
-    TableHead, TableRow, Paper, TablePagination, Grid
+    TableHead, TableRow, Paper, TablePagination, Grid,
+    Dialog, DialogTitle, DialogContent, DialogActions, IconButton
 } from '@mui/material';
-import { Receipt, Search, Download, CreditCard, TrendingUp, Clock, AlertCircle } from 'lucide-react';
+import { 
+    Receipt, Search, Download, CreditCard, TrendingUp, Clock, 
+    AlertCircle, Eye, Check, XCircle, X, ExternalLink
+} from 'lucide-react';
 import { useSelector } from 'react-redux';
-
-// Use billing API directly
-const API_BASE = import.meta.env.VITE_API_BILLING_URL;
-const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import billingService from '../../api/billing.service.js';
+import { getBillingProofUrl } from '../../utils/cn';
 
 const STATUS_COLORS = {
     Paid:      { bg: '#f0fdf4', text: '#15803d', chip: 'success' },
@@ -30,20 +29,50 @@ export default function AdminBillingPage() {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [selectedPayment, setSelectedPayment] = useState(null);
+    const [proofDialogOpen, setProofDialogOpen] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => { fetchInvoices(); }, []);
 
     const fetchInvoices = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_BASE}/invoices`, { headers: getAuthHeader() });
-            const data = await res.json();
+            const data = await billingService.getAllInvoices();
             setInvoices(Array.isArray(data) ? data : []);
             setError(null);
         } catch (err) {
             setError('Failed to load invoices.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleApprove = async (paymentId) => {
+        try {
+            setActionLoading(true);
+            await billingService.approvePayment(paymentId);
+            setProofDialogOpen(false);
+            fetchInvoices();
+        } catch (err) {
+            alert('Approval failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleReject = async (paymentId) => {
+        const reason = window.prompt('Reason for rejection:');
+        if (reason === null) return;
+        try {
+            setActionLoading(true);
+            await billingService.rejectPayment(paymentId, reason);
+            setProofDialogOpen(false);
+            fetchInvoices();
+        } catch (err) {
+            alert('Rejection failed');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -168,7 +197,7 @@ export default function AdminBillingPage() {
                                     <Table size="small">
                                         <TableHead>
                                             <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                                {['Invoice ID', 'Patient ID', 'Description', 'Amount (ETB)', 'Due Date', 'Status', 'Created'].map(h => (
+                                                {['Invoice ID', 'Patient ID', 'Description', 'Amount (ETB)', 'Status', 'Payments', 'Actions'].map(h => (
                                                     <TableCell key={h} sx={{ fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b', py: 1.5, px: 2 }}>
                                                         {h}
                                                     </TableCell>
@@ -213,9 +242,42 @@ export default function AdminBillingPage() {
                                                         />
                                                     </TableCell>
                                                     <TableCell sx={{ px: 2 }}>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {new Date(inv.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                        </Typography>
+                                                        <Box className="flex flex-col gap-1">
+                                                            {(inv.payments || []).map(p => (
+                                                                <Chip 
+                                                                    key={p.id}
+                                                                    label={p.status}
+                                                                    size="extraSmall"
+                                                                    onClick={p.proofUrl ? () => { setSelectedPayment(p); setProofDialogOpen(true); } : undefined}
+                                                                    sx={{ 
+                                                                        fontSize: '0.65rem', 
+                                                                        height: 18, 
+                                                                        cursor: p.proofUrl ? 'pointer' : 'default',
+                                                                        bgcolor: p.status === 'Pending' ? '#fffbeb' : p.status === 'Success' ? '#f0fdf4' : '#fef2f2'
+                                                                    }}
+                                                                />
+                                                            ))}
+                                                            {(inv.payments || []).length === 0 && <Typography variant="caption" color="text.secondary">None</Typography>}
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell sx={{ px: 2 }}>
+                                                        <div className="flex items-center gap-1">
+                                                            {inv.payments?.some(p => p.status === 'Pending') && (
+                                                                <Button 
+                                                                    size="small" 
+                                                                    variant="contained" 
+                                                                    color="warning"
+                                                                    onClick={() => { 
+                                                                        const p = inv.payments.find(x => x.status === 'Pending');
+                                                                        setSelectedPayment(p);
+                                                                        setProofDialogOpen(true);
+                                                                    }}
+                                                                    sx={{ fontSize: '0.65rem', fontWeight: 800, borderRadius: 1.5, py: 0.25 }}
+                                                                >
+                                                                    Review
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -244,6 +306,91 @@ export default function AdminBillingPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Proof Review Dialog */}
+            <Dialog 
+                open={proofDialogOpen} 
+                onClose={() => setProofDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 4 } }}
+            >
+                <DialogTitle className="flex justify-between items-center">
+                    <Typography variant="h6" fontWeight={800}>Payment Verification</Typography>
+                    <IconButton onClick={() => setProofDialogOpen(false)}><X size={20} /></IconButton>
+                </DialogTitle>
+                <DialogContent dividers>
+                    {selectedPayment ? (
+                        <Box className="space-y-4">
+                            <Box className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                <div>
+                                    <Typography variant="caption" color="text.secondary" display="block">Amount</Typography>
+                                    <Typography variant="h6" fontWeight={800} color="teal.700">ETB {parseFloat(selectedPayment.amount).toLocaleString()}</Typography>
+                                </div>
+                                <Chip label={selectedPayment.status} color={selectedPayment.status === 'Success' ? 'success' : 'warning'} size="small" sx={{ fontWeight: 800 }} />
+                            </Box>
+
+                            <div>
+                                <Typography variant="subtitle2" fontWeight={700} gutterBottom className="flex items-center gap-2">
+                                    <Eye size={16} /> Payment Proof / Receipt
+                                </Typography>
+                                <Box sx={{ 
+                                    width: '100%', 
+                                    minHeight: 200, 
+                                    bgcolor: '#f8fafc', 
+                                    borderRadius: 3, 
+                                    overflow: 'hidden',
+                                    border: '1px solid #e2e8f0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <img 
+                                        src={getBillingProofUrl(selectedPayment.proofUrl)} 
+                                        alt="Proof of Payment" 
+                                        style={{ maxWidth: '100%', maxHeight: 400, objectFit: 'contain' }}
+                                        onError={(e) => { e.target.src = 'https://via.placeholder.com/400?text=Image+Not+Found'; }}
+                                    />
+                                </Box>
+                            </div>
+
+                            <Box className="flex items-center gap-2 text-slate-500">
+                                <Clock size={14} />
+                                <Typography variant="caption">Submitted on {new Date(selectedPayment.createdAt).toLocaleString()}</Typography>
+                            </Box>
+                        </Box>
+                    ) : (
+                        <Typography variant="body2" color="text.secondary">No payment selected</Typography>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button onClick={() => setProofDialogOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>Close</Button>
+                    {selectedPayment?.status === 'Pending' && (
+                        <>
+                            <Button 
+                                variant="outlined" 
+                                color="error" 
+                                startIcon={<XCircle size={18} />}
+                                onClick={() => handleReject(selectedPayment.id)}
+                                disabled={actionLoading}
+                                sx={{ borderRadius: 2, px: 3 }}
+                            >
+                                Reject
+                            </Button>
+                            <Button 
+                                variant="contained" 
+                                color="success" 
+                                startIcon={<Check size={18} />}
+                                onClick={() => handleApprove(selectedPayment.id)}
+                                disabled={actionLoading}
+                                sx={{ borderRadius: 2, px: 3, bgcolor: '#059669' }}
+                            >
+                                {actionLoading ? <CircularProgress size={20} color="inherit" /> : 'Approve Payment'}
+                            </Button>
+                        </>
+                    )}
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

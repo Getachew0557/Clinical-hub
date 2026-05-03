@@ -42,6 +42,7 @@ import AuditLogPage from './pages/Admin/AuditLogPage';
 import BroadcastPage from './pages/Admin/BroadcastPage';
 import PrescriptionsPage from './pages/Doctor/PrescriptionsPage';
 import UserManagementPage from './pages/Admin/UserManagementPage';
+import HospitalListPage from './pages/Hospital/HospitalListPage';
 import FindDoctorPage from './pages/Patient/FindDoctorPage';
 import appointmentService from './api/appointment.service';
 import { Card, CardContent, CircularProgress, Box, Typography, Button, Chip } from '@mui/material';
@@ -419,6 +420,7 @@ const App = () => (
           <Route path="/prescriptions" element={<RoleGuard allowedRoles={['Doctor']}><PrescriptionsPage /></RoleGuard>} />
           <Route path="/user-management" element={<RoleGuard allowedRoles={['Admin']}><UserManagementPage /></RoleGuard>} />
           <Route path="/receptionists" element={<RoleGuard allowedRoles={['Admin']}><ReceptionistListPage /></RoleGuard>} />
+          <Route path="/hospitals" element={<RoleGuard allowedRoles={['Admin','Receptionist']}><HospitalListPage /></RoleGuard>} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/book/:doctorId" element={<BookingPage />} />

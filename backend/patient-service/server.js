@@ -65,6 +65,10 @@ const connectDB = async () => {
     await sequelize.query('ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "rawData" TEXT NULL;').catch(() => {});
     console.log('Added column: Payments.rawData');
   }
+  if (!payCols.proofUrl) {
+    await sequelize.query('ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "proofUrl" VARCHAR(255) NULL;').catch(() => {});
+    console.log('Added column: Payments.proofUrl');
+  }
 
   connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
   subscribeToEvent('patient_service_registration', 'user.registered', handleUserRegistered);

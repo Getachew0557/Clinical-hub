@@ -252,5 +252,9 @@
   "sidebar.broadcast": "Broadcast",
   "sidebar.prescriptions": "Prescriptions",
   "sidebar.userManagement": "User Management",
-  "sidebar.findDoctor": "Find a Doctor"
+  "sidebar.findDoctor": "Find a Doctor",
+  "sidebar.hospitals": "Hospitals",
+  "nav.hospitals": "Hospitals",
+  "hospitals.network": "Our Hospital Network",
+  "hospitals.networkDesc": "World-class care across our specialized clinical sites."
 }
