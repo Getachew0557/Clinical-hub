@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import patientService from '../../api/patient.service';
 import { useSelector } from 'react-redux';
+import { getPatientPhotoUrl } from '../../utils/cn';
+
 
 export default function EditPatientModal({ open, onClose, onSuccess, patient }) {
     const { user } = useSelector((s) => s.auth);
@@ -20,6 +22,8 @@ export default function EditPatientModal({ open, onClose, onSuccess, patient }) 
     const isPatient = role === 'Patient';
 
     const [loading, setLoading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -45,8 +49,18 @@ export default function EditPatientModal({ open, onClose, onSuccess, patient }) 
                 allergies: patient.allergies || '',
                 emergencyContact: patient.emergencyContact || ''
             });
+            setPreviewUrl(patient.profilePhoto || null);
+            setSelectedFile(null);
         }
     }, [open, patient]);
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -57,7 +71,18 @@ export default function EditPatientModal({ open, onClose, onSuccess, patient }) 
         e.preventDefault();
         setLoading(true);
         try {
-            await patientService.updatePatient(patient.id, formData);
+            let dataToSend = formData;
+            
+            // If there's a file or we need to send multipart
+            if (selectedFile) {
+                dataToSend = new FormData();
+                Object.keys(formData).forEach(key => {
+                    dataToSend.append(key, formData[key]);
+                });
+                dataToSend.append('profilePhoto', selectedFile);
+            }
+
+            await patientService.updatePatient(patient.id, dataToSend);
             alert('Profile updated successfully!');
             onSuccess();
             onClose();
@@ -106,21 +131,33 @@ export default function EditPatientModal({ open, onClose, onSuccess, patient }) 
                             <Grid item xs={12} className="flex justify-center mb-4">
                                 <Box sx={{ position: 'relative' }}>
                                     <Avatar
-                                        src={patient?.profilePhoto}
+                                        src={previewUrl ? (previewUrl.startsWith('blob:') ? previewUrl : getPatientPhotoUrl(previewUrl)) : undefined}
                                         sx={{ width: 100, height: 100, borderRadius: 4, bgcolor: '#eff6ff', color: '#3b82f6' }}
                                     >
                                         <UserCircle size={64} />
                                     </Avatar>
                                     {canEdit && (
-                                        <IconButton
-                                            size="small"
-                                            sx={{
-                                                position: 'absolute', bottom: -10, right: -10,
-                                                bgcolor: 'white', boxShadow: 1, '&:hover': { bgcolor: '#f1f5f9' }
-                                            }}
-                                        >
-                                            <Upload size={16} className="text-blue-600" />
-                                        </IconButton>
+                                        <>
+                                            <input
+                                                accept="image/*"
+                                                style={{ display: 'none' }}
+                                                id="icon-button-file"
+                                                type="file"
+                                                onChange={handleFileChange}
+                                            />
+                                            <label htmlFor="icon-button-file">
+                                                <IconButton
+                                                    size="small"
+                                                    component="span"
+                                                    sx={{
+                                                        position: 'absolute', bottom: -10, right: -10,
+                                                        bgcolor: 'white', boxShadow: 1, '&:hover': { bgcolor: '#f1f5f9' }
+                                                    }}
+                                                >
+                                                    <Upload size={16} className="text-blue-600" />
+                                                </IconButton>
+                                            </label>
+                                        </>
                                     )}
                                 </Box>
                             </Grid>

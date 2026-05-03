@@ -15,7 +15,8 @@ import LanguageSwitcher from '../common/LanguageSwitcher';
 import GlobalSearch from '../common/GlobalSearch';
 import doctorService from '../../api/doctor.service';
 import patientService from '../../api/patient.service';
-import { getDoctorPhotoUrl, getAuthPhotoUrl } from '../../utils/cn';
+import { getDoctorPhotoUrl, getAuthPhotoUrl, getPatientPhotoUrl } from '../../utils/cn';
+
 
 export default function TopBar({ onMenuClick }) {
     const { user } = useSelector((s) => s.auth);
@@ -51,7 +52,9 @@ export default function TopBar({ onMenuClick }) {
             patientService.getMyProfile()
                 .then(data => {
                     const p = data?.patient || data;
-                    if (p?.profilePhoto) setProfilePhoto(p.profilePhoto);
+                    if (p?.profilePhoto) {
+                        setProfilePhoto(getPatientPhotoUrl(p.profilePhoto));
+                    }
                 })
                 .catch(() => {});
         }

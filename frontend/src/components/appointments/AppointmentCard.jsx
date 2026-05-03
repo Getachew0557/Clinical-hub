@@ -73,17 +73,21 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-teal-300 hover:shadow-md transition-all duration-200">
 
       {/* ── Top strip: name + badge ── */}
-      <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
+      <div 
+        onClick={() => navigate(`/appointments/${id}`)}
+        className="px-4 pt-4 pb-3 flex items-start justify-between gap-2 cursor-pointer group/header"
+      >
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
             {isVideo && <Video size={13} className="text-indigo-500 shrink-0" />}
-            <span className="font-semibold text-slate-800 text-sm truncate">
+            <span className="font-semibold text-slate-800 text-sm truncate group-hover/header:text-teal-600 transition-colors">
               {displayName || <span className="text-slate-400 italic">Loading...</span>}
             </span>
           </div>
           {/* Short ID + phone on one line */}
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">PID:</span>
+            <span className="text-[11px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
               {shortId(patientId || id)}
             </span>
             {phone && (
@@ -127,17 +131,20 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
 
         {/* Confirmed by / confirmed at — shown for Confirmed, In Progress, Completed */}
         {['Confirmed', 'In Progress', 'Completed'].includes(status) && appointment.confirmedAt && (
-          <div className="flex items-center gap-1.5 mt-1 px-2 py-1.5 bg-blue-50 rounded-lg border border-blue-100">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-500 shrink-0"><path d="M20 6 9 17l-5-5"/></svg>
+          <div className="flex items-center gap-1.5 mt-1 px-2.5 py-1.5 bg-blue-50/80 rounded-lg border border-blue-100/50">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-blue-500 shrink-0"><path d="M20 6 9 17l-5-5"/></svg>
             <div className="flex flex-col min-w-0">
-              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">Confirmed</span>
-              <span className="text-[11px] text-blue-700 font-medium truncate">
-                {appointment.confirmedByName || 'Staff'}
-                <span className="text-blue-400 font-normal ml-1">
-                  · {new Date(appointment.confirmedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  {' '}
-                  {new Date(appointment.confirmedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider">Confirmed</span>
+                <span className="text-[9px] font-bold text-blue-400">
+                  {new Date(appointment.confirmedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
+              </div>
+              <span className="text-[11px] text-blue-800 font-bold truncate mt-0.5">
+                By: {appointment.confirmedByName || 'Staff'}
+              </span>
+              <span className="text-[9px] text-blue-500 font-medium">
+                On: {new Date(appointment.confirmedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
             </div>
           </div>

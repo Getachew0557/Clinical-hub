@@ -339,18 +339,44 @@ export default function ReportsPage() {
                 {/* KPI Section */}
                 <Grid container spacing={3} sx={{ mb: 8 }}>
                     {[
-                        { label: 'Total Visits', value: stats.appointments.total, color: '#2563eb', icon: <Users size={20} /> },
-                        { label: 'Patient Headcount', value: stats.demographics.totalPatients, color: '#059669', icon: <Users size={20} /> },
-                        { label: 'Asset Inventory', value: stats.inventory.totalItems, color: '#d97706', icon: <Package size={20} /> },
-                        { label: 'Low Stock Risks', value: stats.inventory.lowStockItems, color: '#dc2626', icon: <AlertCircle size={20} /> }
+                        { label: 'Total Visits', value: stats.appointments.total, color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', icon: <Users size={24} strokeWidth={2} /> },
+                        { label: 'Patient Headcount', value: stats.demographics.totalPatients, color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0', icon: <UserCheck size={24} strokeWidth={2} /> },
+                        { label: 'Asset Inventory', value: stats.inventory.totalItems, color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', icon: <Package size={24} strokeWidth={2} /> },
+                        { label: 'Low Stock Risks', value: stats.inventory.lowStockItems, color: '#ef4444', bg: '#fef2f2', border: '#fecaca', icon: <AlertCircle size={24} strokeWidth={2} /> }
                     ].map((kpi, idx) => (
                         <Grid item xs={12} sm={6} md={3} key={idx}>
-                            <Box sx={{ p: 4, borderRadius: 5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', height: '100%' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, color: kpi.color }}>
-                                    {kpi.icon}
-                                    <Typography variant="overline" sx={{ fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>{kpi.label}</Typography>
+                            <Box sx={{ 
+                                p: 4, 
+                                borderRadius: 5, 
+                                bgcolor: '#ffffff', 
+                                border: '1px solid #e2e8f0', 
+                                height: '100%',
+                                boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                transition: 'transform 0.2s',
+                                '&:hover': { transform: 'translateY(-4px)' }
+                            }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                                    <Box sx={{ 
+                                        width: 48, height: 48, 
+                                        borderRadius: 3, 
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        bgcolor: kpi.bg, color: kpi.color, border: `1px solid ${kpi.border}` 
+                                    }}>
+                                        {kpi.icon}
+                                    </Box>
+                                    <Activity size={18} color="#cbd5e1" />
                                 </Box>
-                                <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>{kpi.value.toLocaleString()}</Typography>
+                                <Box>
+                                    <Typography variant="h3" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>
+                                        {kpi.value.toLocaleString()}
+                                    </Typography>
+                                    <Typography variant="overline" sx={{ fontWeight: 800, color: '#64748b', letterSpacing: '0.05em', mt: 0.5, display: 'block' }}>
+                                        {kpi.label}
+                                    </Typography>
+                                </Box>
                             </Box>
                         </Grid>
                     ))}
@@ -361,20 +387,20 @@ export default function ReportsPage() {
                     <Grid container spacing={5}>
                         <Grid item xs={12} lg={8}>
                             <Box sx={{ mb: 6 }}>
-                                <Typography variant="subtitle1" sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                    <TrendingUp size={20} className="text-blue-600" />
+                                <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5, color: '#0f172a' }}>
+                                    <TrendingUp size={22} className="text-blue-600" />
                                     Operational Trajectory & Revenue Volume
                                 </Typography>
-                                <Box sx={{ height: 400 }}>
+                                <Box sx={{ height: 400, p: 3, borderRadius: 5, bgcolor: '#ffffff', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={financialData} margin={{ left: 10, right: 10 }}>
+                                        <LineChart data={financialData} margin={{ left: 10, right: 10, top: 10, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} />
-                                            <Tooltip contentStyle={{ borderRadius: 16, border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }} />
-                                            <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: 20 }} />
-                                            <Line type="monotone" dataKey="revenue" name="Total Revenue ($)" stroke="#2563eb" strokeWidth={5} dot={{ r: 6, fill: '#2563eb' }} activeDot={{ r: 8 }} />
-                                            <Line type="monotone" dataKey="expenses" name="Operational Cost ($)" stroke="#94a3b8" strokeWidth={2} strokeDasharray="6 6" dot={false} />
+                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }} dx={-10} />
+                                            <Tooltip contentStyle={{ borderRadius: 16, border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)', padding: '12px 16px' }} cursor={{ stroke: '#e2e8f0', strokeWidth: 2, strokeDasharray: '4 4' }} />
+                                            <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: 20 }} iconType="circle" />
+                                            <Line type="monotone" dataKey="revenue" name="Total Revenue ($)" stroke="#2563eb" strokeWidth={4} dot={{ r: 5, fill: '#2563eb', strokeWidth: 3, stroke: '#ffffff' }} activeDot={{ r: 8, strokeWidth: 0 }} />
+                                            <Line type="monotone" dataKey="expenses" name="Operational Cost ($)" stroke="#cbd5e1" strokeWidth={3} strokeDasharray="6 6" dot={{ r: 4, fill: '#cbd5e1', strokeWidth: 2, stroke: '#ffffff' }} activeDot={{ r: 6 }} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </Box>
@@ -383,23 +409,24 @@ export default function ReportsPage() {
                             <Divider sx={{ my: 6, borderStyle: 'dashed' }} />
 
                             <Box>
-                                <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                    <Calendar size={20} className="text-indigo-600" />
+                                <Typography variant="subtitle1" fontWeight={800} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5, color: '#0f172a' }}>
+                                    <Calendar size={22} className="text-indigo-600" />
                                     Temporal Attendance Patterns
                                 </Typography>
-                                <Box sx={{ height: 320 }}>
+                                <Box sx={{ height: 320, p: 3, borderRadius: 5, bgcolor: '#ffffff', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={stats.appointments.monthlyTrend} margin={{ left: 10, right: 10 }}>
+                                        <AreaChart data={stats.appointments.monthlyTrend?.length > 1 ? stats.appointments.monthlyTrend : [...(stats.appointments.monthlyTrend || []), { month: 'Present', count: 0 }]} margin={{ left: 10, right: 10, top: 10, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="gradVisits" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2} />
+                                                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
                                                     <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} />
-                                            <YAxis hide />
-                                            <Tooltip />
-                                            <Area type="monotone" dataKey="count" name="Patient Volume" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#gradVisits)" />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
+                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }} dx={-10} />
+                                            <Tooltip contentStyle={{ borderRadius: 16, border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }} />
+                                            <Area type="monotone" dataKey="count" name="Patient Volume" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#gradVisits)" activeDot={{ r: 8, strokeWidth: 0 }} />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </Box>
@@ -409,44 +436,45 @@ export default function ReportsPage() {
                         <Grid item xs={12} lg={4}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 {/* Distribution Charts */}
-                                <Box sx={{ p: 4, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                                    <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, opacity: 0.6, letterSpacing: '0.1em' }}>Demographic Distribution</Typography>
+                                <Box sx={{ p: 4, borderRadius: 5, bgcolor: '#ffffff', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
+                                    <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, color: '#64748b', letterSpacing: '0.1em' }}>Demographic Distribution</Typography>
                                     <Box sx={{ height: 260 }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
-                                                <Pie data={ageData} innerRadius={65} outerRadius={90} paddingAngle={4} dataKey="value">
-                                                    {ageData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                                <Pie data={ageData.length ? ageData : [{name: 'No Data', value: 1}]} innerRadius={65} outerRadius={90} paddingAngle={4} dataKey="value" stroke="none">
+                                                    {(ageData.length ? ageData : [{name: 'No Data', value: 1}]).map((_, i) => <Cell key={i} fill={ageData.length ? COLORS[i % COLORS.length] : '#f1f5f9'} />)}
                                                 </Pie>
-                                                <Tooltip />
+                                                <Tooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </Box>
                                     <Box sx={{ mt: 3, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                                         {ageData.map((item, i) => (
-                                            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length] }} />
-                                                <Typography variant="caption" fontWeight={700} color="#475569">{item.name}</Typography>
+                                            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1, borderRadius: 2, '&:hover': { bgcolor: '#f8fafc' } }}>
+                                                <Box sx={{ width: 12, height: 12, borderRadius: 1, bgcolor: COLORS[i % COLORS.length] }} />
+                                                <Typography variant="caption" fontWeight={700} color="#334155">{item.name}</Typography>
                                             </Box>
                                         ))}
                                     </Box>
                                 </Box>
 
-                                <Box sx={{ p: 4, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                                    <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, opacity: 0.6, letterSpacing: '0.1em' }}>Success Rate Matrix</Typography>
+                                <Box sx={{ p: 4, borderRadius: 5, bgcolor: '#ffffff', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
+                                    <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, color: '#64748b', letterSpacing: '0.1em' }}>Success Rate Matrix</Typography>
                                     <Box sx={{ height: 220 }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={statusData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f8fafc" />
                                                 <XAxis type="number" hide />
-                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={90} tick={{ fontSize: 12, fontWeight: 700 }} />
-                                                <Tooltip />
-                                                <Bar dataKey="value" name="Occurrences" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={24} />
+                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={90} tick={{ fontSize: 13, fontWeight: 700, fill: '#475569' }} />
+                                                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                                                <Bar dataKey="value" name="Occurrences" fill="#3b82f6" radius={[0, 8, 8, 0]} barSize={20} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </Box>
                                 </Box>
 
-                                <Box sx={{ p: 4, borderRadius: 3, bgcolor: '#fff7ed', border: '1px solid #ffedd5' }}>
-                                    <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, opacity: 0.6, letterSpacing: '0.1em', color: '#9a3412' }}>Supply Chain Allocation</Typography>
+                                <Box sx={{ p: 4, borderRadius: 5, bgcolor: '#fff7ed', boxShadow: '0 10px 40px -10px rgba(234,88,12,0.1)', border: '1px solid #fed7aa' }}>
+                                    <Typography variant="subtitle2" fontWeight={800} className="uppercase" sx={{ mb: 3, letterSpacing: '0.1em', color: '#c2410c' }}>Supply Chain Allocation</Typography>
                                     <Box sx={{ height: 180 }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={inventoryData} margin={{ top: 10 }}>

@@ -4,13 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
     Users, CalendarDays, Receipt, TrendingUp, Clock, AlertTriangle,
-    Activity, BarChart2, Stethoscope, BadgeCheck, Zap, ArrowRight,
+    Activity, BarChart2, Stethoscope, BadgeCheck, Zap, ArrowRight, Download, Printer, FileText, FileSpreadsheet
 } from 'lucide-react';
 import {
     Card, CardContent, Typography, Chip, Avatar, CircularProgress, Box,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Button,
+    Button, Menu, MenuItem, ListItemIcon, ListItemText
 } from '@mui/material';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend,
@@ -53,6 +56,7 @@ export default function DashboardPage() {
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState([]);
+    const [exportAnchorEl, setExportAnchorEl] = useState(null);
     const [appointments, setAppointments] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
     const [revenueData, setRevenueData] = useState([]);
@@ -139,6 +143,60 @@ export default function DashboardPage() {
         );
     }
 
+    const handleExportOpen = (event) => setExportAnchorEl(event.currentTarget);
+    const handleExportClose = () => setExportAnchorEl(null);
+
+    const exportToPDF = async () => {
+        handleExportClose();
+        const dashboardElement = document.getElementById('dashboard-content');
+        if (!dashboardElement) return;
+
+        try {
+            const canvas = await html2canvas(dashboardElement, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save('Clinical_Dashboard_Report.pdf');
+        } catch (error) {
+            console.error('PDF Export Error:', error);
+        }
+    };
+
+    const exportToExcel = () => {
+        handleExportClose();
+        // Create simple worksheets
+        const wb = XLSX.utils.book_new();
+        
+        // Stats Sheet
+        const statsData = stats.map(s => ({ Metric: s.title, Value: s.value, Trend: s.change }));
+        const wsStats = XLSX.utils.json_to_sheet(statsData);
+        XLSX.utils.book_append_sheet(wb, wsStats, "Key Metrics");
+
+        // Appointments Sheet
+        const aptData = appointments.map(a => ({
+            Patient: a.patientName,
+            Service: a.serviceType || 'Consultation',
+            Status: a.status,
+            Date: a.appointmentDate?.split('T')[0],
+            Time: a.appointmentTime
+        }));
+        const wsApt = XLSX.utils.json_to_sheet(aptData);
+        XLSX.utils.book_append_sheet(wb, wsApt, "Appointments");
+
+        // Revenue/Patient Trend Sheet
+        const wsTrends = XLSX.utils.json_to_sheet(revenueData);
+        XLSX.utils.book_append_sheet(wb, wsTrends, "Monthly Trends");
+
+        XLSX.writeFile(wb, "Clinical_Dashboard_Data.xlsx");
+    };
+
+    const handlePrint = () => {
+        handleExportClose();
+        window.print();
+    };
+
     const showAllCharts = role === 'Admin' || role === 'Receptionist';
 
     return (
@@ -154,14 +212,51 @@ export default function DashboardPage() {
                         {t('dashboard.welcome', { name: user?.fullName || 'User' })} • {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                     </Typography>
                 </Box>
-                <Chip 
-                    icon={<Zap size={14} />} 
-                    label="System Live" 
-                    color="success" 
-                    variant="outlined" 
-                    sx={{ borderRadius: 3, fontWeight: 800, py: 2 }} 
-                />
+                <Box className="flex items-center gap-3">
+                    <Chip 
+                        icon={<Zap size={14} />} 
+                        label="System Live" 
+                        color="success" 
+                        variant="outlined" 
+                        sx={{ borderRadius: 3, fontWeight: 800, py: 2, display: { xs: 'none', sm: 'flex' } }} 
+                    />
+                    {showAllCharts && (
+                        <>
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
+                                startIcon={<Download size={16} />}
+                                onClick={handleExportOpen}
+                                sx={{ borderRadius: 3, px: 3, boxShadow: 'none' }}
+                            >
+                                Export Report
+                            </Button>
+                            <Menu
+                                anchorEl={exportAnchorEl}
+                                open={Boolean(exportAnchorEl)}
+                                onClose={handleExportClose}
+                                PaperProps={{ elevation: 2, sx: { borderRadius: 3, mt: 1, minWidth: 200 } }}
+                            >
+                                <MenuItem onClick={exportToPDF}>
+                                    <ListItemIcon><FileText size={18} className="text-red-500" /></ListItemIcon>
+                                    <ListItemText primary="Export as PDF" />
+                                </MenuItem>
+                                <MenuItem onClick={exportToExcel}>
+                                    <ListItemIcon><FileSpreadsheet size={18} className="text-green-600" /></ListItemIcon>
+                                    <ListItemText primary="Export as Excel" />
+                                </MenuItem>
+                                <MenuItem onClick={handlePrint}>
+                                    <ListItemIcon><Printer size={18} className="text-slate-600" /></ListItemIcon>
+                                    <ListItemText primary="Print Dashboard" />
+                                </MenuItem>
+                            </Menu>
+                        </>
+                    )}
+                </Box>
             </Box>
+
+            <Box id="dashboard-content" className="flex flex-col gap-8">
+
 
             {/* ── Stats Cards ── */}
             <Box className={`grid gap-5 ${stats.length >= 4 ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}`}>
@@ -371,7 +466,8 @@ export default function DashboardPage() {
                     </Table>
                 </TableContainer>
             </Card>
+            </Box>
         </Box>
-    </Box>
+        </Box>
     );
 }

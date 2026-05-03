@@ -17,6 +17,7 @@ import DashboardPage from './pages/DashboardPage';
 import DoctorListPage from './pages/Doctor/DoctorListPage';
 import DoctorProfilePage from './pages/Doctor/DoctorProfilePage';
 import AppointmentListPage from './pages/Appointment/AppointmentListPage';
+import AppointmentDetailPage from './pages/Appointment/AppointmentDetailPage';
 import PatientListPage from './pages/Patient/PatientListPage';
 import InventoryListPage from './pages/Inventory/InventoryListPage';
 import BillingPage from './pages/BillingPage';
@@ -407,6 +408,7 @@ const App = () => (
           <Route path="/find-doctor" element={<FindDoctorPage />} />
           <Route path="/appointments" element={<StatusDashboard />} />
           <Route path="/patients" element={<PatientListPage />} />
+          <Route path="/appointments/:id" element={<AppointmentDetailPage />} />
           <Route path="/emr" element={<RoleGuard allowedRoles={['Admin','Doctor','Patient']}><PatientEMRPage /></RoleGuard>} />
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/inventory" element={<RoleGuard allowedRoles={['Admin','Receptionist']}><InventoryListPage /></RoleGuard>} />

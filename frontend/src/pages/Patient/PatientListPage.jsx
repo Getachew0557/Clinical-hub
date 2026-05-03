@@ -17,6 +17,7 @@ import AddPatientModal from '../../components/patients/AddPatientModal';
 import EditPatientModal from '../../components/patients/EditPatientModal';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { getPatientPhotoUrl } from '../../utils/cn';
 
 export default function PatientListPage() {
     const navigate = useNavigate();
@@ -89,22 +90,48 @@ export default function PatientListPage() {
             } else {
                 const data = await patientService.getAllPatients();
                 patientData = data.patients || [];
+            }
 
-                // Also pull Patient-role users from auth-service who may not have a profile yet
-                // (self-registered patients before the event bus fix)
+            // DEDUPLICATE: Prevent same patient appearing twice (e.g. from server bugs or mixed sources)
+            const seenKeys = new Set();
+            patientData = patientData.filter(p => {
+                const key = String(p.userId || p.id).toLowerCase();
+                const emailKey = p.email?.toLowerCase();
+                if (seenKeys.has(key) || (emailKey && seenKeys.has(emailKey))) return false;
+                seenKeys.add(key);
+                if (emailKey) seenKeys.add(emailKey);
+                return true;
+            });
+
+            // Also pull Patient-role users from auth-service who may not have a profile yet
+            if (isStaff) {
                 try {
                     const authData = await import('../../api/auth.service.js').then(m => m.default.getAllUsers());
                     const authPatients = (Array.isArray(authData) ? authData : [])
                         .filter(u => u.role === 'Patient');
-                    // Merge: add auth users that don't already have a patient profile
-                    // Check both userId AND email to prevent duplicates
-                    const existingUserIds = new Set(patientData.map(p => p.userId).filter(Boolean));
-                    const existingEmails  = new Set(patientData.map(p => p.email).filter(Boolean));
+                    
+                    const existingUserIds = new Set(patientData.map(p => String(p.userId || p.id).toLowerCase()));
+                    const existingEmails  = new Set(patientData.map(p => p.email?.toLowerCase()).filter(Boolean));
+                    
                     const missing = authPatients
-                        .filter(u => !existingUserIds.has(u.id) && !existingEmails.has(u.email))
-                        .map(u => ({ id: u.id, userId: u.id, fullName: u.fullName, email: u.email, isActive: true }));
+                        .filter(u => {
+                            const idMatch = existingUserIds.has(String(u.id).toLowerCase());
+                            const emailMatch = u.email && existingEmails.has(u.email.toLowerCase());
+                            return !idMatch && !emailMatch;
+                        })
+                        .map(u => ({ 
+                            id: u.id, 
+                            userId: u.id, 
+                            fullName: u.fullName, 
+                            email: u.email, 
+                            phone: u.phone || '',
+                            isActive: true 
+                        }));
+                    
                     patientData = [...patientData, ...missing];
-                } catch { /* ignore */ }
+                } catch (e) { 
+                    console.warn('Auth merge failed:', e.message);
+                }
             }
 
             console.log('Fetched Patients:', patientData);
@@ -249,7 +276,7 @@ export default function PatientListPage() {
                                     <div className="p-6 flex items-start justify-between">
                                         <div className="flex items-center gap-5">
                                             <Avatar
-                                                src={pt.profilePhoto}
+                                                src={getPatientPhotoUrl(pt.profilePhoto)}
                                                 sx={{ 
                                                     width: 64, 
                                                     height: 64, 

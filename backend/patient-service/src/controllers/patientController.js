@@ -131,7 +131,13 @@ export const getPatientById = async (req, res) => {
  */
 export const updatePatientProfile = async (req, res) => {
     try {
-        const patient = await PatientProfile.findByPk(req.params.id);
+        let patient = await PatientProfile.findByPk(req.params.id);
+        
+        // Fallback: If not found by primary key, try userId
+        if (!patient) {
+            patient = await PatientProfile.findOne({ where: { userId: req.params.id } });
+        }
+
         if (!patient) return res.status(404).json({ message: 'Patient not found' });
 
         // Authorization: Admin can edit anything. Patient can only edit their own.

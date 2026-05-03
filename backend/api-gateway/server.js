@@ -85,11 +85,28 @@ const socketProxy = createProxyMiddleware({
 
 app.use('/socket.io', socketProxy);
 
-// Proxy /uploads/appt-* → appointment-service (attachment files)
+const AUTH_BASE_URL = (process.env.AUTH_SERVICE_URL || 'http://localhost:5001').replace(/\/api\/auth.*$/, '');
+const PATIENT_BASE_URL = (process.env.PATIENT_SERVICE_URL || 'http://localhost:5002').replace(/\/api\/patients.*$/, '');
+const DOCTOR_BASE_URL = (process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010').replace(/\/api\/doctors.*$/, '');
+
 app.use('/uploads', createProxyMiddleware({
-  target: APPT_BASE_URL,
+  target: APPT_BASE_URL, // Fallback
   changeOrigin: true,
   proxyTimeout: 30000,
+  pathRewrite: (_path, req) => req.originalUrl,
+  router: (req) => {
+      const url = req.originalUrl || req.url;
+      if (url.includes('/profile-') || url.includes('/auth-')) {
+          return AUTH_BASE_URL;
+      }
+      if (url.includes('/emr-') || url.includes('/patient-')) {
+          return PATIENT_BASE_URL;
+      }
+      if (url.includes('/doctor-')) {
+          return DOCTOR_BASE_URL;
+      }
+      return APPT_BASE_URL;
+  }
 }));
 
 // Health check

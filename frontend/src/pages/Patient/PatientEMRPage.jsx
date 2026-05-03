@@ -324,7 +324,7 @@ export default function PatientEMRPage() {
                     >
                         Print History
                     </Button>
-                    {isDoctor && patient && (
+                    {(isDoctor || isAdmin) && patient && (
                         <Button
                             variant="contained"
                             startIcon={<Plus size={18} />}
@@ -529,10 +529,20 @@ export default function PatientEMRPage() {
                                         </Card>
                                     ))
                                 ) : (
-                                    <Box className="py-20 flex flex-col items-center justify-center gap-4 text-slate-300 border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                                    <Box className="py-20 flex flex-col items-center justify-center gap-4 text-slate-300 border-2 border-dashed border-slate-200 rounded-[2.5rem]">
                                         <FileText size={64} strokeWidth={1} />
-                                        <Typography variant="h6" fontWeight={700}>No records found</Typography>
-                                        <Typography variant="body2">Add a new record to start the health history.</Typography>
+                                        <Typography variant="h6" fontWeight={700} sx={{ color: 'slate.500' }}>No records found</Typography>
+                                        <Typography variant="body2" sx={{ color: 'slate.400' }}>Add a new record to start the health history.</Typography>
+                                        {(isDoctor || isAdmin) && (
+                                            <Button 
+                                                variant="outlined" 
+                                                startIcon={<Plus size={16}/>} 
+                                                onClick={() => handleOpenModal()} 
+                                                sx={{ mt: 2, borderRadius: 3, borderWidth: 2, '&:hover': { borderWidth: 2 } }}
+                                            >
+                                                Create First Record
+                                            </Button>
+                                        )}
                                     </Box>
                                 )}
                             </Box>

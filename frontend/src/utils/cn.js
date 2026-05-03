@@ -33,6 +33,18 @@ export function getAuthPhotoUrl(profilePhoto) {
     return `${base}${clean}`;
 }
 
+export function getPatientPhotoUrl(profilePhoto) {
+    if (!profilePhoto) return null;
+    if (profilePhoto.startsWith('http://') || profilePhoto.startsWith('https://')) {
+        return profilePhoto;
+    }
+    const base =
+        import.meta.env.VITE_API_PATIENT_URL?.replace(/\/api\/patients$/, '') ||
+        'http://localhost:5002';
+    const clean = profilePhoto.startsWith('/') ? profilePhoto : `/${profilePhoto}`;
+    return `${base}${clean}`;
+}
+
 export function getAppointmentAttachmentUrl(attachmentUrl) {
     if (!attachmentUrl) return null;
     if (attachmentUrl.startsWith('http://') || attachmentUrl.startsWith('https://')) {

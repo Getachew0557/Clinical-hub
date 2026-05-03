@@ -1,4 +1,4 @@
-﻿import axios from './axiosInstance.js';
+import axios from './axiosInstance.js';
 
 const API_URL = import.meta.env.VITE_API_PATIENT_URL;
 
@@ -43,8 +43,14 @@ const patientService = {
      * Update patient
      */
     updatePatient: async (id, patientData) => {
+        const isFormData = patientData instanceof FormData;
+        const headers = { ...getAuthHeader() };
+        if (isFormData) {
+            headers['Content-Type'] = 'multipart/form-data';
+        }
+        
         const response = await axios.put(`${API_URL}/${id}`, patientData, {
-            headers: getAuthHeader()
+            headers
         });
         return response.data;
     },
