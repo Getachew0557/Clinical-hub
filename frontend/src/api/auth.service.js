@@ -88,6 +88,31 @@ const authService = {
     resetPassword: async (token, newPassword) => {
         const response = await axios.post(`${API_URL}/reset-password`, { token, newPassword });
         return response.data;
+    },
+
+    // Google OAuth — sends the ID token from Google to our backend for verification
+    googleAuth: async (idToken) => {
+        const response = await axios.post(`${API_URL}/google`, { idToken }, {
+            withCredentials: true, // receive httpOnly refresh token cookie
+        });
+        if (response.data.token) {
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        return response.data;
+    },
+
+    // GDPR — anonymize and delete account
+    deleteAccount: async (password) => {
+        const token = localStorage.getItem('token');
+        const response = await axios.delete(`${API_URL}/delete-account`, {
+            headers: { Authorization: `Bearer ${token}` },
+            data: { password },
+        });
+        // Clear local session
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return response.data;
     }
 };
 

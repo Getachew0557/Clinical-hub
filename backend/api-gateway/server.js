@@ -4,15 +4,43 @@ dotenv.config();
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const app = express();
 
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow images from other origins
+  contentSecurityPolicy: false, // managed by frontend
+}));
+
+// Rate limiting — global: 200 req/min per IP
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please slow down.' },
+});
+app.use(globalLimiter);
+
+const ALLOWED_ORIGINS = process.env.NODE_ENV === 'production'
+  ? ['https://bruhtena.vercel.app', 'https://clinical-hub.onrender.com']
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'];
+
 // Allow all origins (Vercel frontend + any client)
 app.use(cors({
-  origin: '*',
+  origin: (origin, cb) => {
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
+    if (!origin) return cb(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 // Proxy configuration — merged service routing

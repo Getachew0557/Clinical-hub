@@ -1,8 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { register, reset } from "../../store/slices/authSlice";
+import { register, reset, googleLogin } from "../../store/slices/authSlice";
 import { Eye, EyeOff, Stethoscope, AlertCircle, Loader2 } from "lucide-react";
+
+// Load Google Identity Services script once
+function useGoogleScript(clientId) {
+    const [ready, setReady] = useState(false);
+    useEffect(() => {
+        if (!clientId) return;
+        if (window.google?.accounts?.id) { setReady(true); return; }
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => setReady(true);
+        document.head.appendChild(script);
+    }, [clientId]);
+    return ready;
+}
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -12,15 +28,57 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [localError, setLocalError] = useState("");
+    const [googleLoading, setGoogleLoading] = useState(false);
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { isLoading, isError, isSuccess, message, user } = useSelector(s => s.auth);
 
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const googleReady = useGoogleScript(clientId);
+
     useEffect(() => {
         if (isSuccess || user) navigate("/dashboard");
         if (isError || isSuccess) dispatch(reset());
     }, [isSuccess, user, navigate, isError, dispatch]);
+
+    const handleGoogleResponse = useCallback(async (response) => {
+        if (!response?.credential) {
+            setLocalError("Google sign-up failed. Please try again.");
+            return;
+        }
+        setGoogleLoading(true);
+        setLocalError("");
+        try {
+            await dispatch(googleLogin(response.credential)).unwrap();
+        } catch (err) {
+            setLocalError(err || "Google sign-up failed. Please try again.");
+        } finally {
+            setGoogleLoading(false);
+        }
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (!googleReady || !clientId) return;
+        window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleGoogleResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+        });
+        const container = document.getElementById('google-signup-btn');
+        if (container) {
+            window.google.accounts.id.renderButton(container, {
+                type: 'standard',
+                theme: 'outline',
+                size: 'large',
+                text: 'signup_with',
+                shape: 'rectangular',
+                logo_alignment: 'left',
+                width: container.offsetWidth || 380,
+            });
+        }
+    }, [googleReady, clientId, handleGoogleResponse]);
 
     const onChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -46,6 +104,8 @@ export default function RegisterPage() {
         }));
     };
 
+    const errorMsg = localError || (isError ? (message || "Registration failed") : "");
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-100 flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-[460px]">
@@ -66,11 +126,32 @@ export default function RegisterPage() {
                         <p className="text-sm text-slate-500 mt-0.5">Fill in your details to get started</p>
                     </div>
 
-                    {(isError || localError) && (
+                    {errorMsg && (
                         <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
                             <AlertCircle size={16} className="shrink-0" />
-                            {localError || message || "Registration failed"}
+                            {errorMsg}
                         </div>
+                    )}
+
+                    {/* Google Sign-Up */}
+                    {clientId && (
+                        <>
+                            <div className="mb-4">
+                                {googleLoading ? (
+                                    <div className="w-full flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-xl text-sm text-slate-600 bg-slate-50">
+                                        <Loader2 size={16} className="animate-spin text-teal-600" />
+                                        Signing up with Google...
+                                    </div>
+                                ) : (
+                                    <div id="google-signup-btn" className="w-full flex justify-center" />
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3 mb-5">
+                                <div className="flex-1 h-px bg-slate-200" />
+                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">or register manually</span>
+                                <div className="flex-1 h-px bg-slate-200" />
+                            </div>
+                        </>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,13 +160,13 @@ export default function RegisterPage() {
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">First Name</label>
                                 <input name="firstName" required autoComplete="given-name"
-                                    value={formData.firstName} onChange={onChange} placeholder="John"
+                                    value={formData.firstName} onChange={onChange} placeholder="Abebe"
                                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all" />
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Last Name</label>
                                 <input name="lastName" required autoComplete="family-name"
-                                    value={formData.lastName} onChange={onChange} placeholder="Doe"
+                                    value={formData.lastName} onChange={onChange} placeholder="Kebede"
                                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all" />
                             </div>
                         </div>
@@ -98,9 +179,9 @@ export default function RegisterPage() {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Phone</label>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Phone <span className="text-slate-300 normal-case font-normal">(optional)</span></label>
                             <input name="phone" type="tel" autoComplete="tel"
-                                value={formData.phone} onChange={onChange} placeholder="+1 555-0100"
+                                value={formData.phone} onChange={onChange} placeholder="+251 9XX XXX XXX"
                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all" />
                         </div>
 
@@ -130,7 +211,7 @@ export default function RegisterPage() {
                             </div>
                         </div>
 
-                        <button type="submit" disabled={isLoading}
+                        <button type="submit" disabled={isLoading || googleLoading}
                             className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-teal-600/20 disabled:opacity-60 disabled:cursor-not-allowed mt-2">
                             {isLoading ? (
                                 <span className="flex items-center justify-center gap-2">

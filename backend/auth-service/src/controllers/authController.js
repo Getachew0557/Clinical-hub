@@ -1,14 +1,18 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import axios from 'axios';
 import { publishEvent } from '../utils/eventBus.js';
 import { Op } from 'sequelize';
+import { sendPasswordResetEmail, sendWelcomeEmail } from '../utils/emailService.js';
 
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN
+        expiresIn: process.env.JWT_EXPIRES_IN || '24h'
     });
 };
+
+const generateRefreshToken = () => crypto.randomBytes(40).toString('hex');
 
 export const register = async (req, res) => {
     try {
@@ -79,6 +83,9 @@ export const register = async (req, res) => {
             }
         }
 
+        // Send welcome email (non-blocking)
+        sendWelcomeEmail(user.email, user.fullName, finalRole).catch(() => {});
+
         res.status(201).json({
             message: 'User registered successfully',
             user: {
@@ -102,6 +109,18 @@ export const login = async (req, res) => {
         if (!user || !(await user.comparePassword(password))) {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
+
+        const refreshToken = generateRefreshToken();
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        // Set refresh token as httpOnly cookie (7 days)
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
 
         res.status(200).json({
             message: 'Login successful',
@@ -229,6 +248,9 @@ export const forgotPassword = async (req, res) => {
 
         console.log(`[Auth] Password reset token for ${email}: ${token}`);
 
+        // Send email (non-blocking)
+        sendPasswordResetEmail(email, resetUrl).catch(() => {});
+
         res.status(200).json({
             message: 'If an account with that email exists, a reset link has been sent.',
             ...(isDev && { resetUrl, token }) // Only expose in dev
@@ -267,6 +289,157 @@ export const resetPassword = async (req, res) => {
 
         res.status(200).json({ message: 'Password reset successfully. You can now log in.' });
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const refreshAccessToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.cookies;
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'No refresh token provided' });
+        }
+
+        const user = await User.findOne({ where: { refreshToken } });
+        if (!user) {
+            return res.status(403).json({ message: 'Invalid refresh token' });
+        }
+
+        // Issue new access token
+        const newToken = generateToken(user.id, user.role);
+        res.status(200).json({ token: newToken });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const logout = async (req, res) => {
+    try {
+        const { refreshToken } = req.cookies;
+        if (refreshToken) {
+            // Invalidate the refresh token
+            await User.update({ refreshToken: null }, { where: { refreshToken } });
+        }
+        res.clearCookie('refreshToken');
+        res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * POST /api/auth/google
+ * Verifies a Google ID token using Google's tokeninfo CDN endpoint.
+ * If the email is verified by Google, creates or logs in the user.
+ * No extra library needed — uses Google's public HTTPS endpoint.
+ */
+export const googleAuth = async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        if (!idToken) {
+            return res.status(400).json({ message: 'Google ID token is required' });
+        }
+
+        // Verify token with Google's tokeninfo endpoint (no library needed)
+        let googlePayload;
+        try {
+            const verifyRes = await axios.get(
+                `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`,
+                { timeout: 10000 }
+            );
+            googlePayload = verifyRes.data;
+        } catch (err) {
+            console.error('[Google Auth] Token verification failed:', err.response?.data || err.message);
+            return res.status(401).json({ message: 'Invalid or expired Google token' });
+        }
+
+        // Validate the token is for our app
+        const expectedClientId = process.env.GOOGLE_CLIENT_ID;
+        if (expectedClientId && googlePayload.aud !== expectedClientId) {
+            return res.status(401).json({ message: 'Google token was not issued for this application' });
+        }
+
+        // Require email_verified = true (Google has verified this email)
+        if (googlePayload.email_verified !== 'true' && googlePayload.email_verified !== true) {
+            return res.status(400).json({ message: 'Google account email is not verified. Please verify your Google email first.' });
+        }
+
+        const { email, name, picture, sub: googleId } = googlePayload;
+        if (!email) {
+            return res.status(400).json({ message: 'Could not retrieve email from Google account' });
+        }
+
+        // Find or create user
+        let user = await User.findOne({ where: { email: email.toLowerCase() } });
+
+        if (!user) {
+            // New user — register as Patient
+            user = await User.create({
+                fullName: name || email.split('@')[0],
+                email: email.toLowerCase(),
+                password: crypto.randomBytes(32).toString('hex'), // random unguessable password
+                role: 'Patient',
+                profilePhoto: picture || null,
+                googleId,
+            });
+
+            // Create patient profile
+            const patientServiceUrl = process.env.PATIENT_SERVICE_URL;
+            if (patientServiceUrl) {
+                const baseUrl = patientServiceUrl.replace('/api/patients', '');
+                axios.post(`${baseUrl}/api/internal/events`, {
+                    routingKey: 'user.registered',
+                    data: { userId: user.id, fullName: user.fullName, email: user.email }
+                }).catch(() => {});
+            }
+
+            // Welcome email
+            sendWelcomeEmail(user.email, user.fullName, 'Patient').catch(() => {});
+
+            // Welcome notification
+            const notifyUrl = process.env.NOTIFICATION_SERVICE_URL;
+            if (notifyUrl) {
+                axios.post(notifyUrl, {
+                    userId: user.id,
+                    title: 'Welcome to Biruh Tena!',
+                    message: `Welcome, ${user.fullName}! Your patient account is ready via Google Sign-In.`,
+                    type: 'Success',
+                    link: '/dashboard'
+                }).catch(() => {});
+            }
+        } else {
+            // Existing user — update Google profile photo if not set
+            if (!user.profilePhoto && picture) {
+                user.profilePhoto = picture;
+                await user.save();
+            }
+        }
+
+        // Issue tokens
+        const refreshToken = generateRefreshToken();
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        res.status(200).json({
+            message: 'Google authentication successful',
+            user: {
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                profilePhoto: user.profilePhoto || null,
+            },
+            token: generateToken(user.id, user.role),
+        });
+    } catch (error) {
+        console.error('[Google Auth] Error:', error.message);
         res.status(500).json({ message: error.message });
     }
 };

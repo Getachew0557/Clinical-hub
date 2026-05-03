@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Lock, Shield, Save, Key, AlertCircle, CheckCircle2, Stethoscope, Phone, Clock, DollarSign, Camera, Plus, Building2 } from 'lucide-react';
+import { User, Mail, Lock, Shield, Save, Key, AlertCircle, CheckCircle2, Stethoscope, Phone, Clock, DollarSign, Camera, Plus, Building2, Trash2 } from 'lucide-react';
 import { Typography, Button, Card, CardContent, TextField, Grid, Avatar, Alert, CircularProgress, Box, IconButton, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import authService from '../../api/auth.service';
 import doctorService from '../../api/doctor.service';
 import hospitalService from '../../api/hospital.service';
 import { getDoctorPhotoUrl, getAuthPhotoUrl } from '../../utils/cn';
-import { updateUser } from '../../store/slices/authSlice';
+import { updateUser, logout } from '../../store/slices/authSlice';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 export default function ProfilePage() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { user } = useSelector((s) => s.auth);
     const isDoctor = user?.role === 'Doctor';
 
@@ -20,6 +22,9 @@ export default function ProfilePage() {
     const [doctorLoading, setDoctorLoading] = useState(false);
     const [hospitals, setHospitals] = useState([]);
     const [hospitalSelectionOpen, setHospitalSelectionOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
     const [doctorProfile, setDoctorProfile] = useState(null);
@@ -133,7 +138,6 @@ export default function ProfilePage() {
             const formData = new FormData();
             formData.append('profilePhoto', file);
             const result = await authService.updateMe(formData);
-            // Update Redux + localStorage so avatar refreshes immediately without reload
             if (result?.user?.profilePhoto) {
                 dispatch(updateUser({ profilePhoto: result.user.profilePhoto }));
             }
@@ -142,6 +146,22 @@ export default function ProfilePage() {
             setErrorMsg('Failed to upload photo. Please try a JPEG or PNG under 5MB.');
         } finally {
             setPhotoLoading(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!deletePassword) return;
+        setDeleteLoading(true);
+        try {
+            await authService.deleteAccount(deletePassword);
+            dispatch(logout());
+            navigate('/login?account=deleted');
+        } catch (err) {
+            setErrorMsg(err.response?.data?.message || 'Failed to delete account. Check your password.');
+            setDeleteDialogOpen(false);
+        } finally {
+            setDeleteLoading(false);
+            setDeletePassword('');
         }
     };
 
@@ -578,10 +598,70 @@ export default function ProfilePage() {
                             </CardContent>
                         </Card>
 
+                        {/* ── Danger Zone — Delete Account ── */}
+                        <Card elevation={0} sx={{ border: '1px solid #fecaca', borderRadius: 5, bgcolor: '#fff5f5' }}>
+                            <CardContent className="p-6">
+                                <div className="flex items-center gap-3 mb-3 pl-1">
+                                    <Trash2 size={20} className="text-red-600" />
+                                    <Typography variant="h6" fontWeight={800} color="error.main">Danger Zone</Typography>
+                                </div>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                    Permanently delete your account. Your personal data will be anonymized and cannot be recovered.
+                                    Medical records and appointment history are retained for compliance purposes.
+                                </Typography>
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<Trash2 size={16} />}
+                                    onClick={() => setDeleteDialogOpen(true)}
+                                    sx={{ borderRadius: 3 }}
+                                >
+                                    Delete My Account
+                                </Button>
+                            </CardContent>
+                        </Card>
+
                     </div>
                 </Grid>
             </Grid>
             </div>
+
+            {/* Delete Account Confirmation Dialog */}
+            <Dialog open={deleteDialogOpen} onClose={() => { setDeleteDialogOpen(false); setDeletePassword(''); }} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
+                <DialogTitle sx={{ color: 'error.main', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Trash2 size={20} /> Delete Account
+                </DialogTitle>
+                <DialogContent>
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                        This action is <strong>irreversible</strong>. Your account will be anonymized and you will be logged out immediately.
+                    </Alert>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Enter your password to confirm account deletion:
+                    </Typography>
+                    <TextField
+                        type="password"
+                        fullWidth
+                        placeholder="Your current password"
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        autoFocus
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ p: 3, gap: 1.5 }}>
+                    <Button color="inherit" onClick={() => { setDeleteDialogOpen(false); setDeletePassword(''); }}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        disabled={!deletePassword || deleteLoading}
+                        onClick={handleDeleteAccount}
+                        startIcon={deleteLoading ? <CircularProgress size={16} color="inherit" /> : <Trash2 size={16} />}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        {deleteLoading ? 'Deleting...' : 'Yes, Delete My Account'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Hospital Selection Dialog */}
             <Dialog open={hospitalSelectionOpen} onClose={() => setHospitalSelectionOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 4 } }}>

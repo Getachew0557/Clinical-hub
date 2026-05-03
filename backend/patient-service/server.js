@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sequelize, { ensureDatabaseExists } from './src/config/database.js';
@@ -17,6 +18,7 @@ import './src/models/MedicalRecord.js';
 import './src/models/Prescription.js';
 import './src/models/Invoice.js';
 import './src/models/Payment.js';
+import './src/models/AuditLog.js';
 
 // Event Bus
 import { connectEventBus, subscribeToEvent, handleInternalEvent } from './src/utils/eventBus.js';
@@ -27,6 +29,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

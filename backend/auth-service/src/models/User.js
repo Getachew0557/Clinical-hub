@@ -39,6 +39,15 @@ const User = sequelize.define('User', {
     profilePhoto: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    refreshToken: {
+        type: DataTypes.STRING(512),
+        allowNull: true
+    },
+    googleId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: 'Google OAuth sub (user ID) — set when user signs in with Google'
     }
 }, {
     hooks: {

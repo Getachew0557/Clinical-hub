@@ -2,6 +2,21 @@ import { Sequelize } from 'sequelize';
 import axios from 'axios';
 import MedicalRecord from '../models/MedicalRecord.js';
 import Prescription from '../models/Prescription.js';
+import AuditLog from '../models/AuditLog.js';
+
+// ─── Audit helper ──────────────────────────────────────────────────────────
+const audit = (req, action, resource, resourceId, patientId, details = null) => {
+    AuditLog.create({
+        actorId: req.user?.id,
+        actorRole: req.user?.role || 'Unknown',
+        action,
+        resource,
+        resourceId: resourceId || null,
+        patientId: patientId || null,
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || null,
+        details: details ? JSON.stringify(details) : null,
+    }).catch(err => console.warn('[Audit] Failed to log:', err.message));
+};
 
 // Helper to send notifications
 const sendNotification = async (req, userId, title, message, link, type = 'info') => {
@@ -45,6 +60,9 @@ export const createRecord = async (req, res) => {
         // Trigger Notification
         sendNotification(req, patientId, 'Medical Record Updated', `A new health record has been added to your profile.`, '/emr', 'Info');
 
+        // Audit log
+        audit(req, 'CREATE', 'MedicalRecord', record.id, patientId, { diagnosis: record.diagnosis });
+
         res.status(201).json({ message: 'Medical record created successfully', record: result });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -82,6 +100,9 @@ export const getPatientRecords = async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
 
+        // Audit log — track who accessed patient records
+        audit(req, 'READ', 'MedicalRecord', null, patientId, { count: records.length });
+
         res.status(200).json({ count: records.length, records });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -98,6 +119,9 @@ export const getRecordById = async (req, res) => {
 
         const isAuthorized = ['Admin', 'Doctor', 'Patient'].includes(req.user.role);
         if (!isAuthorized) return res.status(403).json({ message: 'Not authorized to view this record' });
+
+        // Audit log
+        audit(req, 'READ', 'MedicalRecord', record.id, record.patientId);
 
         res.status(200).json(record);
     } catch (error) {
@@ -126,6 +150,9 @@ export const updateRecord = async (req, res) => {
             include: [{ model: Prescription, as: 'prescriptions' }]
         });
 
+        // Audit log
+        audit(req, 'UPDATE', 'MedicalRecord', record.id, record.patientId);
+
         res.status(200).json({ message: 'Record updated successfully', record: updatedRecord });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -142,6 +169,10 @@ export const deleteRecord = async (req, res) => {
         }
 
         await record.destroy();
+
+        // Audit log
+        audit(req, 'DELETE', 'MedicalRecord', req.params.id, record.patientId);
+
         res.status(200).json({ message: 'Medical record deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

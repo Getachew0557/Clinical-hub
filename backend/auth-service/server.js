@@ -3,6 +3,9 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -15,8 +18,24 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
+// Strict rate limit on auth endpoints — 10 attempts per 15 min per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
+  skipSuccessfulRequests: true, // only count failed attempts
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+
 // Middlewares
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json());
 
 // Ensure uploads directory exists
@@ -63,6 +82,14 @@ const connectDB = async () => {
   if (!cols.resetPasswordExpires) {
     await sequelize.query('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "resetPasswordExpires" TIMESTAMP NULL;').catch(() => {});
     console.log('Added column: resetPasswordExpires');
+  }
+  if (!cols.refreshToken) {
+    await sequelize.query('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "refreshToken" VARCHAR(512) NULL;').catch(() => {});
+    console.log('Added column: refreshToken');
+  }
+  if (!cols.googleId) {
+    await sequelize.query('ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "googleId" VARCHAR(255) NULL;').catch(() => {});
+    console.log('Added column: googleId');
   }
 
   connectEventBus().catch(err => console.warn('EventBus (non-fatal):', err.message));
