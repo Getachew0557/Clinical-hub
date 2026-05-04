@@ -62,9 +62,9 @@ export default function ProfilePage() {
                         slotDuration: p?.slotDuration || 30,
                         breakStart: p?.breakStart || '',
                         breakEnd: p?.breakEnd || '',
-                        workingDays: Array.isArray(p?.workingDays) ? p.workingDays : (p?.workingDays ? JSON.parse(p.workingDays) : []),
-                        serviceTypes: Array.isArray(p?.serviceTypes) ? p.serviceTypes : (p?.serviceTypes ? JSON.parse(p.serviceTypes) : ['clinic', 'video']),
-                        hospitals: Array.isArray(p?.hospitals) ? p.hospitals : (p?.hospitals ? JSON.parse(p.hospitals) : []),
+                        workingDays: Array.isArray(p?.workingDays) ? p.workingDays : (p?.workingDays ? (() => { try { return JSON.parse(p.workingDays); } catch { return []; } })() : []),
+                        serviceTypes: Array.isArray(p?.serviceTypes) ? p.serviceTypes : (p?.serviceTypes ? (() => { try { return JSON.parse(p.serviceTypes); } catch { return ['clinic', 'video']; } })() : ['clinic', 'video']),
+                        hospitals: Array.isArray(p?.hospitals) ? p.hospitals : (p?.hospitals ? (() => { try { return JSON.parse(p.hospitals); } catch { return []; } })() : []),
                     });
                 })
                 .catch(() => {})

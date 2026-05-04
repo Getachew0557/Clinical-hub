@@ -713,27 +713,31 @@ export default function DoctorProfilePage() {
         fetchDoctor();
     }, [doctorId, user]);
 
+    // Safe JSON parse helper — returns fallback if value is not valid JSON
+    const safeParseJSON = (val, fallback) => {
+        if (!val) return fallback;
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+            try { return JSON.parse(val); } catch { return fallback; }
+        }
+        return fallback;
+    };
+
     // Use real doctor data, fall back to sensible defaults
-    const education = doctor?.education
-        ? (Array.isArray(doctor.education) ? doctor.education : JSON.parse(doctor.education))
-        : [
-            { title: doctor?.qualification || 'Doctor of Medicine (MD)', subtitle: 'Addis Ababa University', year: '2015', icon: GraduationCap },
-            { title: `Residency — ${doctor?.specialization || 'General Medicine'}`, subtitle: 'Black Lion Specialized Hospital', year: '2018', icon: Award },
-          ];
+    const education = safeParseJSON(doctor?.education, [
+        { title: doctor?.qualification || 'Doctor of Medicine (MD)', subtitle: 'Addis Ababa University', year: '2015', icon: GraduationCap },
+        { title: `Residency — ${doctor?.specialization || 'General Medicine'}`, subtitle: 'Black Lion Specialized Hospital', year: '2018', icon: Award },
+    ]);
 
-    const experience = doctor?.workExperience
-        ? (Array.isArray(doctor.workExperience) ? doctor.workExperience : JSON.parse(doctor.workExperience))
-        : [{ title: 'Biruh Tena Specialty Center', subtitle: doctor?.specialization || 'Specialist', year: '2019 – Present', icon: Briefcase }];
+    const experience = safeParseJSON(doctor?.workExperience, [
+        { title: 'Biruh Tena Specialty Center', subtitle: doctor?.specialization || 'Specialist', year: '2019 – Present', icon: Briefcase }
+    ]);
 
-    const languages = doctor?.languages
-        ? (Array.isArray(doctor.languages) ? doctor.languages : JSON.parse(doctor.languages))
-        : ['Amharic', 'English'];
+    const languages = safeParseJSON(doctor?.languages, ['Amharic', 'English']);
 
-    const awardsArr = doctor?.awards ? (Array.isArray(doctor.awards) ? doctor.awards : (() => { try { return JSON.parse(doctor.awards); } catch { return []; } })()) : [];
+    const awardsArr = safeParseJSON(doctor?.awards, []);
 
-    const serviceTypes = doctor?.serviceTypes
-        ? (Array.isArray(doctor.serviceTypes) ? doctor.serviceTypes : JSON.parse(doctor.serviceTypes))
-        : ['clinic', 'video'];
+    const serviceTypes = safeParseJSON(doctor?.serviceTypes, ['clinic', 'video']);
 
     // ── Loading ──
     if (loading) return (
