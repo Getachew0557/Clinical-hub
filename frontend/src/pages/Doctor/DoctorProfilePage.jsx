@@ -335,7 +335,9 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
             try {
                 setLoadingSlots(true);
                 setSelectedTime(null);
-                const data = await appointmentService.getAvailability(doctorId, selectedDate, 'clinic');
+                // Use the doctor's auth userId for availability lookup (matches appointment doctorId)
+                const availDoctorId = doctor?.userId || doctorId;
+                const data = await appointmentService.getAvailability(availDoctorId, selectedDate, 'clinic');
                 setSlots(data.slots || []);
             } catch {
                 setSlots([]);
@@ -395,11 +397,14 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
             return;
         }
 
+        // Use the doctor's auth userId for the appointment (not the profile ID)
+        const appointmentDoctorId = doctor?.userId || doctorId;
+
         setBooking(true);
         setBookingError('');
         try {
             await appointmentService.createAppointment({
-                doctorId,
+                doctorId: appointmentDoctorId,
                 patientId,
                 appointmentDate: selectedDate,
                 appointmentTime: selectedTime.timeValue,

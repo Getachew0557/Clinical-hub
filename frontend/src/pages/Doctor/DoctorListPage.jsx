@@ -106,14 +106,24 @@ export default function DoctorListPage() {
         if (mode === 'edit' && doctor) {
             setFormData({
                 ...doctor,
-                consultationFee: doctor.consultationFee || ''
+                consultationFee: doctor.consultationFee || '',
+                hospitals: Array.isArray(doctor.hospitals)
+                    ? doctor.hospitals
+                    : (doctor.hospitals ? (() => { try { return JSON.parse(doctor.hospitals); } catch { return []; } })() : [])
             });
             setSelectedDoctor(doctor);
         } else {
             setFormData({
                 fullName: '', email: '', password: '', phone: '',
                 specialization: '', licenseNumber: '', experience: '',
-                qualification: '', bio: '', consultationFee: ''
+                qualification: '', bio: '', consultationFee: '',
+                clinicFee: '', videoFee: '',
+                serviceTypes: ['clinic', 'video'],
+                workingDays: [], workingHoursStart: '08:00', workingHoursEnd: '18:00',
+                breakStart: '13:00', breakEnd: '14:00',
+                maxPatientsPerHour: 10, slotDuration: 30,
+                languages: 'Amharic, English',
+                hospitals: []
             });
         }
         setModalOpen(true);
@@ -793,10 +803,20 @@ export default function DoctorListPage() {
                                         )}
                                         <FormControl fullWidth>
                                             <Select
-                                                name="hospital"
-                                                value={formData.hospital || ''}
+                                                name="hospitals"
+                                                value={
+                                                    Array.isArray(formData.hospitals)
+                                                        ? (formData.hospitals[0] || '')
+                                                        : (formData.hospitals || '')
+                                                }
                                                 displayEmpty
-                                                onChange={handleInputChange}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        hospitals: val ? [val] : []
+                                                    }));
+                                                }}
                                             >
                                                 <MenuItem value="">No hospital selected</MenuItem>
                                                 {hospitals.map(h => (

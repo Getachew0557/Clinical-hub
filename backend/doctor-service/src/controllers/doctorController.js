@@ -97,10 +97,11 @@ export const getPublicDoctors = async (req, res) => {
             where,
             order: [['fullName', 'ASC']],
             attributes: [
-                'id', 'fullName', 'specialization', 'experience', 'qualification', 'bio',
+                'id', 'userId', 'fullName', 'specialization', 'experience', 'qualification', 'bio',
                 'profilePhoto', 'consultationFee', 'videoFee', 'rating', 'reviewsCount',
                 'isActive', 'serviceTypes', 'workingDays', 'workingHoursStart', 'workingHoursEnd',
-                'slotDuration', 'breakStart', 'breakEnd', 'maxPatientsPerHour', 'languages'
+                'slotDuration', 'breakStart', 'breakEnd', 'maxPatientsPerHour', 'languages',
+                'hospitals'
             ]
         });
 

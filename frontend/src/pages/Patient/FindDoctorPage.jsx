@@ -124,21 +124,26 @@ export default function FindDoctorPage() {
                     </div>
 
                     {/* Specialization chips — built from actual doctors */}
-                    <div className="flex gap-2 flex-wrap">
-                        {specializations.map(s => (
-                            <button
-                                key={s}
-                                onClick={() => setSpecFilter(s)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                                    specFilter === s
-                                        ? 'bg-teal-600 text-white border-teal-600'
-                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-teal-300'
-                                }`}
-                            >
-                                {s}
-                            </button>
-                        ))}
-                    </div>
+                    {specializations.length > 1 && (
+                        <div className="flex flex-col gap-2">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Filter by Specialty</span>
+                            <div className="flex gap-2 flex-wrap">
+                                {specializations.map(s => (
+                                    <button
+                                        key={s}
+                                        onClick={() => setSpecFilter(s)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                                            specFilter === s
+                                                ? 'bg-teal-600 text-white border-teal-600'
+                                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-teal-300'
+                                        }`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Results count */}

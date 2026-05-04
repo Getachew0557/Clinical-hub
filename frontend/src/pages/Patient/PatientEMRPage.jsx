@@ -101,6 +101,15 @@ export default function PatientEMRPage() {
                         }));
                 }
 
+                // Deduplicate by userId/id
+                const seenKeys = new Set();
+                doctorPatients = doctorPatients.filter(p => {
+                    const key = String(p.userId || p.id).toLowerCase();
+                    if (seenKeys.has(key)) return false;
+                    seenKeys.add(key);
+                    return true;
+                });
+
                 setAllPatients(doctorPatients);
             } else {
                 const data = await patientService.getAllPatients();

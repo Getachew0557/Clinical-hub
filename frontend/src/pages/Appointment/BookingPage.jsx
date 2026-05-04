@@ -42,7 +42,7 @@ const BookingPage = () => {
 
     useEffect(() => {
         if (selectedDate) fetchAvailability();
-    }, [selectedDate, doctorId, consultationType]);
+    }, [selectedDate, doctorId, consultationType, doctor]);
 
     const fetchDoctor = async () => {
         try {
@@ -73,8 +73,11 @@ const BookingPage = () => {
     };
 
     const fetchAvailability = async () => {
+        if (!doctor) return; // wait until doctor is loaded
+        // Use the doctor's auth userId for availability lookup (matches appointment doctorId)
+        const availDoctorId = doctor?.userId || doctorId;
         try {
-            const data = await appointmentService.getAvailability(doctorId, selectedDate, consultationType);
+            const data = await appointmentService.getAvailability(availDoctorId, selectedDate, consultationType);
             setSlots(data.slots || []);
             setSlotsMessage(data.message || '');
         } catch (err) {
@@ -90,11 +93,14 @@ const BookingPage = () => {
         setBooking(true);
         setError('');
 
+        // Use the doctor's auth userId for the appointment (not the profile ID)
+        const appointmentDoctorId = doctor?.userId || doctorId;
+
         try {
             if (attachmentFile) {
                 // Use FormData when a file is attached
                 const fd = new FormData();
-                fd.append('doctorId', doctorId);
+                fd.append('doctorId', appointmentDoctorId);
                 fd.append('appointmentDate', selectedDate);
                 fd.append('appointmentTime', selectedTime.timeValue);
                 fd.append('reason', reason);
@@ -103,7 +109,7 @@ const BookingPage = () => {
                 await appointmentService.createAppointmentWithFile(fd);
             } else {
                 await appointmentService.createAppointment({
-                    doctorId,
+                    doctorId: appointmentDoctorId,
                     appointmentDate: selectedDate,
                     appointmentTime: selectedTime.timeValue,
                     reason,
@@ -270,10 +276,11 @@ const BookingPage = () => {
                                                 `}
                                             >
                                                 {slot.time}
-                                                {slot.available && slot.remainingSpots === 1 && slot.bookedCount > 0 && (
+                                                {/* Only show remaining count if at least one spot is already booked */}
+                                                {slot.available && slot.bookedCount > 0 && slot.remainingSpots === 1 && (
                                                     <span className="block text-xs mt-0.5 text-orange-500 font-bold uppercase">Last Spot</span>
                                                 )}
-                                                {slot.available && slot.remainingSpots > 1 && slot.bookedCount > 0 && (
+                                                {slot.available && slot.bookedCount > 0 && slot.remainingSpots > 1 && (
                                                     <span className="block text-xs mt-0.5 text-slate-400 font-medium">{slot.remainingSpots} left</span>
                                                 )}
                                             </button>

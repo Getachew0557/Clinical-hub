@@ -39,7 +39,7 @@ export default function AppointmentListPage() {
 
     // Role-based tab definitions
     const TABS = isDoctor
-        ? ['Confirmed', 'In Progress', 'Completed', 'Cancelled']  // Doctor sees all active + history
+        ? ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']  // Doctor sees all statuses
         : isPatient
             ? ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
             : ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];
@@ -443,6 +443,13 @@ export default function AppointmentListPage() {
                         <span className="text-sm font-medium text-amber-600">Revert to Pending</span>
                     </MenuItem>
                 )}
+                {/* Doctor: Revert Confirmed → Pending */}
+                {selectedApt?.status === 'Confirmed' && isDoctor && (
+                    <MenuItem onClick={() => handleUpdateStatus('Pending')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                        <AlertCircle size={16} className="text-amber-500" />
+                        <span className="text-sm font-medium text-amber-600">Revert to Pending</span>
+                    </MenuItem>
+                )}
                 {/* Doctor: Start consultation (Confirmed → In Progress) */}
                 {selectedApt?.status === 'Confirmed' && isDoctor && (
                     <MenuItem
@@ -474,8 +481,9 @@ export default function AppointmentListPage() {
                         <span className="text-sm font-medium">Reschedule</span>
                     </MenuItem>
                 )}
-                {/* Cancel — Patient (Pending only), Staff (any active) */}
+                {/* Cancel — Patient (Pending only), Doctor (Confirmed/In Progress), Staff (any active) */}
                 {((isPatient && selectedApt?.status === 'Pending') ||
+                  (isDoctor && ['Confirmed', 'In Progress'].includes(selectedApt?.status)) ||
                   (isStaff && ['Pending', 'Confirmed', 'In Progress'].includes(selectedApt?.status))) && (
                     <MenuItem onClick={() => handleUpdateStatus('Cancelled')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <XCircle size={16} className="text-red-500" />
