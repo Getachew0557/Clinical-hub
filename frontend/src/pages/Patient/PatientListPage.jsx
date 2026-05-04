@@ -353,15 +353,18 @@ export default function PatientListPage() {
                                         >
                                             Records
                                         </Button>
-                                        <Button
-                                            fullWidth
-                                            size="medium"
-                                            variant="contained"
-                                            startIcon={<Calendar size={15} />}
-                                            onClick={() => navigate(`/appointments?patientId=${pt.userId || pt.id}`)}
-                                        >
-                                            Book
-                                        </Button>
+                                        {/* Only Admin/Receptionist can book — Doctor views records only */}
+                                        {isStaff && (
+                                            <Button
+                                                fullWidth
+                                                size="medium"
+                                                variant="contained"
+                                                startIcon={<Calendar size={15} />}
+                                                onClick={() => navigate(`/appointments?patientId=${pt.userId || pt.id}`)}
+                                            >
+                                                Appointments
+                                            </Button>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

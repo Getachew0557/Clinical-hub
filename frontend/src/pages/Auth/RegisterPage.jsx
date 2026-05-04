@@ -85,9 +85,16 @@ export default function RegisterPage() {
         setLocalError("");
     };
 
+    // Real-time email format validation
+    const emailValid = !formData.email || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setLocalError("");
+        if (!emailValid) {
+            setLocalError("Please enter a valid email address (e.g. name@example.com)");
+            return;
+        }
         if (formData.password !== formData.confirmPassword) {
             setLocalError("Passwords do not match");
             return;
@@ -175,7 +182,19 @@ export default function RegisterPage() {
                             <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Email</label>
                             <input name="email" type="email" required autoComplete="email"
                                 value={formData.email} onChange={onChange} placeholder="you@example.com"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all" />
+                                className={`w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+                                    formData.email && !emailValid
+                                        ? 'border-red-300 focus:ring-red-400'
+                                        : formData.email && emailValid
+                                            ? 'border-teal-300 focus:ring-teal-400'
+                                            : 'border-slate-200 focus:ring-teal-400'
+                                }`} />
+                            {formData.email && !emailValid && (
+                                <p className="text-xs text-red-500 mt-1">Please enter a valid email address</p>
+                            )}
+                            {formData.email && emailValid && (
+                                <p className="text-xs text-teal-600 mt-1">✓ Valid email format</p>
+                            )}
                         </div>
 
                         <div>

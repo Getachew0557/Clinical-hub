@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import doctorService from '../../api/doctor.service';
 import authService from '../../api/auth.service';
+import hospitalService from '../../api/hospital.service';
 import { useSelector } from 'react-redux';
 import { getDoctorPhotoUrl } from '../../utils/cn';
 import useSnack from '../../hooks/useSnack';
@@ -45,13 +46,45 @@ export default function DoctorListPage() {
     const [submitting, setSubmitting] = useState(false);
     const [profilePhotoFile, setProfilePhotoFile] = useState(null);
 
+    // Hospital state
+    const [hospitals, setHospitals] = useState([]);
+    const [newHospitalName, setNewHospitalName] = useState('');
+    const [addingHospital, setAddingHospital] = useState(false);
+    const [showAddHospital, setShowAddHospital] = useState(false);
+
     // Menu state
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedDoctor, setSelectedDoctor] = useState(null);
 
     useEffect(() => {
         fetchDoctors();
+        fetchHospitals();
     }, []);
+
+    const fetchHospitals = async () => {
+        try {
+            const data = await hospitalService.getAllHospitals();
+            setHospitals(Array.isArray(data) ? data : []);
+        } catch { /* non-fatal */ }
+    };
+
+    const handleAddHospital = async () => {
+        if (!newHospitalName.trim()) return;
+        setAddingHospital(true);
+        try {
+            const fd = new FormData();
+            fd.append('name', newHospitalName.trim());
+            await hospitalService.createHospital(fd);
+            await fetchHospitals();
+            setNewHospitalName('');
+            setShowAddHospital(false);
+            showSnack(`Hospital "${newHospitalName.trim()}" added!`);
+        } catch (err) {
+            showSnack(err.response?.data?.message || 'Failed to add hospital', 'error');
+        } finally {
+            setAddingHospital(false);
+        }
+    };
 
     const fetchDoctors = async () => {
         try {
@@ -722,6 +755,56 @@ export default function DoctorListPage() {
                                             </button>
                                         )}
                                     </div>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Box>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5 }}>
+                                                Associated Hospital
+                                            </Typography>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowAddHospital(v => !v)}
+                                                className="text-xs text-teal-600 font-bold hover:underline flex items-center gap-1"
+                                            >
+                                                + Add New Hospital
+                                            </button>
+                                        </div>
+                                        {showAddHospital && (
+                                            <div className="flex gap-2 mb-2">
+                                                <TextField
+                                                    size="small"
+                                                    fullWidth
+                                                    placeholder="Hospital name..."
+                                                    value={newHospitalName}
+                                                    onChange={e => setNewHospitalName(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddHospital())}
+                                                />
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    onClick={handleAddHospital}
+                                                    disabled={addingHospital || !newHospitalName.trim()}
+                                                    sx={{ borderRadius: 2, whiteSpace: 'nowrap' }}
+                                                >
+                                                    {addingHospital ? '...' : 'Add'}
+                                                </Button>
+                                            </div>
+                                        )}
+                                        <FormControl fullWidth>
+                                            <Select
+                                                name="hospital"
+                                                value={formData.hospital || ''}
+                                                displayEmpty
+                                                onChange={handleInputChange}
+                                            >
+                                                <MenuItem value="">No hospital selected</MenuItem>
+                                                {hospitals.map(h => (
+                                                    <MenuItem key={h.id} value={h.name}>{h.name}{h.address ? ` — ${h.address}` : ''}</MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <Box>

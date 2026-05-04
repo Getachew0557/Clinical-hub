@@ -39,10 +39,10 @@ export default function AppointmentListPage() {
 
     // Role-based tab definitions
     const TABS = isDoctor
-        ? ['In Progress', 'Completed', 'Cancelled']           // Doctor sees actionable + cancelled
+        ? ['Confirmed', 'In Progress', 'Completed', 'Cancelled']  // Doctor sees all active + history
         : isPatient
-            ? ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']  // Patient sees all their own
-            : ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']; // Admin/Receptionist sees all
+            ? ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
+            : ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];
 
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -69,7 +69,7 @@ export default function AppointmentListPage() {
     }, [urlStatus]);
 
     const fetchStatusCounts = async () => {
-        // Status counts endpoint only available for staff roles — skip for Patient
+        // For Patient role, derive counts from loaded appointments (no separate API call needed)
         if (isPatient) return;
         try {
             const data = await appointmentService.getStatusCounts();
@@ -218,8 +218,11 @@ export default function AppointmentListPage() {
                         >
                             {TABS.map(tab => {
                                 const counts = statusCounts[tab];
-                                const live = counts?.live ?? appointments.filter(a => a.status === tab).length;
-                                const cumulative = counts?.cumulative;
+                                // For Patient: always derive from loaded appointments (no API count)
+                                const live = isPatient
+                                    ? appointments.filter(a => a.status === tab).length
+                                    : (counts?.live ?? appointments.filter(a => a.status === tab).length);
+                                const cumulative = isPatient ? undefined : counts?.cumulative;
                                 return (
                                     <Tab
                                         key={tab}
@@ -421,11 +424,23 @@ export default function AppointmentListPage() {
                         <span className="text-sm font-medium text-blue-600">Approve Booking</span>
                     </MenuItem>
                 )}
+                {/* View Details — always available */}
+                <MenuItem onClick={() => { navigate(`/appointments/${selectedApt?.id}`); handleMenuClose(); }} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                    <FileIcon size={16} className="text-slate-500" />
+                    <span className="text-sm font-medium">View Details</span>
+                </MenuItem>
                 {/* Admin/Receptionist: Confirm */}
                 {selectedApt?.status === 'Pending' && isStaff && (
                     <MenuItem onClick={() => handleUpdateStatus('Confirmed')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <CheckCircle size={16} className="text-green-500" />
                         <span className="text-sm font-medium">Confirm Booking</span>
+                    </MenuItem>
+                )}
+                {/* Admin: Revert Confirmed → Pending */}
+                {selectedApt?.status === 'Confirmed' && role === 'Admin' && (
+                    <MenuItem onClick={() => handleUpdateStatus('Pending')} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
+                        <AlertCircle size={16} className="text-amber-500" />
+                        <span className="text-sm font-medium text-amber-600">Revert to Pending</span>
                     </MenuItem>
                 )}
                 {/* Doctor: Start consultation (Confirmed → In Progress) */}

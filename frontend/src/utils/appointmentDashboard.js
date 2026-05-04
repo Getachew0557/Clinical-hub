@@ -3,7 +3,7 @@
  * All functions are side-effect free and do not depend on external state.
  */
 
-const DOCTOR_BUCKETS = ['In Progress', 'Completed', 'Cancelled'];
+const DOCTOR_BUCKETS = ['Confirmed', 'In Progress', 'Completed', 'Cancelled'];
 const STAFF_BUCKETS  = ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];
 
 const ALL_STATUSES = ['Pending', 'Confirmed', 'In Progress', 'Completed', 'Cancelled'];

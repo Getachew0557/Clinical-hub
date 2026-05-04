@@ -579,7 +579,8 @@ function SlotPicker({ type, doctorId, user, navigate, onBooked, doctor }) {
                                                 <span className={`text-xs font-black uppercase tracking-tighter mt-1 ${
                                                     isSelected ? 'text-white/80' : remainingColor(slot)
                                                 }`}>
-                                                    {remainingLabel(slot)}
+                                                    {/* Only show remaining count if at least 1 spot is booked */}
+                                                    {slot.bookedCount > 0 ? remainingLabel(slot) : ''}
                                                 </span>
                                             </button>
                                         );
@@ -672,21 +673,32 @@ export default function DoctorProfilePage() {
     const [activeTab, setActiveTab] = useState('overview');
     const [success, setSuccess] = useState(false);
 
-    // Fetch doctor
+    // Fetch doctor — use public endpoint first (no auth needed), fall back to authenticated for staff
     useEffect(() => {
         const fetchDoctor = async () => {
             try {
                 setLoading(true);
-                let data;
+                let data = null;
+
+                // Try public endpoint first — works for everyone without auth issues
                 try {
                     const res = await doctorService.getPublicDoctors({ search: '' });
                     const found = (res.doctors || res.records || []).find(d => d.id === doctorId);
-                    if (found) { data = found; }
+                    if (found) data = found;
                 } catch (_) {}
-                if (!data) {
-                    data = await doctorService.getDoctorById(doctorId);
+
+                // If not found in public list (e.g. inactive doctor viewed by admin), try authenticated
+                if (!data && user && ['Admin', 'Receptionist'].includes(user?.role)) {
+                    try {
+                        data = await doctorService.getDoctorById(doctorId);
+                    } catch (_) {}
                 }
-                setDoctor(data);
+
+                if (!data) {
+                    setNotFound(true);
+                } else {
+                    setDoctor(data);
+                }
             } catch {
                 setNotFound(true);
             } finally {
@@ -694,7 +706,7 @@ export default function DoctorProfilePage() {
             }
         };
         fetchDoctor();
-    }, [doctorId]);
+    }, [doctorId, user]);
 
     // Use real doctor data, fall back to sensible defaults
     const education = doctor?.education

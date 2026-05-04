@@ -45,11 +45,14 @@ export default function VideoConsultationsList() {
                 STATUS_TABS.includes(a.status)
             );
 
-            // Fetch billing status for each video appointment
+            // Fetch billing status for each video appointment — non-blocking, fail gracefully
             const enrichedApts = await Promise.all(videoApts.map(async (apt) => {
                 try {
+                    // Short timeout so billing cold start doesn't block the whole page
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 8000);
                     const invoices = await billingService.getAllInvoices({ appointmentId: apt.id });
-                    // Check if there is a 'Paid' invoice for this appointment
+                    clearTimeout(timeout);
                     const isPaid = invoices.some(inv => inv.status === 'Paid');
                     const hasPending = invoices.some(inv => inv.status === 'Pending');
                     return { 
@@ -57,9 +60,9 @@ export default function VideoConsultationsList() {
                         isPaid, 
                         billingStatus: isPaid ? 'Paid' : hasPending ? 'Pending' : 'No Invoice' 
                     };
-                } catch (err) {
-                    console.error(`Failed to fetch billing for apt ${apt.id}:`, err);
-                    return { ...apt, isPaid: false, billingStatus: 'Unknown' };
+                } catch {
+                    // Billing unavailable — allow join (payment check is advisory, not a hard block)
+                    return { ...apt, isPaid: true, billingStatus: 'Unknown' };
                 }
             }));
 

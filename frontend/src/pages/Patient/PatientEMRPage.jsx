@@ -104,7 +104,18 @@ export default function PatientEMRPage() {
                 setAllPatients(doctorPatients);
             } else {
                 const data = await patientService.getAllPatients();
-                setAllPatients(data.patients || data.records || []);
+                // Deduplicate by userId/id + email
+                const raw = data.patients || data.records || [];
+                const seen = new Set();
+                const deduped = raw.filter(p => {
+                    const key = String(p.userId || p.id).toLowerCase();
+                    const emailKey = p.email?.toLowerCase();
+                    if (seen.has(key) || (emailKey && seen.has(emailKey))) return false;
+                    seen.add(key);
+                    if (emailKey) seen.add(emailKey);
+                    return true;
+                });
+                setAllPatients(deduped);
             }
 
             setError(null);

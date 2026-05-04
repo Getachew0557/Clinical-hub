@@ -7,6 +7,7 @@ import { Video, User, Stethoscope, Clock, FileText } from 'lucide-react';
 function getActions(role, status) {
   const isDoctor = role === 'Doctor';
   const isStaff  = role === 'Admin' || role === 'Receptionist';
+  const isAdmin  = role === 'Admin';
 
   if (isDoctor) {
     if (status === 'Confirmed')   return [{ label: 'Start',    next: 'In Progress', variant: 'primary' }];
@@ -20,6 +21,7 @@ function getActions(role, status) {
     ];
     if (status === 'Confirmed')   return [
       { label: 'Start',    next: 'In Progress', variant: 'primary' },
+      ...(isAdmin ? [{ label: 'Revert',  next: 'Pending',     variant: 'warning' }] : []),
       { label: 'Cancel',   next: 'Cancelled',   variant: 'danger'  },
     ];
     if (status === 'In Progress') return [
@@ -38,6 +40,7 @@ const BTN = {
   primary: 'bg-teal-600 hover:bg-teal-700 text-white',
   success: 'bg-emerald-600 hover:bg-emerald-700 text-white',
   danger:  'bg-red-500 hover:bg-red-600 text-white',
+  warning: 'bg-amber-500 hover:bg-amber-600 text-white',
   video:   'bg-indigo-600 hover:bg-indigo-700 text-white',
 };
 

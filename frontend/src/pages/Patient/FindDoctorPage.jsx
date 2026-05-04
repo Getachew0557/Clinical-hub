@@ -16,12 +16,6 @@ import {
 import doctorService from '../../api/doctor.service';
 import { getDoctorPhotoUrl } from '../../utils/cn';
 
-const SPECIALIZATIONS = [
-    'All', 'General Dentistry', 'Orthodontics', 'Oral Surgery',
-    'Pediatric Dentistry', 'Periodontics', 'Endodontics', 'Prosthodontics',
-    'General Medicine', 'Cardiology', 'Dermatology', 'Pediatrics',
-];
-
 const VISIT_TYPES = [
     { val: 'all',    label: 'All Types' },
     { val: 'clinic', label: '🏥 Clinic Visit' },
@@ -43,7 +37,6 @@ export default function FindDoctorPage() {
         try {
             setLoading(true);
             const data = await doctorService.getPublicDoctors();
-            // getPublicDoctors returns { doctors: [...] } or { records: [...] }
             const list = data.doctors || data.records || (Array.isArray(data) ? data : []);
             setDoctors(list.filter(d => d.isActive !== false));
             setError(null);
@@ -53,6 +46,9 @@ export default function FindDoctorPage() {
             setLoading(false);
         }
     };
+
+    // Build specialization list dynamically from actual doctors
+    const specializations = ['All', ...new Set(doctors.map(d => d.specialization).filter(Boolean))].sort((a, b) => a === 'All' ? -1 : a.localeCompare(b));
 
     const parseTypes = (d) => {
         if (!d.serviceTypes) return ['clinic', 'video'];
@@ -127,9 +123,9 @@ export default function FindDoctorPage() {
                         ))}
                     </div>
 
-                    {/* Specialization chips */}
+                    {/* Specialization chips — built from actual doctors */}
                     <div className="flex gap-2 flex-wrap">
-                        {SPECIALIZATIONS.slice(0, 8).map(s => (
+                        {specializations.map(s => (
                             <button
                                 key={s}
                                 onClick={() => setSpecFilter(s)}
@@ -313,7 +309,7 @@ export default function FindDoctorPage() {
                                                 variant="outlined"
                                                 size="small"
                                                 sx={{ flex: 1, borderRadius: 3, borderColor: '#e2e8f0', color: '#64748b', fontSize: '0.75rem' }}
-                                                onClick={() => navigate(`/doctor/${doctor.userId || doctor.id}`)}
+                                                onClick={() => navigate(`/doctor/${doctor.id}`)}
                                             >
                                                 View Profile
                                             </Button>
@@ -322,7 +318,7 @@ export default function FindDoctorPage() {
                                                 size="small"
                                                 endIcon={<ChevronRight size={14} />}
                                                 sx={{ flex: 1, borderRadius: 3, fontSize: '0.75rem' }}
-                                                onClick={() => navigate(`/doctor/${doctor.userId || doctor.id}`)}
+                                                onClick={() => navigate(`/book/${doctor.id}`)}
                                             >
                                                 Book Now
                                             </Button>

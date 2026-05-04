@@ -46,14 +46,22 @@ const BookingPage = () => {
 
     const fetchDoctor = async () => {
         try {
-            const data = await doctorService.getDoctorById(doctorId);
+            let data = null;
+            // Try public endpoint first — no auth required
+            try {
+                const res = await doctorService.getPublicDoctors({ search: '' });
+                const found = (res.doctors || res.records || []).find(d => d.id === doctorId);
+                if (found) data = found;
+            } catch (_) {}
+            // Fall back to authenticated endpoint (for admin/staff viewing inactive doctors)
+            if (!data) {
+                data = await doctorService.getDoctorById(doctorId);
+            }
             setDoctor(data);
-            // Set available service types from doctor's profile
             const types = Array.isArray(data?.serviceTypes)
                 ? data.serviceTypes
                 : (data?.serviceTypes ? JSON.parse(data.serviceTypes) : ['clinic', 'video']);
             setAvailableTypes(types);
-            // Default to first available type
             if (types.length > 0 && !types.includes(consultationType)) {
                 setConsultationType(types[0]);
             }
@@ -262,8 +270,11 @@ const BookingPage = () => {
                                                 `}
                                             >
                                                 {slot.time}
-                                                {slot.available && slot.remainingSpots === 1 && (
+                                                {slot.available && slot.remainingSpots === 1 && slot.bookedCount > 0 && (
                                                     <span className="block text-xs mt-0.5 text-orange-500 font-bold uppercase">Last Spot</span>
+                                                )}
+                                                {slot.available && slot.remainingSpots > 1 && slot.bookedCount > 0 && (
+                                                    <span className="block text-xs mt-0.5 text-slate-400 font-medium">{slot.remainingSpots} left</span>
                                                 )}
                                             </button>
                                         ))}
