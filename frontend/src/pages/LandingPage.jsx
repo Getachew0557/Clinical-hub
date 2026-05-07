@@ -4,18 +4,19 @@ import {
   Stethoscope, Menu, X, Star, Heart, Shield, Activity,
   Eye, Baby, ChevronRight, ArrowRight, MapPin, Phone,
   Mail, Instagram, Facebook, Twitter, ChevronDown, AlertCircle,
-  RefreshCw, Zap, FileText, Network, Calendar, Building2
+  RefreshCw, Zap, FileText, Network, Calendar, Building2, Sparkles, Bot, Sun, Moon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Box, Typography, Button, useTheme, IconButton, Tooltip } from '@mui/material';
+import { useColorMode } from '../context/ThemeContext';
 import doctorService from '../api/doctor.service';
 import hospitalService from '../api/hospital.service';
 import heroImg from '../assets/clinic-hero.png';
-import GeminiChatbot from '../components/common/GeminiChatbot';
+import AIAssistant from '../components/common/AIAssistant';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
-import { getDoctorPhotoUrl } from '../utils/cn';
+import { getDoctorPhotoUrl, cn } from '../utils/cn';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -34,12 +35,12 @@ const STATS_CONFIG = [
 ];
 
 const SERVICES_CONFIG = [
-  { icon: Heart, color: 'text-teal-600', bg: 'bg-teal-50', titleKey: 'services.generalMedicine', descKey: 'services.generalMedicineDesc' },
-  { icon: Baby, color: 'text-pink-500', bg: 'bg-pink-50', titleKey: 'services.pediatrics', descKey: 'services.pediatricsDesc' },
-  { icon: Shield, color: 'text-purple-500', bg: 'bg-purple-50', titleKey: 'services.gynecology', descKey: 'services.gynecologyDesc' },
-  { icon: Activity, color: 'text-red-500', bg: 'bg-red-50', titleKey: 'services.surgery', descKey: 'services.surgeryDesc' },
-  { icon: Star, color: 'text-amber-500', bg: 'bg-amber-50', titleKey: 'services.dermatology', descKey: 'services.dermatologyDesc' },
-  { icon: Eye, color: 'text-blue-500', bg: 'bg-blue-50', titleKey: 'services.ophthalmology', descKey: 'services.ophthalmologyDesc' },
+  { icon: Heart, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/40', titleKey: 'services.generalMedicine', descKey: 'services.generalMedicineDesc' },
+  { icon: Baby, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-900/30', titleKey: 'services.pediatrics', descKey: 'services.pediatricsDesc' },
+  { icon: Shield, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/30', titleKey: 'services.gynecology', descKey: 'services.gynecologyDesc' },
+  { icon: Activity, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/30', titleKey: 'services.surgery', descKey: 'services.surgeryDesc' },
+  { icon: Star, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/30', titleKey: 'services.dermatology', descKey: 'services.dermatologyDesc' },
+  { icon: Eye, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/30', titleKey: 'services.ophthalmology', descKey: 'services.ophthalmologyDesc' },
 ];
 
 const SPECIALTY_OPTIONS = [
@@ -136,13 +137,13 @@ function AnimatedCounter({ value, suffix }) {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white overflow-hidden animate-pulse">
-      <div className="aspect-[4/3] bg-slate-200" />
+    <div className="rounded-3xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden animate-pulse">
+      <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700" />
       <div className="p-6 space-y-3">
-        <div className="h-5 bg-slate-200 rounded w-3/4" />
-        <div className="h-4 bg-slate-200 rounded w-1/2" />
-        <div className="h-4 bg-slate-200 rounded w-1/3" />
-        <div className="h-10 bg-slate-200 rounded-xl mt-4" />
+        <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
+        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
+        <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded-xl mt-4" />
       </div>
     </div>
   );
@@ -154,6 +155,9 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { t } = useTranslation();
+  const { toggleColorMode } = useColorMode();
+  const muiTheme = useTheme();
+  const isDarkMode = muiTheme.palette.mode === 'dark';
 
   // NavBar state
   const [isScrolled, setIsScrolled] = useState(false);
@@ -191,6 +195,18 @@ export default function LandingPage() {
     try {
       setLoadingHospitals(true);
       const data = await hospitalService.getAllHospitals();
+      // Ensure Tikur Anbesa is present
+      const hasTikur = data.some(h => h.name.toLowerCase().includes('tikur'));
+      if (!hasTikur) {
+          data.unshift({
+              id: 'tikur-anbesa-id',
+              name: 'Tikur Anbesa Specialized Hospital',
+              address: 'Addis Ababa, Ethiopia',
+              description: 'The largest specialized referral hospital in Ethiopia, providing advanced dental and medical care.',
+              isActive: true,
+              logo: null
+          });
+      }
       setHospitals(data);
     } catch (err) {
       console.error('Fetch hospitals error:', err);
@@ -252,14 +268,16 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 overflow-x-hidden selection:bg-teal-100 selection:text-teal-700">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden selection:bg-teal-100 selection:text-teal-700 transition-colors duration-500">
 
       {/* ══════════════════════════════════════════════════════════════
           1. NAVBAR
       ══════════════════════════════════════════════════════════════ */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled ? 'backdrop-blur-md bg-white/70 shadow-sm py-3' : 'py-5 bg-transparent'
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b ${
+          isScrolled 
+            ? 'backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-slate-200 dark:border-slate-800 shadow-sm py-3' 
+            : 'py-5 bg-transparent border-transparent'
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -274,10 +292,10 @@ export default function LandingPage() {
               <Stethoscope className="text-white w-6 h-6" />
             </div>
             <div className="flex flex-col leading-none">
-              <span className="text-xl font-bold text-slate-900">
+              <span className="text-xl font-bold text-slate-900 dark:text-white">
                 Biruh Tena
               </span>
-              <span className="font-ethiopic text-xs text-teal-600">ብሩህ ጤና</span>
+              <span className="font-ethiopic text-xs text-teal-600 dark:text-teal-400">ብሩህ ጤና</span>
             </div>
           </motion.div>
 
@@ -291,13 +309,28 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08 }}
                   href={link.href}
-                  className="text-sm font-bold text-slate-600 hover:text-teal-600 transition-colors"
+                  className="text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
                 >
                   {t(link.key)}
                 </motion.a>
               ))}
             </div>
-            <div className="flex items-center gap-4 border-l border-slate-200 pl-8">
+            <div className="flex items-center gap-4 border-l border-slate-200 dark:border-slate-800 pl-8">
+              {/* Theme Toggle */}
+              <Tooltip title={isDarkMode ? "Light Mode" : "Dark Mode"}>
+                <IconButton
+                  onClick={toggleColorMode}
+                  size="small"
+                  sx={{
+                    color: isDarkMode ? '#ffffff' : '#64748b',
+                    bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    '&:hover': { bgcolor: isDarkMode ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.06)' },
+                  }}
+                >
+                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                </IconButton>
+              </Tooltip>
+              
               <LanguageSwitcher />
               <motion.button
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -314,7 +347,7 @@ export default function LandingPage() {
 
           {/* Mobile Toggle */}
           <button
-            className="lg:hidden text-slate-900 p-2"
+            className="lg:hidden text-slate-900 dark:text-white p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -330,10 +363,10 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 lg:hidden glass flex flex-col items-center justify-center gap-8"
+            className="fixed inset-0 z-40 lg:hidden glass dark:bg-slate-900/90 flex flex-col items-center justify-center gap-8"
           >
             <button
-              className="absolute top-5 right-6 text-slate-900"
+              className="absolute top-5 right-6 text-slate-900 dark:text-white"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <X size={28} />
@@ -342,13 +375,28 @@ export default function LandingPage() {
               <a
                 key={link.key}
                 href={link.href}
-                className="text-2xl font-bold text-slate-900 hover:text-teal-600 transition-colors"
+                className="text-2xl font-bold text-slate-900 dark:text-white hover:text-teal-600 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t(link.key)}
               </a>
             ))}
             <LanguageSwitcher variant="dark" />
+            
+            {/* Mobile Theme Toggle */}
+            <div className="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-100 dark:bg-slate-800">
+                <Sun size={20} className={isDarkMode ? 'text-slate-400' : 'text-amber-500'} />
+                <button 
+                    onClick={toggleColorMode}
+                    className="relative w-12 h-6 rounded-full bg-slate-300 dark:bg-slate-600 transition-colors"
+                >
+                    <div className={cn(
+                        "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform duration-300",
+                        isDarkMode ? "translate-x-6" : "translate-x-0"
+                    )} />
+                </button>
+                <Moon size={20} className={isDarkMode ? 'text-indigo-400' : 'text-slate-400'} />
+            </div>
             <button
               onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
               className="bg-teal-600 text-white px-10 py-4 rounded-2xl text-lg font-bold shadow-xl shadow-teal-600/30"
@@ -368,12 +416,12 @@ export default function LandingPage() {
           <motion.div
             animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
             transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-teal-100/60 blur-[120px]"
+            className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-teal-100/60 dark:bg-teal-900/30 blur-[120px]"
           />
           <motion.div
             animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
             transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-amber-100/50 blur-[120px]"
+            className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-amber-100/50 dark:bg-amber-900/20 blur-[120px]"
           />
         </div>
 
@@ -384,16 +432,16 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <span className="inline-block px-4 py-2 rounded-full bg-teal-50 text-teal-700 text-xs font-bold uppercase tracking-widest mb-6 border border-teal-100">
+            <span className="inline-block px-4 py-2 rounded-full bg-teal-50 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 text-xs font-bold uppercase tracking-widest mb-6 border border-teal-100 dark:border-teal-800">
               {t('hero.badge')}
             </span>
-            <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] mb-6 text-slate-900">
+            <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] mb-6 text-slate-900 dark:text-white">
               Your Health,{' '}
               <br className="hidden sm:block" />
               Our Mission.{' '}
               <span className="text-gradient">Biruh Tena.</span>
             </h1>
-            <p className="text-base text-slate-500 max-w-lg mb-8 font-medium leading-relaxed">
+            <p className="text-base text-slate-500 dark:text-slate-400 max-w-lg mb-8 font-medium leading-relaxed">
               {t('hero.subtext')}
             </p>
             <div className="flex flex-wrap gap-4">
@@ -408,7 +456,7 @@ export default function LandingPage() {
               </motion.button>
               <button
                 onClick={() => scrollTo('about')}
-                className="px-8 py-4 rounded-2xl font-bold text-slate-700 border border-slate-200 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50 transition-all"
+                className="px-8 py-4 rounded-2xl font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-600 hover:text-teal-700 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-all"
               >
                 {t('hero.learnBtn')}
               </button>
@@ -487,38 +535,38 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════
           4. SERVICES GRID
       ══════════════════════════════════════════════════════════════ */}
-      <section id="services" className="py-28 bg-slate-50">
+      <section id="services" className="py-24 lg:py-32 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
+            <span className="text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('services.label')}
             </span>
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">
+            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-4">
               {t('services.heading')}
             </h2>
-            <p className="text-slate-500 text-sm leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed">
               {t('services.description')}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {SERVICES_CONFIG.map((svc, i) => {
               const Icon = svc.icon;
               return (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
-                  className="group p-8 rounded-3xl bg-white border border-slate-100 hover:border-teal-400 hover:shadow-2xl hover:shadow-teal-600/8 hover:-translate-y-1 transition-all duration-300"
+                  className="group p-8 rounded-3xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/50 hover:border-teal-300 dark:hover:border-teal-600/60 hover:shadow-xl hover:shadow-teal-600/10 hover:-translate-y-1.5 transition-all duration-300"
                 >
-                  <div className={`w-14 h-14 rounded-2xl ${svc.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <div className={`w-14 h-14 rounded-2xl ${svc.bg} shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`${svc.color} w-7 h-7`} />
                   </div>
-                  <h3 className="text-xl font-extrabold text-slate-900 mb-3">{t(svc.titleKey)}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed mb-5">{t(svc.descKey)}</p>
-                  <button className="flex items-center gap-2 text-teal-600 text-sm font-bold hover:gap-3 transition-all">
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-2">{t(svc.titleKey)}</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-5">{t(svc.descKey)}</p>
+                  <button className="flex items-center gap-2 text-teal-600 dark:text-teal-400 text-sm font-bold hover:gap-3 transition-all group-hover:text-teal-700 dark:group-hover:text-teal-300">
                     {t('services.learnMore')} <ChevronRight size={16} />
                   </button>
                 </motion.div>
@@ -528,19 +576,106 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          5. DOCTOR SEARCH SECTION
-      ══════════════════════════════════════════════════════════════ */}
-      <section id="doctors" className="py-28 bg-white">
+      {/* ── AI INNOVATION SECTION ── */}
+      <section className="py-24 relative overflow-hidden bg-white dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="aspect-square rounded-[3rem] bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center p-12 border-2 border-teal-100 dark:border-teal-800 shadow-2xl shadow-teal-600/5">
+                <Box className="relative">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                    className="absolute inset-0 border-4 border-dashed border-teal-200 rounded-full"
+                  />
+                  <div className="w-48 h-48 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-inner relative z-10">
+                    <Sparkles size={80} className="text-teal-600" />
+                  </div>
+                </Box>
+              </div>
+              
+              {/* Floating feature pills */}
+              <motion.div 
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className="absolute -top-6 -right-6 glass p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-teal-100"
+              >
+                <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center text-teal-600">
+                  <Bot size={20} />
+                </div>
+                <div>
+                  <Typography variant="caption" fontWeight={800} sx={{ display: 'block' }}>RAG-POWERED AI</Typography>
+                  <Typography variant="body2" color="text.secondary">Full Clinical Context</Typography>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
+                Next-Gen Healthcare
+              </span>
+              <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-6 leading-tight">
+                AI-Driven Clinical <br />
+                <span className="text-teal-600">Decision Support</span>
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-base leading-relaxed mb-8">
+                Our system integrates advanced Google Gemini AI to assist both patients and clinical staff. 
+                With full context of the medical environment, our AI agent provides real-time guidance, 
+                treatment suggestions, and automated clinical workflows.
+              </p>
+              
+              <ul className="space-y-4 mb-10">
+                {[
+                  { icon: Zap, text: 'Instant Treatment Plan Suggestions' },
+                  { icon: Network, text: 'Full System Context Awareness' },
+                  { icon: Building2, text: '24/7 Intelligent Patient Guidance' },
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-teal-600">
+                      <item.icon size={14} />
+                    </div>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button 
+                variant="contained" 
+                onClick={() => navigate('/register')}
+                sx={{ 
+                  borderRadius: 3, 
+                  px: 4, 
+                  py: 1.5, 
+                  bgcolor: '#0d9488', 
+                  fontWeight: 800,
+                  boxShadow: '0 10px 20px rgba(13, 148, 136, 0.2)'
+                }}
+              >
+                Experience AI Healthcare
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      <section id="doctors" className="py-28 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('doctors.label')}
             </span>
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white mb-4">
               {t('doctors.heading')}
             </h2>
-            <p className="text-slate-500 text-sm leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
               {t('doctors.description')}
             </p>
           </div>
@@ -552,12 +687,12 @@ export default function LandingPage() {
               value={query}
               onChange={handleQueryChange}
               placeholder={t('doctors.searchPlaceholder')}
-              className="flex-1 px-5 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+              className="flex-1 px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
             />
             <select
               value={specialty}
               onChange={handleSpecialtyChange}
-              className="px-5 py-3 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all bg-white"
+              className="px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all bg-white dark:bg-slate-800"
             >
               {SPECIALTY_OPTIONS.map((opt) => (
                 <option key={opt} value={opt === 'All Specialties' ? '' : opt}>
@@ -579,7 +714,7 @@ export default function LandingPage() {
           {/* Error State */}
           {!loadingDoctors && doctorError && (
             <div className="flex flex-col items-center gap-4 py-16">
-              <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl">
+              <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-6 py-4 rounded-2xl">
                 <AlertCircle size={20} />
                 <span className="text-sm font-medium">{doctorError}</span>
               </div>
@@ -595,11 +730,11 @@ export default function LandingPage() {
           {/* Empty State */}
           {!loadingDoctors && !doctorError && doctors.length === 0 && (
             <div className="text-center py-16">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Stethoscope className="text-slate-400 w-8 h-8" />
               </div>
-              <p className="text-slate-500 font-medium">{t('doctors.noResults')}</p>
-              <p className="text-slate-400 text-sm mt-1">{t('doctors.noResultsHint')}</p>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">{t('doctors.noResults')}</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">{t('doctors.noResultsHint')}</p>
             </div>
           )}
 
@@ -614,7 +749,7 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
-                  className="group rounded-3xl border border-slate-100 bg-white overflow-hidden hover:-translate-y-2 hover:border-teal-200 hover:shadow-2xl hover:shadow-teal-600/8 transition-all duration-300 cursor-pointer"
+                  className="group rounded-3xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden hover:-translate-y-2 hover:border-teal-200 dark:hover:border-teal-600 hover:shadow-2xl hover:shadow-teal-600/8 transition-all duration-300 cursor-pointer"
                   onClick={() => navigate(`/doctor/${doc.id}`)}
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
@@ -639,15 +774,19 @@ export default function LandingPage() {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="text-lg font-extrabold text-slate-900 leading-tight">{doc.fullName}</h3>
+                        <h3 className="text-lg font-extrabold text-slate-900 dark:text-white leading-tight">{doc.fullName}</h3>
                         <p className="text-teal-600 text-sm font-semibold mt-0.5">{doc.specialization}</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-[11px] mt-1 flex items-center gap-1">
+                          <Building2 size={12} />
+                          {doc.hospitals && doc.hospitals.length > 0 ? doc.hospitals.join(', ') : 'Addis Ababa Clinic'}
+                        </p>
                       </div>
-                      <span className="shrink-0 px-2.5 py-1 bg-teal-50 text-teal-700 text-xs font-bold rounded-lg border border-teal-100">
+                      <span className="shrink-0 px-2.5 py-1 bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 text-xs font-bold rounded-lg border border-teal-100 dark:border-teal-800">
                         {doc.experience || '5'}+ yrs
                       </span>
                     </div>
                     {doc.reviewsCount > 0 && (
-                      <p className="text-slate-400 text-xs mb-4">{doc.reviewsCount} reviews</p>
+                      <p className="text-slate-400 dark:text-slate-500 text-xs mb-4">{doc.reviewsCount} reviews</p>
                     )}
                     <button
                       onClick={(e) => { e.stopPropagation(); navigate(`/doctor/${doc.id}`); }}
@@ -685,30 +824,46 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════
           6. HOW IT WORKS
       ══════════════════════════════════════════════════════════════ */}
-      <section className="py-28 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-24 lg:py-32 relative overflow-hidden transition-colors duration-300" style={{ background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 50%, #f0f9ff 100%)' }}>
+        <div className="absolute inset-0 dark:opacity-0 opacity-100 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-teal-100/60 blur-[120px]" />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full bg-sky-100/60 blur-[100px]" />
+        </div>
+        <div className="absolute inset-0 dark:bg-slate-950/95 opacity-0 dark:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center max-w-xl mx-auto mb-16">
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900">
+            <span className="text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-3 block">
+              {t('howItWorks.label') || 'Simple Process'}
+            </span>
+            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-4">
               {t('howItWorks.heading')}
             </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-base">
+              {t('howItWorks.subtext') || 'Get the care you need in three easy steps'}
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Connecting line on desktop */}
+            <div className="hidden md:block absolute top-16 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-0.5 bg-gradient-to-r from-teal-200 via-teal-400 to-teal-200 dark:from-teal-800 dark:via-teal-600 dark:to-teal-800 z-0" />
+
             {HOW_IT_WORKS_CONFIG.map((item, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative p-8 rounded-3xl bg-white border border-slate-100 hover:bg-teal-600 transition-all duration-300 cursor-default"
+                transition={{ delay: i * 0.15 }}
+                className="group relative z-10 flex flex-col items-center text-center p-8 rounded-3xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/50 hover:border-teal-300 dark:hover:border-teal-600/60 hover:shadow-2xl hover:shadow-teal-600/10 hover:-translate-y-2 transition-all duration-300"
               >
-                <span className="block text-5xl font-black text-slate-100 group-hover:text-white/20 mb-6 transition-colors">
-                  {item.step}
-                </span>
-                <h3 className="text-xl font-extrabold text-slate-900 group-hover:text-white mb-3 transition-colors">
+                {/* Step number circle */}
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center mb-6 shadow-lg shadow-teal-600/30 group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-2xl font-black text-white">{item.step}</span>
+                </div>
+                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-3">
                   {t(item.titleKey)}
                 </h3>
-                <p className="text-slate-500 text-sm leading-relaxed group-hover:text-white/80 transition-colors">
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                   {t(item.descKey)}
                 </p>
               </motion.div>
@@ -720,43 +875,27 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════
           7. VIDEO CONSULTATION BANNER
       ══════════════════════════════════════════════════════════════ */}
-      <section id="video-consult" className="py-16" style={{ backgroundColor: '#e6faf8' }}>
+      <section id="video-consult" className="py-16 bg-teal-50 dark:bg-slate-900/50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex flex-col md:flex-row items-center gap-10 bg-white rounded-[2.5rem] shadow-xl shadow-teal-600/8 overflow-hidden"
+            className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-teal-600 to-teal-700 shadow-2xl shadow-teal-600/20"
           >
-            {/* Doctor Image */}
-            <div className="md:w-72 shrink-0 hidden md:block">
-              <img
-                src="https://images.unsplash.com/photo-1559839734-2b71f1e3c770?q=80&w=600&auto=format&fit=crop"
-                alt="Specialist Doctor"
-                className="w-full h-72 object-cover object-top"
-              />
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 px-8 py-10 md:py-0">
-              <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">
-                {t('videoConsult.banner.heading')}
-              </h2>
-              <p className="text-slate-500 text-base mb-6 font-medium">
-                {t('videoConsult.banner.subtext')}
-              </p>
-              <div className="flex items-center gap-5 flex-wrap">
-                {/* 24/7 Badge */}
-                <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-400/30">
-                  <span className="text-white font-black text-sm leading-tight text-center">
-                    {t('videoConsult.banner.badge')}
-                  </span>
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 p-10 md:p-14">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  {t('videoConsult.banner.badge')} Available
                 </div>
+                <h2 className="text-2xl lg:text-3xl font-black text-white mb-3">{t('videoConsult.banner.heading')}</h2>
+                <p className="text-teal-100 text-base mb-6 font-medium">{t('videoConsult.banner.subtext')}</p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => scrollTo('doctors')}
-                  className="bg-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-sm hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 flex items-center gap-2"
+                  className="inline-flex items-center gap-2 bg-white text-teal-700 px-8 py-4 rounded-2xl font-black text-sm hover:bg-teal-50 transition-all shadow-lg"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -764,7 +903,17 @@ export default function LandingPage() {
                   {t('videoConsult.banner.cta')}
                 </motion.button>
               </div>
+              <div className="hidden md:block w-64 shrink-0">
+                <img
+                  src="https://images.unsplash.com/photo-1559839734-2b71f1e3c770?q=80&w=600&auto=format&fit=crop"
+                  alt="Specialist Doctor"
+                  className="w-full h-64 object-cover object-top rounded-2xl opacity-90"
+                />
+              </div>
             </div>
+            {/* Decorative circles */}
+            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/5" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-white/5" />
           </motion.div>
         </div>
       </section>
@@ -772,76 +921,90 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════
           8. TESTIMONIALS (was 7)
       ══════════════════════════════════════════════════════════════ */}
-      <section className="py-28 bg-white">
+      <section className="py-24 lg:py-32 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto mb-16">
-            <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
+            <span className="text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('testimonials.label')}
             </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
+            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white">
               {t('testimonials.heading')}
             </h2>
           </div>
 
-          <div className="relative group">
-            {/* Scroll Container */}
-            <div 
-              className="flex gap-6 overflow-x-auto pb-12 snap-x snap-mandatory no-scrollbar"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {TESTIMONIALS.map((testimonial, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {TESTIMONIALS.slice(0, 3).map((testimonial, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex flex-col gap-5 p-8 rounded-3xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/50 hover:border-teal-200 dark:hover:border-teal-600/60 hover:shadow-xl hover:shadow-teal-600/8 transition-all duration-300"
+              >
+                <div className="flex gap-1">
+                  {Array.from({ length: testimonial.rating }).map((_, j) => (
+                    <Star key={j} size={16} className="text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed flex-1">"{testimonial.text}"</p>
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white font-black text-sm shadow-md shadow-teal-600/20">
+                    {testimonial.initial}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{testimonial.name}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{testimonial.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Extra testimonials row */}
+          {TESTIMONIALS.length > 3 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              {TESTIMONIALS.slice(3).map((testimonial, i) => (
                 <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  key={i + 3}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="min-w-full md:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-16px)] snap-center"
+                  className="flex flex-col gap-5 p-8 rounded-3xl bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/50 hover:border-teal-200 dark:hover:border-teal-600/60 hover:shadow-xl hover:shadow-teal-600/8 transition-all duration-300"
                 >
-                  <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 h-full flex flex-col gap-4 hover:border-teal-200 hover:bg-white hover:shadow-xl hover:shadow-teal-900/5 transition-all duration-300">
-                    <div className="flex gap-1">
-                      {Array.from({ length: testimonial.rating }).map((_, j) => (
-                        <Star key={j} size={16} className="text-amber-400 fill-amber-400" />
-                      ))}
+                  <div className="flex gap-1">
+                    {Array.from({ length: testimonial.rating }).map((_, j) => (
+                      <Star key={j} size={16} className="text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed flex-1">"{testimonial.text}"</p>
+                  <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center text-white font-black text-sm shadow-md shadow-teal-600/20">
+                      {testimonial.initial}
                     </div>
-                    <p className="text-slate-600 text-sm leading-relaxed flex-1">"{testimonial.text}"</p>
-                    <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-                      <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-black text-sm">
-                        {testimonial.initial}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{testimonial.name}</p>
-                        <p className="text-xs text-slate-400">{testimonial.role}</p>
-                      </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{testimonial.name}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">{testimonial.role}</p>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </div>
-
-            {/* Pagination Indicators (Visual Only) */}
-            <div className="flex justify-center gap-2 mt-4">
-              {[0, 1, 2].map((i) => (
-                <div 
-                  key={i} 
-                  className={`h-1.5 rounded-full transition-all duration-300 ${i === 0 ? 'w-8 bg-teal-600' : 'w-2 bg-slate-200'}`} 
-                />
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
           8. HOSPITAL NETWORK
       ══════════════════════════════════════════════════════════════ */}
-      <section id="hospitals" className="py-28 bg-white">
+      <section id="hospitals" className="py-24 lg:py-32 bg-white dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
+            <span className="text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('hospitals.network')}
             </span>
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-4">
+            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white mb-4">
               {t('hospitals.networkDesc')}
             </h2>
           </div>
@@ -849,7 +1012,7 @@ export default function LandingPage() {
           {loadingHospitals ? (
             <div className="flex justify-center py-12"><CircularProgress /></div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {hospitals.map((hosp, i) => (
                 <motion.div
                   key={hosp.id}
@@ -857,19 +1020,19 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="group p-6 rounded-[2.5rem] bg-slate-50 border border-slate-100 hover:border-teal-200 hover:bg-white hover:shadow-2xl hover:shadow-teal-900/5 transition-all duration-300"
+                  className="group p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/50 hover:border-teal-200 dark:hover:border-teal-600/60 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl hover:shadow-teal-600/10 hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                     {hosp.logo ? (
-                      <img src={getDoctorPhotoUrl(hosp.logo)} alt={hosp.name} className="w-10 h-10 object-contain" />
+                      <img src={getDoctorPhotoUrl(hosp.logo)} alt={hosp.name} className="w-9 h-9 object-contain" />
                     ) : (
-                      <Building2 className="text-teal-600 w-8 h-8" />
+                      <Building2 className="text-teal-600 w-7 h-7" />
                     )}
                   </div>
-                  <h3 className="text-lg font-extrabold text-slate-900 mb-2">{hosp.name}</h3>
-                  <p className="text-slate-500 text-sm mb-4 line-clamp-2">{hosp.description || 'Modern clinical site equipped with the latest medical technology.'}</p>
-                  <div className="flex items-center gap-2 text-teal-600 text-xs font-bold">
-                    <MapPin size={14} /> {hosp.address || 'Addis Ababa, ET'}
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white mb-2 leading-snug">{hosp.name}</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-4 line-clamp-2 leading-relaxed">{hosp.description || 'Modern clinical site equipped with the latest medical technology.'}</p>
+                  <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 text-xs font-bold">
+                    <MapPin size={13} /> {hosp.address || 'Addis Ababa, ET'}
                   </div>
                 </motion.div>
               ))}
@@ -881,7 +1044,7 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════
           9. ABOUT TECH
       ══════════════════════════════════════════════════════════════ */}
-      <section id="about" className="py-28 bg-slate-50 overflow-hidden">
+      <section id="about" className="py-24 lg:py-32 bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           {/* Image */}
           <motion.div
@@ -909,7 +1072,7 @@ export default function LandingPage() {
             <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-4 block">
               Our Technology
             </span>
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-8">
+            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white mb-8">
               Precision Meets Compassionate Care.
             </h2>
             <ul className="space-y-6">
@@ -933,12 +1096,12 @@ export default function LandingPage() {
                 const Icon = li.icon;
                 return (
                   <li key={i} className="flex gap-5">
-                    <div className="w-11 h-11 shrink-0 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center">
+                    <div className="w-11 h-11 shrink-0 rounded-2xl bg-teal-50 dark:bg-teal-900/40 border border-teal-100 dark:border-teal-800 flex items-center justify-center">
                       <Icon className="text-teal-600 w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-slate-900 mb-1">{li.title}</h4>
-                      <p className="text-sm text-slate-500 leading-relaxed">{li.desc}</p>
+                      <h4 className="font-extrabold text-slate-900 dark:text-white mb-1">{li.title}</h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{li.desc}</p>
                     </div>
                   </li>
                 );
@@ -951,13 +1114,13 @@ export default function LandingPage() {
       {/* ══════════════════════════════════════════════════════════════
           9. FAQ ACCORDION
       ══════════════════════════════════════════════════════════════ */}
-      <section id="faq" className="py-28 bg-white">
+      <section id="faq" className="py-24 lg:py-32 bg-white dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-16">
-            <span className="text-teal-600 text-xs font-bold uppercase tracking-widest mb-3 block">
+            <span className="text-teal-600 dark:text-teal-400 text-xs font-bold uppercase tracking-widest mb-3 block">
               {t('faq.label')}
             </span>
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-900">
+            <h2 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white">
               {t('faq.heading')}
             </h2>
           </div>
@@ -970,19 +1133,19 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="rounded-2xl border border-slate-100 bg-slate-50 overflow-hidden"
+                className="rounded-2xl border border-slate-100 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80 overflow-hidden hover:border-teal-200 dark:hover:border-teal-700 transition-colors duration-200"
               >
                 <button
                   className="w-full flex items-center justify-between px-6 py-5 text-left"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 >
-                  <span className="font-bold text-slate-900 text-sm pr-4">{t(faq.qKey)}</span>
+                  <span className="font-bold text-slate-900 dark:text-white text-sm pr-4">{t(faq.qKey)}</span>
                   <motion.div
                     animate={{ rotate: openFaq === i ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                     className="shrink-0"
                   >
-                    <ChevronDown size={18} className="text-teal-600" />
+                    <ChevronDown size={18} className="text-teal-600 dark:text-teal-400" />
                   </motion.div>
                 </button>
                 <AnimatePresence initial={false}>
@@ -995,7 +1158,7 @@ export default function LandingPage() {
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <p className="px-6 pb-5 text-sm text-slate-500 leading-relaxed">{t(faq.aKey)}</p>
+                      <p className="px-6 pb-5 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{t(faq.aKey)}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1029,58 +1192,95 @@ export default function LandingPage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
+          CTA SECTION — before footer
+      ══════════════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/5" />
+          <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-white/5" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-white/3 blur-3xl" />
+        </div>
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className="inline-flex items-center gap-2 bg-white/15 text-white text-xs font-bold px-4 py-2 rounded-full mb-6 border border-white/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Accepting New Patients
+            </span>
+            <h2 className="text-3xl lg:text-5xl font-black text-white mb-6 leading-tight">
+              Ready to take control<br />of your health?
+            </h2>
+            <p className="text-teal-100 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+              Join thousands of patients who trust Biruh Tena for world-class medical care. Book your first appointment today.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/register')}
+                className="bg-white text-teal-700 px-10 py-4 rounded-2xl font-black text-sm hover:bg-teal-50 transition-all shadow-xl shadow-teal-900/20 flex items-center justify-center gap-2"
+              >
+                Get Started Free <ArrowRight size={18} />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => scrollTo('doctors')}
+                className="bg-white/10 border border-white/30 text-white px-10 py-4 rounded-2xl font-black text-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+              >
+                Browse Doctors
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════
           11. FOOTER
       ══════════════════════════════════════════════════════════════ */}
-      <footer id="contact" style={{ backgroundColor: '#0a2540' }} className="pt-20 pb-10 rounded-t-[4rem]">
+      <footer id="contact" style={{ backgroundColor: '#0a2540' }} className="pt-20 pb-10 rounded-t-[3rem]">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 mb-16">
-            {/* Col 1 — Brand (span 2) */}
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
+            {/* Col 1 — Brand (span 4) */}
+            <div className="lg:col-span-4">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-900/40">
                   <Stethoscope className="text-white w-6 h-6" />
                 </div>
                 <div className="flex flex-col leading-none">
-                  <span className="text-xl font-bold text-white">
-                    Biruh Tena
-                  </span>
+                  <span className="text-xl font-bold text-white">Biruh Tena</span>
                   <span className="font-ethiopic text-xs text-teal-400">ብሩህ ጤና</span>
                 </div>
               </div>
               <p className="text-white/50 text-sm leading-relaxed max-w-xs mb-8">
                 {t('footer.tagline')}
               </p>
+              <div className="flex gap-3 mb-8">
+                {[Instagram, Facebook, Twitter].map((Icon, i) => (
+                  <a
+                    key={i}
+                    href="#"
+                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-teal-600 hover:border-teal-600 text-white/50 hover:text-white transition-all duration-200"
+                  >
+                    <Icon size={17} />
+                  </a>
+                ))}
+              </div>
               <button
                 onClick={() => navigate('/login')}
-                className="bg-teal-600 text-white px-8 py-3.5 rounded-2xl font-bold text-sm hover:bg-teal-500 transition-all flex items-center gap-2 shadow-lg shadow-teal-900/30"
+                className="bg-teal-600 text-white px-7 py-3 rounded-xl font-bold text-sm hover:bg-teal-500 transition-all flex items-center gap-2 shadow-lg shadow-teal-900/30"
               >
-                {t('footer.getStarted')} <ChevronRight size={16} />
+                {t('footer.getStarted')} <ChevronRight size={15} />
               </button>
             </div>
 
-            {/* Col 2 — Contact */}
-            <div>
-              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">{t('footer.contact')}</p>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3 text-white/60 text-sm">
-                  <MapPin size={16} className="text-teal-400 mt-0.5 shrink-0" />
-                  Bole 12, Addis Ababa, ET
-                </li>
-                <li className="flex items-center gap-3 text-white/60 text-sm">
-                  <Phone size={16} className="text-teal-400 shrink-0" />
-                  +251 911 22 33 44
-                </li>
-                <li className="flex items-center gap-3 text-white/60 text-sm">
-                  <Mail size={16} className="text-teal-400 shrink-0" />
-                  hello@biruhtena.et
-                </li>
-              </ul>
-            </div>
-
-            {/* Col 3 — Quick Links + Social */}
-            <div>
+            {/* Col 2 — Quick Links (span 2) */}
+            <div className="lg:col-span-2">
               <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">{t('footer.quickLinks')}</p>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3">
                 {[
                   { label: 'nav.services', href: '#services' },
                   { label: 'nav.doctors', href: '#doctors' },
@@ -1098,22 +1298,49 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-4">{t('footer.social')}</p>
-              <div className="flex gap-3">
-                {[Instagram, Facebook, Twitter].map((Icon, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-teal-600 text-white/50 hover:text-white transition-all"
-                  >
-                    <Icon size={18} />
-                  </a>
+            </div>
+
+            {/* Col 3 — Services (span 3) */}
+            <div className="lg:col-span-3">
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">{t('services.label')}</p>
+              <ul className="space-y-3">
+                {SERVICES_CONFIG.slice(0, 5).map((svc) => (
+                  <li key={svc.titleKey}>
+                    <a href="#services" className="text-white/50 text-sm hover:text-teal-400 transition-colors">
+                      {t(svc.titleKey)}
+                    </a>
+                  </li>
                 ))}
+              </ul>
+            </div>
+
+            {/* Col 4 — Contact (span 3) */}
+            <div className="lg:col-span-3">
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">{t('footer.contact')}</p>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-start gap-3 text-white/60 text-sm">
+                  <MapPin size={15} className="text-teal-400 mt-0.5 shrink-0" />
+                  Bole 12, Addis Ababa, ET
+                </li>
+                <li className="flex items-center gap-3 text-white/60 text-sm">
+                  <Phone size={15} className="text-teal-400 shrink-0" />
+                  +251 911 22 33 44
+                </li>
+                <li className="flex items-center gap-3 text-white/60 text-sm">
+                  <Mail size={15} className="text-teal-400 shrink-0" />
+                  hello@biruhtena.et
+                </li>
+              </ul>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-2">Emergency</p>
+                <a href="tel:+251911223344" className="text-white font-black text-lg hover:text-teal-400 transition-colors">
+                  +251 911 22 33 44
+                </a>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between gap-4">
+          <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between gap-4 items-center">
             <p className="text-white/30 text-xs">
               {t('footer.copyright')}
             </p>
@@ -1126,7 +1353,7 @@ export default function LandingPage() {
       </footer>
 
       {/* ── AI Assistant ── */}
-      <GeminiChatbot />
+      <AIAssistant />
     </div>
   );
 }

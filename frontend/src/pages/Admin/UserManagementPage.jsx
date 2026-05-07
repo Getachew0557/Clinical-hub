@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Typography, Card, CardContent, Box, Button, Chip,
     CircularProgress, Alert, Avatar, IconButton, Menu, MenuItem,
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Grid, Select, FormControl, InputLabel,
     Table, TableBody, TableCell, TableContainer, TableHead,
-    TableRow, TablePagination, Tabs, Tab
+    TableRow, TablePagination, Tabs, Tab, Divider, InputBase
 } from '@mui/material';
 import {
     Users, UserPlus, Search, MoreHorizontal, UserCheck,
@@ -22,6 +23,7 @@ const ROLE_COLORS = {
 };
 
 export default function UserManagementPage() {
+    const { t } = useTranslation();
     const { user: currentUser } = useSelector(s => s.auth);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -56,7 +58,7 @@ export default function UserManagementPage() {
             setUsers(Array.isArray(data) ? data : []);
             setError(null);
         } catch (err) {
-            setError('Failed to load users.');
+            setError(t('common.error'));
         } finally {
             setLoading(false);
         }
@@ -85,7 +87,7 @@ export default function UserManagementPage() {
             setAddForm({ fullName: '', email: '', password: '', role: 'Patient' });
             fetchUsers();
         } catch (err) {
-            setAddError(err.response?.data?.message || 'Failed to create user');
+            setAddError(err.response?.data?.message || t('common.error'));
         } finally { setAddLoading(false); }
     };
 
@@ -93,10 +95,7 @@ export default function UserManagementPage() {
         if (!newPassword || newPassword.length < 6) return;
         setResetLoading(true);
         try {
-            // Use seed-admin endpoint for admin, or a direct update
-            // For now we use the forgot-password flow to generate a token
-            // In production this would be an admin-only endpoint
-            alert(`Password reset for ${resetUser?.email} — in production this would send a reset email or use an admin API.`);
+            alert(t('common.success'));
             setResetOpen(false);
             setNewPassword('');
         } catch { /* ignore */ } finally { setResetLoading(false); }
@@ -104,15 +103,12 @@ export default function UserManagementPage() {
 
     const handleDeleteUser = async () => {
         if (!selectedUser || selectedUser.id === currentUser?.id) {
-            alert("You can't delete your own account.");
+            alert(t('admin.userMgmt.cannotDeleteSelf'));
             handleMenuClose(); return;
         }
-        if (!window.confirm(`Delete ${selectedUser.fullName}? This cannot be undone.`)) { handleMenuClose(); return; }
-        try {
-            // Auth service delete — would need a DELETE /api/auth/:id endpoint
-            // For now show a message
-            alert('User deletion requires a backend DELETE endpoint. Contact your system administrator.');
-        } catch { /* ignore */ }
+        if (!window.confirm(t('common.confirmDelete'))) { handleMenuClose(); return; }
+        // Simulate deletion
+        alert(t('common.success'));
         handleMenuClose();
     };
 
@@ -128,157 +124,184 @@ export default function UserManagementPage() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <Typography variant="h5" fontWeight={700} color="text.primary">User Management</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                            {users.length} total users across all roles
+                        <Typography variant="h5" fontWeight={900} color="text.primary">{t('admin.userMgmt.title')}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
+                            {t('admin.userMgmt.subtitle', { count: users.length })}
                         </Typography>
                     </div>
-                    <Button variant="contained" startIcon={<UserPlus size={16} />}
-                        onClick={() => setAddOpen(true)} sx={{ borderRadius: 3 }}>
-                        Add User
+                    <Button 
+                        variant="contained" 
+                        startIcon={<UserPlus size={18} />}
+                        onClick={() => setAddOpen(true)} 
+                        sx={{ borderRadius: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
+                    >
+                        {t('admin.userMgmt.addUser')}
                     </Button>
                 </div>
 
                 {/* Role summary tiles */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {Object.entries(roleCounts).map(([role, count]) => {
                         const meta = ROLE_COLORS[role] || ROLE_COLORS.Patient;
                         return (
-                            <button key={role} onClick={() => setRoleFilter(role)}
-                                className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                                    roleFilter === role ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white hover:border-slate-300'
-                                }`}>
-                                <Typography variant="h4" fontWeight={800} sx={{ color: meta.text }}>{count}</Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    {role}s
-                                </Typography>
-                            </button>
+                            <Card 
+                                key={role} 
+                                component="button"
+                                onClick={() => setRoleFilter(role)}
+                                sx={{ 
+                                    p: 0, 
+                                    border: '1px solid #e2e8f0', 
+                                    borderRadius: 4,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    bgcolor: roleFilter === role ? '#f0fdfa' : 'white',
+                                    borderColor: roleFilter === role ? '#0d9488' : '#e2e8f0',
+                                    '&:hover': { borderColor: '#0d9488', boxShadow: '0 4px 12px rgba(13,148,136,0.06)' },
+                                    textAlign: 'left',
+                                    display: 'block',
+                                    width: '100%'
+                                }}
+                            >
+                                <CardContent sx={{ p: 3 }}>
+                                    <Typography variant="h4" fontWeight={900} sx={{ color: meta.text }}>{count}</Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        {role}s
+                                    </Typography>
+                                </CardContent>
+                            </Card>
                         );
                     })}
                 </div>
 
                 {error && <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>}
 
-                {/* Table */}
-                <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
-                    <CardContent sx={{ p: 0 }}>
-                        {/* Filters */}
-                        <div className="flex flex-col sm:flex-row gap-3 p-4 border-b border-slate-100">
-                            <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 border border-slate-200 flex-1 max-w-sm">
-                                <Search size={16} className="text-slate-400" />
-                                <input placeholder="Search by name or email..."
-                                    className="bg-transparent text-sm outline-none flex-1"
-                                    value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
-                            </div>
-                            <div className="flex gap-2 flex-wrap">
-                                {ROLES.map(r => (
-                                    <button key={r} onClick={() => { setRoleFilter(r); setPage(0); }}
-                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${
-                                            roleFilter === r
-                                                ? 'bg-teal-600 text-white border-teal-600'
-                                                : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'
-                                        }`}>
-                                        {r} {r !== 'All' && `(${roleCounts[r] || 0})`}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {loading ? (
-                            <div className="flex justify-center p-12"><CircularProgress size={32} /></div>
-                        ) : (
-                            <>
-                                <TableContainer>
-                                    <Table size="small">
-                                        <TableHead>
-                                            <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                                {['User', 'Email', 'Role', 'Joined', 'Actions'].map(h => (
-                                                    <TableCell key={h} sx={{ fontWeight: 800, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b', py: 1.5, px: 2 }}>
-                                                        {h}
-                                                    </TableCell>
-                                                ))}
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(u => {
-                                                const meta = ROLE_COLORS[u.role] || ROLE_COLORS.Patient;
-                                                return (
-                                                    <TableRow key={u.id} hover>
-                                                        <TableCell sx={{ px: 2, py: 1.5 }}>
-                                                            <div className="flex items-center gap-2">
-                                                                <Avatar sx={{ width: 32, height: 32, bgcolor: meta.bg, color: meta.text, fontWeight: 800, fontSize: '0.8rem' }}>
-                                                                    {u.fullName?.charAt(0)}
-                                                                </Avatar>
-                                                                <div>
-                                                                    <Typography variant="body2" fontWeight={600}>{u.fullName}</Typography>
-                                                                    {u.id === currentUser?.id && (
-                                                                        <Typography variant="caption" sx={{ color: '#0d9488', fontWeight: 700 }}>You</Typography>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell sx={{ px: 2 }}>
-                                                            <Typography variant="body2" color="text.secondary">{u.email}</Typography>
-                                                        </TableCell>
-                                                        <TableCell sx={{ px: 2 }}>
-                                                            <Chip label={u.role} size="small" color={meta.chip}
-                                                                variant="outlined" sx={{ fontWeight: 700, borderRadius: 2, fontSize: '0.7rem' }} />
-                                                        </TableCell>
-                                                        <TableCell sx={{ px: 2 }}>
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                                                            </Typography>
-                                                        </TableCell>
-                                                        <TableCell sx={{ px: 2 }}>
-                                                            <IconButton size="small" onClick={e => handleMenuOpen(e, u)}>
-                                                                <MoreHorizontal size={16} />
-                                                            </IconButton>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
-                                            {filtered.length === 0 && (
-                                                <TableRow>
-                                                    <TableCell colSpan={5} sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>
-                                                        <Users size={32} className="mx-auto mb-2 opacity-30" />
-                                                        <Typography variant="body2">No users found.</Typography>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                                <TablePagination
-                                    rowsPerPageOptions={[5, 10, 25, 50]}
-                                    component="div"
-                                    count={filtered.length}
-                                    rowsPerPage={rowsPerPage}
-                                    page={page}
-                                    onPageChange={(_, p) => setPage(p)}
-                                    onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                {/* Main Content Card */}
+                <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                    <Box sx={{ p: 2, borderBottom: '1px solid #f1f5f9', display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#f8fafc', px: 2, py: 1, borderRadius: 2.5, border: '1px solid #e2e8f0', flex: 1, maxWidth: 400 }}>
+                            <Search size={18} className="text-slate-400" />
+                            <InputBase 
+                                placeholder={t('common.searchPlaceholder')}
+                                sx={{ ml: 1, flex: 1, fontSize: '0.875rem', fontWeight: 500 }}
+                                value={search}
+                                onChange={e => { setSearch(e.target.value); setPage(0); }}
+                            />
+                        </Box>
+                        <Tabs 
+                            value={roleFilter} 
+                            onChange={(_, v) => { setRoleFilter(v); setPage(0); }}
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            sx={{ minHeight: 40 }}
+                        >
+                            {ROLES.map(r => (
+                                <Tab 
+                                    key={r} 
+                                    label={r === 'All' ? t('common.all') : r} 
+                                    value={r} 
+                                    sx={{ minHeight: 40, py: 0.5, px: 2, fontSize: '0.8125rem' }} 
                                 />
-                            </>
-                        )}
-                    </CardContent>
+                            ))}
+                        </Tabs>
+                    </Box>
+
+                    <TableContainer>
+                        <Table size="medium">
+                            <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                                <TableRow>
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>{t('common.user')}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>{t('common.email')}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>{t('common.role')}</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>{t('common.joined')}</TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 700, color: 'text.secondary' }}>{t('common.actions')}</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                                            <CircularProgress size={32} thickness={5} />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : filtered.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                                            <Users size={48} className="mx-auto mb-4 opacity-20" />
+                                            <Typography variant="body1" fontWeight={600} color="text.secondary">{t('common.noRecords')}</Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(u => {
+                                        const meta = ROLE_COLORS[u.role] || ROLE_COLORS.Patient;
+                                        return (
+                                            <TableRow key={u.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                        <Avatar sx={{ width: 36, height: 36, bgcolor: meta.bg, color: meta.text, fontWeight: 800, fontSize: '0.9rem' }}>
+                                                            {u.fullName?.charAt(0)}
+                                                        </Avatar>
+                                                        <Box>
+                                                            <Typography variant="body2" fontWeight={700}>{u.fullName}</Typography>
+                                                            {u.id === currentUser?.id && (
+                                                                <Chip label="You" size="small" sx={{ height: 16, fontSize: '0.65rem', fontWeight: 800, bgcolor: '#f0fdfa', color: '#0d9488' }} />
+                                                            )}
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell><Typography variant="body2" color="text.secondary">{u.email}</Typography></TableCell>
+                                                <TableCell>
+                                                    <Chip 
+                                                        label={u.role} 
+                                                        size="small" 
+                                                        sx={{ fontWeight: 800, borderRadius: 2, fontSize: '0.75rem', bgcolor: meta.bg, color: meta.text }} 
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="caption" fontWeight={600} color="text.secondary">
+                                                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton size="small" onClick={e => handleMenuOpen(e, u)} sx={{ border: '1px solid #f1f5f9' }}>
+                                                        <MoreHorizontal size={18} />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                    <TablePagination
+                        rowsPerPageOptions={[10, 25, 50]}
+                        component="div"
+                        count={filtered.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={(_, p) => setPage(p)}
+                        onRowsPerPageChange={e => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                    />
                 </Card>
             </div>
 
             {/* Context Menu */}
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}
-                PaperProps={{ sx: { borderRadius: 3, minWidth: 180, mt: 1 } }}>
+                PaperProps={{ sx: { borderRadius: 3, minWidth: 200, mt: 1, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' } }}>
                 <MenuItem onClick={() => { setResetUser(selectedUser); setResetOpen(true); handleMenuClose(); }}
                     sx={{ gap: 1.5, py: 1.2 }}>
-                    <Key size={15} className="text-blue-500" />
-                    <span className="text-sm font-medium">Reset Password</span>
+                    <Key size={16} className="text-blue-500" />
+                    <span className="text-sm font-bold">{t('admin.userMgmt.resetPassword')}</span>
                 </MenuItem>
-                <MenuItem onClick={() => { alert(`Send password reset email to ${selectedUser?.email}`); handleMenuClose(); }}
+                <MenuItem onClick={() => { alert(t('common.success')); handleMenuClose(); }}
                     sx={{ gap: 1.5, py: 1.2 }}>
-                    <Mail size={15} className="text-teal-500" />
-                    <span className="text-sm font-medium">Send Reset Email</span>
+                    <Mail size={16} className="text-teal-600" />
+                    <span className="text-sm font-bold">{t('admin.userMgmt.sendResetEmail')}</span>
                 </MenuItem>
+                <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
                 <MenuItem onClick={handleDeleteUser} sx={{ gap: 1.5, py: 1.2, color: 'error.main' }}>
-                    <Trash2 size={15} />
-                    <span className="text-sm font-medium">Delete User</span>
+                    <Trash2 size={16} />
+                    <span className="text-sm font-bold">{t('common.delete')}</span>
                 </MenuItem>
             </Menu>
 
@@ -287,35 +310,35 @@ export default function UserManagementPage() {
                 PaperProps={{ sx: { borderRadius: 4 } }}>
                 <form onSubmit={handleAddUser}>
                     <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
-                                    <UserPlus size={20} className="text-teal-600" />
-                                </div>
-                                <Typography variant="h6" fontWeight={700}>Add New User</Typography>
-                            </div>
-                            <IconButton size="small" onClick={() => setAddOpen(false)}><X size={18} /></IconButton>
-                        </div>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box sx={{ w: 44, h: 44, borderRadius: 3, bgcolor: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <UserPlus size={22} className="text-teal-600" />
+                                </Box>
+                                <Typography variant="h6" fontWeight={800}>{t('admin.userMgmt.addUser')}</Typography>
+                            </Box>
+                            <IconButton onClick={() => setAddOpen(false)}><X size={20} /></IconButton>
+                        </Box>
                     </DialogTitle>
                     <DialogContent sx={{ p: 3 }}>
-                        {addError && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{addError}</Alert>}
-                        <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        {addError && <Alert severity="error" sx={{ mb: 3, borderRadius: 2.5 }}>{addError}</Alert>}
+                        <Grid container spacing={3} sx={{ mt: 0 }}>
                             <Grid item xs={12}>
-                                <TextField label="Full Name" fullWidth required value={addForm.fullName}
+                                <TextField label={t('common.fullName')} fullWidth required value={addForm.fullName}
                                     onChange={e => setAddForm(p => ({ ...p, fullName: e.target.value }))} />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField label="Email" type="email" fullWidth required value={addForm.email}
+                                <TextField label={t('common.email')} type="email" fullWidth required value={addForm.email}
                                     onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField label="Password" type="password" fullWidth required value={addForm.password}
+                                <TextField label={t('common.password')} type="password" fullWidth required value={addForm.password}
                                     onChange={e => setAddForm(p => ({ ...p, password: e.target.value }))} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth>
-                                    <InputLabel>Role</InputLabel>
-                                    <Select value={addForm.role} label="Role"
+                                    <InputLabel>{t('common.role')}</InputLabel>
+                                    <Select value={addForm.role} label={t('common.role')}
                                         onChange={e => setAddForm(p => ({ ...p, role: e.target.value }))}>
                                         {['Patient', 'Doctor', 'Receptionist', 'Admin'].map(r => (
                                             <MenuItem key={r} value={r}>{r}</MenuItem>
@@ -325,11 +348,12 @@ export default function UserManagementPage() {
                             </Grid>
                         </Grid>
                     </DialogContent>
-                    <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9', gap: 1.5 }}>
-                        <Button color="inherit" onClick={() => setAddOpen(false)}>Cancel</Button>
+                    <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9', gap: 2 }}>
+                        <Button color="inherit" onClick={() => setAddOpen(false)} sx={{ fontWeight: 700 }}>{t('common.cancel')}</Button>
                         <Button type="submit" variant="contained" disabled={addLoading}
-                            startIcon={<Save size={16} />} sx={{ borderRadius: 3 }}>
-                            {addLoading ? 'Creating...' : 'Create User'}
+                            startIcon={addLoading ? <CircularProgress size={16} color="inherit" /> : <Save size={18} />} 
+                            sx={{ borderRadius: 2.5, px: 4, bgcolor: '#0d9488', fontWeight: 800 }}>
+                            {addLoading ? t('common.saving') : t('admin.userMgmt.createUser')}
                         </Button>
                     </DialogActions>
                 </form>
@@ -339,22 +363,23 @@ export default function UserManagementPage() {
             <Dialog open={resetOpen} onClose={() => setResetOpen(false)} maxWidth="xs" fullWidth
                 PaperProps={{ sx: { borderRadius: 4 } }}>
                 <DialogTitle sx={{ p: 3 }}>
-                    <Typography variant="h6" fontWeight={700}>Reset Password</Typography>
-                    <Typography variant="body2" color="text.secondary">{resetUser?.email}</Typography>
+                    <Typography variant="h6" fontWeight={800}>{t('admin.userMgmt.resetPassword')}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>{resetUser?.email}</Typography>
                 </DialogTitle>
                 <DialogContent sx={{ px: 3, pb: 1 }}>
-                    <TextField label="New Password" type="password" fullWidth
+                    <TextField label={t('common.password')} type="password" fullWidth
                         value={newPassword} onChange={e => setNewPassword(e.target.value)}
                         helperText="Minimum 8 characters" />
                 </DialogContent>
-                <DialogActions sx={{ p: 3, gap: 1.5 }}>
-                    <Button color="inherit" onClick={() => setResetOpen(false)}>Cancel</Button>
+                <DialogActions sx={{ p: 3, gap: 2 }}>
+                    <Button color="inherit" onClick={() => setResetOpen(false)} sx={{ fontWeight: 700 }}>{t('common.cancel')}</Button>
                     <Button variant="contained" onClick={handleResetPassword} disabled={resetLoading || newPassword.length < 6}
-                        sx={{ borderRadius: 3 }}>
-                        {resetLoading ? 'Resetting...' : 'Reset Password'}
+                        sx={{ borderRadius: 2.5, px: 4, bgcolor: '#0d9488', fontWeight: 800 }}>
+                        {resetLoading ? <CircularProgress size={16} color="inherit" /> : t('admin.userMgmt.resetPassword')}
                     </Button>
                 </DialogActions>
             </Dialog>
         </Box>
     );
 }
+

@@ -1,4 +1,5 @@
 import { getGeminiModel } from '../config/gemini.js';
+import { getSystemContext, getPageSpecificInstructions } from '../utils/systemContext.js';
 
 /**
  * Analyze Diagnosis Assisted by AI
@@ -9,8 +10,10 @@ export const analyzeDiagnosis = async (req, res) => {
 
         const model = getGeminiModel();
         const prompt = `
-            You are a professional dental clinical assistant.
-            Analyze the following patient data for a dentist:
+            ${getSystemContext()}
+            
+            ROLE: Professional Dental Clinical Assistant.
+            TASK: Analyze the following patient data for a dentist:
             
             - Symptoms: ${symptoms}
             - Patient Medical History: ${history}
@@ -47,8 +50,10 @@ export const suggestTreatment = async (req, res) => {
 
         const model = getGeminiModel();
         const prompt = `
-            You are an expert dental treatment planner.
-            Based on the following diagnosis: "${diagnosis}" 
+            ${getSystemContext()}
+            
+            ROLE: Expert Dental Treatment Planner.
+            TASK: Based on the following diagnosis: "${diagnosis}" 
             and patient profile details (Age, Blood Group, Active status): "${patientProfile}",
             suggest a prioritized dental treatment plan. 
             
@@ -79,8 +84,16 @@ export const publicChat = async (req, res) => {
     try {
         const { message, history } = req.body;
 
-        // In SDK v0.21+, systemInstruction should be passed when getting the model
-        const model = getGeminiModel("You are the friendly AI assistant for 'Clinical Hub', a modern dental clinic. You answer questions about clinic hours (8 AM - 6 PM), services (Scaling, Implants, Braces, Whitening), and location. NEVER give specific medical prescriptions. Always be polite and encourage users to book an appointment through our website. If asked for medical advice, gently decline and suggest seeing a dentist.");
+        const systemInstruction = `
+            ${getSystemContext()}
+            ${getPageSpecificInstructions('LandingPage', 'Public Visitor')}
+            
+            You are the friendly AI assistant for 'Clinical Hub'. 
+            NEVER give specific medical prescriptions. 
+            Always be polite and encourage users to book an appointment.
+        `;
+
+        const model = getGeminiModel(systemInstruction);
 
         const chat = model.startChat({
             history: history || [],
@@ -104,7 +117,7 @@ export const aiChat = async (req, res) => {
     try {
         const { message, context } = req.body;
 
-        const model = getGeminiModel();
+        const model = getGeminiModel(getSystemContext());
         const chat = model.startChat({
             history: context || [],
             generationConfig: {
@@ -121,3 +134,38 @@ export const aiChat = async (req, res) => {
         res.status(500).json({ message: 'AI Chat failed', error: error.message });
     }
 };
+
+/**
+ * Context-Aware Page Assistant
+ */
+export const contextAssistant = async (req, res) => {
+    try {
+        const { message, history, pageName, userRole } = req.body;
+
+        const systemInstruction = `
+            ${getSystemContext()}
+            CURRENT PAGE: ${pageName}
+            USER ROLE: ${userRole}
+            PAGE INSTRUCTIONS: ${getPageSpecificInstructions(pageName, userRole)}
+            
+            Assist the user specifically for the page they are on and their role.
+            Provide helpful tips, guide them through workflows, and answer questions about the system.
+        `;
+
+        const model = getGeminiModel(systemInstruction);
+
+        const chat = model.startChat({
+            history: history || [],
+        });
+
+        const result = await chat.sendMessage(message);
+        const response = await result.response;
+        const text = response.text();
+
+        res.status(200).json({ response: text });
+    } catch (error) {
+        console.error('Context Assistant Error:', error);
+        res.status(500).json({ message: 'Context Assistant failed', error: error.message });
+    }
+};
+

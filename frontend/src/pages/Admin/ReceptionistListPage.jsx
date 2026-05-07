@@ -10,9 +10,11 @@ import {
     CircularProgress, Alert, Dialog, DialogTitle,
     DialogContent, DialogActions, TextField, Grid, Box
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import authService from '../../api/auth.service';
 
 export default function ReceptionistListPage() {
+    const { t } = useTranslation();
     const [receptionists, setReceptionists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -45,7 +47,7 @@ export default function ReceptionistListPage() {
             setError(null);
         } catch (err) {
             console.error('Fetch Receptionists Error:', err);
-            setError('Failed to load receptionists. Please ensure the auth-service is running.');
+            setError(t('common.error'));
         } finally {
             setLoading(false);
         }
@@ -72,11 +74,11 @@ export default function ReceptionistListPage() {
                 ...formData,
                 role: 'Receptionist'
             });
-            alert('Receptionist registered successfully!');
+            alert(t('admin.broadcast.success', { count: 1 }));
             handleCloseModal();
             fetchReceptionists();
         } catch (err) {
-            alert(err.response?.data?.message || 'Registration failed');
+            alert(err.response?.data?.message || t('common.error'));
         } finally {
             setSubmitting(false);
         }
@@ -101,9 +103,9 @@ export default function ReceptionistListPage() {
             <div className="flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={900} color="text.primary">Receptionists</Typography>
+                    <Typography variant="h5" fontWeight={900} color="text.primary">{t('admin.receptionist.title')}</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
-                        Manage clinic front-desk and administrative staff
+                        {t('admin.receptionist.subtitle')}
                     </Typography>
                 </div>
                 <Button
@@ -112,17 +114,17 @@ export default function ReceptionistListPage() {
                     sx={{ borderRadius: 3 }}
                     onClick={handleOpenModal}
                 >
-                    Add Receptionist
+                    {t('admin.receptionist.add')}
                 </Button>
             </div>
 
             {/* ── Search ── */}
             <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
                 <CardContent className="py-4 px-5">
-                    <div className="flex items-center gap-3 rounded-xl bg-slate-100 px-4 py-2 border border-slate-100 focus-within:border-blue-500 focus-within:bg-white transition-all max-w-md">
+                    <div className="flex items-center gap-3 rounded-xl bg-slate-100 px-4 py-2 border border-slate-100 focus-within:border-teal-500 focus-within:bg-white transition-all max-w-md">
                         <Search size={18} className="text-slate-400" />
                         <InputBase
-                            placeholder="Search by name or email..."
+                            placeholder={t('admin.userMgmt.searchPlaceholder')}
                             className="w-full text-sm"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -151,21 +153,21 @@ export default function ReceptionistListPage() {
                         >
                             <CardContent className="p-5">
                                 <div className="flex justify-between items-start mb-4">
-                                    <Avatar sx={{ bgcolor: '#f1f5f9', color: '#64748b', fontWeight: 800 }}>
+                                    <Avatar sx={{ bgcolor: '#f1f5f9', color: '#0d9488', fontWeight: 800 }}>
                                         {rec.fullName.charAt(0)}
                                     </Avatar>
                                     <IconButton size="small" onClick={(e) => handleMenuOpen(e, rec)} sx={{ mr: -1, mt: -1 }}>
                                         <MoreHorizontal size={18} />
                                     </IconButton>
                                 </div>
-                                <Typography variant="subtitle1" color="text.primary" className="truncate">{rec.fullName}</Typography>
+                                <Typography variant="subtitle1" color="text.primary" className="truncate" fontWeight={700}>{rec.fullName}</Typography>
                                 <div className="flex items-center gap-2 text-slate-500 mt-2">
                                     <Mail size={14} />
                                     <Typography variant="caption" className="truncate">{rec.email}</Typography>
                                 </div>
                                 <div className="mt-4 pt-4 border-t border-slate-50">
                                     <Chip
-                                        label="Receptionist"
+                                        label={t('common.role')}
                                         size="small"
                                         icon={<ShieldCheck size={14} />}
                                         sx={{ bgcolor: '#f0fdf4', color: '#166534', fontWeight: 800, border: '1px solid #dcfce7' }}
@@ -174,6 +176,12 @@ export default function ReceptionistListPage() {
                             </CardContent>
                         </Card>
                     ))}
+                    {filteredList.length === 0 && (
+                        <div className="col-span-full flex flex-col items-center justify-center p-12 text-slate-400">
+                            <ShieldCheck size={48} className="opacity-20 mb-4" />
+                            <Typography variant="body1">{t('admin.receptionist.noStaff')}</Typography>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -187,15 +195,15 @@ export default function ReceptionistListPage() {
             >
                 <form onSubmit={handleSubmit}>
                     <DialogTitle sx={{ p: 3, borderBottom: '1px solid #f1f5f9' }}>
-                        <Typography variant="h6" fontWeight={800}>Register New Receptionist</Typography>
+                        <Typography variant="h6" fontWeight={800}>{t('admin.receptionist.add')}</Typography>
                     </DialogTitle>
                     <DialogContent sx={{ p: 4 }}>
                         <div className="pt-2">
                             <Grid container spacing={3}>
                                 <Grid item xs={12}>
                                     <Box>
-                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                            Full Name
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block', fontWeight: 700 }}>
+                                            {t('common.fullName')}
                                         </Typography>
                                         <TextField
                                             name="fullName"
@@ -209,8 +217,8 @@ export default function ReceptionistListPage() {
                                 </Grid>
                                 <Grid item xs={12}>
                                     <Box>
-                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                            Email Address
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block', fontWeight: 700 }}>
+                                            {t('common.email')}
                                         </Typography>
                                         <TextField
                                             name="email"
@@ -225,8 +233,8 @@ export default function ReceptionistListPage() {
                                 </Grid>
                                 <Grid item xs={12}>
                                     <Box>
-                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                            Temporary Password
+                                        <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block', fontWeight: 700 }}>
+                                            {t('common.password')}
                                         </Typography>
                                         <TextField
                                             name="password"
@@ -243,24 +251,24 @@ export default function ReceptionistListPage() {
                         </div>
                     </DialogContent>
                     <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9' }}>
-                        <Button color="inherit" onClick={handleCloseModal}>Cancel</Button>
+                        <Button color="inherit" onClick={handleCloseModal} sx={{ fontWeight: 600 }}>{t('common.cancel')}</Button>
                         <Button
                             type="submit"
                             variant="contained"
                             disabled={submitting}
-                            sx={{ borderRadius: 3, px: 4 }}
+                            sx={{ borderRadius: 3, px: 4, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                         >
-                            {submitting ? 'Creating...' : 'Register Account'}
+                            {submitting ? t('common.saving') : t('admin.userMgmt.createUser')}
                         </Button>
                     </DialogActions>
                 </form>
             </Dialog>
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem onClick={handleMenuClose}>Deactivate Account</MenuItem>
-                <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>Delete Account</MenuItem>
+                <MenuItem onClick={handleMenuClose}>{t('admin.deactivate')}</MenuItem>
+                <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>{t('admin.deleteUser')}</MenuItem>
             </Menu>
-        </div>
-    </Box>
+            </div>
+        </Box>
     );
 }

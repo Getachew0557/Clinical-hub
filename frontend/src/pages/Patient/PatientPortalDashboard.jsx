@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     CalendarDays, FileText, Receipt, Clock, 
     ArrowRight, Star, PlusCircle, CheckCircle2, Video
@@ -25,16 +26,8 @@ const statusColors = {
     Cancelled:    { bg: '#fef2f2', text: '#dc2626' },
 };
 
-const HEALTH_TIPS = [
-    "Drink at least 8 glasses of water daily to stay hydrated and support your body's natural functions.",
-    "Aim for 7–9 hours of quality sleep each night to allow your body to repair and regenerate.",
-    "30 minutes of moderate exercise daily reduces the risk of chronic disease by up to 35%.",
-    "Eat a balanced diet rich in vegetables, fruits, whole grains, and lean proteins for optimal health.",
-    "Regular health checkups help detect conditions early when they are most treatable.",
-    "Manage stress through mindfulness, deep breathing, or light physical activity every day.",
-];
-
 export default function PatientPortalDashboard() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useSelector((s) => s.auth);
     const [loading, setLoading] = useState(true);
@@ -44,6 +37,8 @@ export default function PatientPortalDashboard() {
         lastCheckup: 'Never',
         nextAppointment: 'None'
     });
+
+    const healthTips = t('portal.healthTips', { returnObjects: true }) || [];
 
     useEffect(() => {
         fetchPatientData();
@@ -92,13 +87,13 @@ export default function PatientPortalDashboard() {
 
     if (loading) {
         return (
-            <div className="flex h-64 items-center justify-center">
+            <Box className="flex h-64 items-center justify-center">
                 <CircularProgress size={40} />
-            </div>
+            </Box>
         );
     }
 
-    const dailyTip = HEALTH_TIPS[Math.floor(Date.now() / 86400000) % HEALTH_TIPS.length];
+    const dailyTip = healthTips[Math.floor(Date.now() / 86400000) % (healthTips.length || 1)];
 
     return (
         <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 12 }}>
@@ -113,10 +108,10 @@ export default function PatientPortalDashboard() {
                     </Avatar>
                     <div>
                         <Typography variant="h4" fontWeight={900} color="text.primary">
-                            Welcome back, {user?.fullName.split(' ')[0]}!
+                            {t('portal.welcome', { name: user?.fullName.split(' ')[0] })}
                         </Typography>
                         <Typography variant="body1" color="text.secondary">
-                            Your health is our priority. Here's what's happening with your care.
+                            {t('portal.subtitle')}
                         </Typography>
                     </div>
                 </Box>
@@ -129,7 +124,7 @@ export default function PatientPortalDashboard() {
                         elevation={0} 
                         sx={{ 
                             borderRadius: 4, 
-                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', 
+                            background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)', 
                             color: 'white',
                             cursor: 'pointer',
                             '&:hover': { transform: 'translateY(-4px)', transition: '0.3s' }
@@ -137,13 +132,13 @@ export default function PatientPortalDashboard() {
                         onClick={() => navigate('/find-doctor')}
                     >
                         <CardContent className="p-6">
-                            <PlusCircle size={32} className="mb-4 text-blue-100" />
-                            <Typography variant="h6" fontWeight={800}>Find a Doctor & Book</Typography>
+                            <PlusCircle size={32} className="mb-4 text-teal-100" />
+                            <Typography variant="h6" fontWeight={800}>{t('portal.findDoctor')}</Typography>
                             <Typography variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
-                                Browse specialists, check availability, and pick clinic or video.
+                                {t('portal.findDoctorDesc')}
                             </Typography>
                             <Box className="flex items-center gap-1 mt-4 font-bold text-sm">
-                                Get Started <ArrowRight size={16} />
+                                {t('portal.getStarted')} <ArrowRight size={16} />
                             </Box>
                         </CardContent>
                     </Card>
@@ -152,29 +147,29 @@ export default function PatientPortalDashboard() {
                 <Grid item xs={12} md={8}>
                     <Grid container spacing={2}>
                         <Grid item xs={12} sm={4}>
-                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5 }}>
+                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
                                 <CardContent className="p-5 text-center">
                                     <Receipt size={24} className="mx-auto mb-2 text-orange-500" />
                                     <Typography variant="h5" fontWeight={800}>{summary.pendingBills}</Typography>
-                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>Unpaid Invoices</Typography>
+                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>{t('common.unpaidInvoices')}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={4}>
-                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
                                 <CardContent className="p-5 text-center">
                                     <CalendarDays size={24} className="mx-auto mb-2 text-blue-500" />
                                     <Typography variant="h5" fontWeight={800}>{summary.nextAppointment}</Typography>
-                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>Next Visit</Typography>
+                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>{t('common.nextVisit')}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={4}>
-                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
                                 <CardContent className="p-5 text-center">
                                     <CheckCircle2 size={24} className="mx-auto mb-2 text-green-500" />
                                     <Typography variant="h5" fontWeight={800}>{summary.lastCheckup}</Typography>
-                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>Last Treatment</Typography>
+                                    <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>{t('common.lastTreatment')}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
@@ -187,8 +182,8 @@ export default function PatientPortalDashboard() {
                 {/* Upcoming Appointments */}
                 <Grid item xs={12} md={7}>
                     <Box className="flex items-center justify-between mb-4">
-                        <Typography variant="h6" fontWeight={900}>Upcoming Visits</Typography>
-                        <Button size="small" onClick={() => navigate('/appointments')}>View All</Button>
+                        <Typography variant="h6" fontWeight={900}>{t('portal.upcomingVisits')}</Typography>
+                        <Button size="small" onClick={() => navigate('/appointments')}>{t('common.viewAll')}</Button>
                     </Box>
                     <div className="flex flex-col gap-3">
                         {appointments.length > 0 ? appointments.map((apt) => {
@@ -201,8 +196,8 @@ export default function PatientPortalDashboard() {
                                                 <CalendarDays size={20} className="text-blue-500" />
                                             </div>
                                             <div>
-                                                <Typography variant="subtitle2" fontWeight={800}>{apt.doctorName || 'General Practitioner'}</Typography>
-                                                <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>{apt.reason || 'General Consultation'}</Typography>
+                                                <Typography variant="subtitle2" fontWeight={800}>{apt.doctorName || t('nav.doctors')}</Typography>
+                                                <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>{apt.reason || t('common.generalConsultation')}</Typography>
                                                 <div className="text-xs text-slate-400 mt-0.5">{apt.appointmentDate} · {apt.appointmentTime?.slice(0,5)}</div>
                                             </div>
                                         </div>
@@ -210,18 +205,18 @@ export default function PatientPortalDashboard() {
                                             <Chip 
                                                 label={apt.status} 
                                                 size="small" 
-                                                sx={{ height: 20, bgcolor: sc.bg, color: sc.text }} 
+                                                sx={{ height: 20, bgcolor: sc.bg, color: sc.text, fontWeight: 700 }} 
                                             />
                                             {(apt.status === 'Confirmed' || apt.status === 'In Progress') && (
                                                 <button
                                                     onClick={() => navigate(`/video/${apt.id}`)}
                                                     className="flex items-center gap-1 px-2.5 py-1 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700 transition-all"
                                                 >
-                                                    <Video size={11} /> Join Video
+                                                    <Video size={11} /> {t('portal.joinVideo')}
                                                 </button>
                                             )}
                                             {apt.status === 'Pending' && (
-                                                <span className="text-xs text-amber-600 font-bold">Awaiting approval</span>
+                                                <span className="text-xs text-amber-600 font-bold">{t('portal.awaitingApproval')}</span>
                                             )}
                                         </div>
                                     </CardContent>
@@ -230,8 +225,8 @@ export default function PatientPortalDashboard() {
                         }) : (
                             <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-3xl">
                                 <CalendarDays size={40} className="mx-auto text-slate-300 mb-2" />
-                                <Typography color="text.secondary">No upcoming visits found.</Typography>
-                                <Button sx={{ mt: 2 }} onClick={() => navigate('/book/new')}>Book Now</Button>
+                                <Typography color="text.secondary">{t('portal.noVisits')}</Typography>
+                                <Button sx={{ mt: 2 }} onClick={() => navigate('/book/new')}>{t('common.bookNow')}</Button>
                             </div>
                         )}
                     </div>
@@ -239,18 +234,18 @@ export default function PatientPortalDashboard() {
 
                 {/* Records & Tips */}
                 <Grid item xs={12} md={5}>
-                    <Typography variant="h6" fontWeight={800} className="mb-4">Medical Summary</Typography>
+                    <Typography variant="h6" fontWeight={800} className="mb-4">{t('portal.medicalSummary')}</Typography>
                     <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4, mb: 3 }}>
                         <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-4">
                                 <FileText className="text-blue-600" />
-                                <Typography variant="subtitle1" fontWeight={700}>Latest Records</Typography>
+                                <Typography variant="subtitle1" fontWeight={700}>{t('portal.latestRecords')}</Typography>
                             </div>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                Access your X-rays, treatment plans, and doctor prescriptions.
+                                {t('portal.latestRecordsDesc')}
                             </Typography>
                             <Button fullWidth variant="outlined" sx={{ borderRadius: 3 }} onClick={() => navigate('/emr')}>
-                                Open Records
+                                {t('common.openRecords')}
                             </Button>
                         </CardContent>
                     </Card>
@@ -260,7 +255,7 @@ export default function PatientPortalDashboard() {
                         <CardContent className="p-6">
                             <div className="flex items-center gap-2 mb-2 text-amber-700">
                                 <Star size={18} fill="currentColor" />
-                                <Typography variant="subtitle2" fontWeight={800}>Daily Health Tip</Typography>
+                                <Typography variant="subtitle2" fontWeight={800}>{t('common.dailyHealthTip')}</Typography>
                             </div>
                             <Typography variant="body2" color="amber.900">
                                 {dailyTip}
@@ -273,3 +268,4 @@ export default function PatientPortalDashboard() {
         </Box>
     );
 }
+

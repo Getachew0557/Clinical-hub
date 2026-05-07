@@ -21,8 +21,8 @@ const AuthLayout = () => {
                 </motion.div>
 
                 <div className="mt-8 text-center">
-                    <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7 }}>
-                        © {new Date().getFullYear()} Clinical Hub Clinic. Professional Management.
+                    <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.6, fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                        © {new Date().getFullYear()} Biruh Tena Specialty Center. All rights reserved.
                     </Typography>
                 </div>
             </Container>

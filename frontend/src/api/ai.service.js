@@ -1,4 +1,4 @@
-﻿import axios from './axiosInstance.js';
+import axios from './axiosInstance.js';
 
 const API_URL = import.meta.env.VITE_API_AI_URL;
 
@@ -41,6 +41,16 @@ const aiService = {
      */
     clinicalChat: async (message, context = []) => {
         const response = await axios.post(`${API_URL}/chat`, { message, context }, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    /**
+     * Context-Aware Page Assistant
+     */
+    getContextAssistantResponse: async (message, pageName, userRole, history = []) => {
+        const response = await axios.post(`${API_URL}/context-assistant`, { message, pageName, userRole, history }, {
             headers: getAuthHeader()
         });
         return response.data;

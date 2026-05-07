@@ -5,6 +5,7 @@ import {
     Alert, Grid, InputLabel
 } from '@mui/material';
 import { Bell, Send, Users, Stethoscope, ShieldCheck, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import authService from '../../api/auth.service';
 
 const API_NOTIFY = import.meta.env.VITE_API_NOTIFICATION_URL;
@@ -13,21 +14,22 @@ const getAuthHeader = () => {
     return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 };
 
-const ROLE_OPTIONS = [
-    { value: 'All', label: 'All Users', icon: Users, color: '#0d9488' },
-    { value: 'Patient', label: 'Patients Only', icon: User, color: '#2563eb' },
-    { value: 'Doctor', label: 'Doctors Only', icon: Stethoscope, color: '#059669' },
-    { value: 'Receptionist', label: 'Receptionists Only', icon: ShieldCheck, color: '#7c3aed' },
-];
-
-const TYPE_OPTIONS = ['Info', 'Success', 'Warning', 'Error'];
-
 export default function BroadcastPage() {
+    const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+
+    const ROLE_OPTIONS = [
+        { value: 'All', label: t('common.allUsers'), icon: Users, color: '#0d9488' },
+        { value: 'Patient', label: t('common.patientsOnly'), icon: User, color: '#2563eb' },
+        { value: 'Doctor', label: t('common.doctorsOnly'), icon: Stethoscope, color: '#059669' },
+        { value: 'Receptionist', label: t('common.receptionistsOnly'), icon: ShieldCheck, color: '#7c3aed' },
+    ];
+
+    const TYPE_OPTIONS = [t('common.info'), t('common.success'), t('common.warning'), 'Error'];
 
     const [form, setForm] = useState({
         targetRole: 'All',
@@ -50,7 +52,7 @@ export default function BroadcastPage() {
 
     const handleSend = async () => {
         if (!form.title.trim() || !form.message.trim()) {
-            setError('Title and message are required.');
+            setError(t('admin.broadcast.required'));
             return;
         }
         setSending(true);
@@ -81,10 +83,10 @@ export default function BroadcastPage() {
                 sent += batch.length;
             }
 
-            setSuccess(`✅ Broadcast sent to ${sent} user${sent !== 1 ? 's' : ''} successfully.`);
+            setSuccess(t('admin.broadcast.success', { count: sent }));
             setForm(prev => ({ ...prev, title: '', message: '' }));
         } catch (err) {
-            setError('Failed to send broadcast. Please try again.');
+            setError(t('admin.broadcast.error'));
         } finally {
             setSending(false);
         }
@@ -95,9 +97,9 @@ export default function BroadcastPage() {
             <div className="flex flex-col gap-6">
 
                 <div>
-                    <Typography variant="h5" fontWeight={700} color="text.primary">Broadcast Notifications</Typography>
+                    <Typography variant="h5" fontWeight={700} color="text.primary">{t('admin.broadcast.title')}</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                        Send announcements to all users or specific roles
+                        {t('admin.broadcast.subtitle')}
                     </Typography>
                 </div>
 
@@ -113,14 +115,14 @@ export default function BroadcastPage() {
                                     <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
                                         <Bell size={20} className="text-teal-600" />
                                     </div>
-                                    <Typography variant="h6" fontWeight={700}>Compose Broadcast</Typography>
+                                    <Typography variant="h6" fontWeight={700}>{t('admin.broadcast.compose')}</Typography>
                                 </div>
 
                                 <div className="flex flex-col gap-4">
                                     {/* Target Role */}
                                     <div>
                                         <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            Target Audience
+                                            {t('admin.broadcast.target')}
                                         </Typography>
                                         <div className="flex flex-wrap gap-2">
                                             {ROLE_OPTIONS.map(opt => (
@@ -143,10 +145,13 @@ export default function BroadcastPage() {
                                     {/* Type */}
                                     <div>
                                         <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            Notification Type
+                                            {t('admin.broadcast.type')}
                                         </Typography>
                                         <div className="flex gap-2">
-                                            {TYPE_OPTIONS.map(t => {
+                                            {TYPE_OPTIONS.map(tOption => {
+                                                const rawType = tOption === t('common.info') ? 'Info' : 
+                                                               tOption === t('common.success') ? 'Success' : 
+                                                               tOption === t('common.warning') ? 'Warning' : 'Error';
                                                 const colors = {
                                                     Info: 'bg-blue-50 text-blue-700 border-blue-200',
                                                     Success: 'bg-green-50 text-green-700 border-green-200',
@@ -161,13 +166,13 @@ export default function BroadcastPage() {
                                                 };
                                                 return (
                                                     <button
-                                                        key={t}
-                                                        onClick={() => setForm(p => ({ ...p, type: t }))}
+                                                        key={tOption}
+                                                        onClick={() => setForm(p => ({ ...p, type: rawType }))}
                                                         className={`px-3 py-1.5 rounded-xl border-2 text-xs font-bold transition-all ${
-                                                            form.type === t ? active[t] : colors[t]
+                                                            form.type === rawType ? active[rawType] : colors[rawType]
                                                         }`}
                                                     >
-                                                        {t}
+                                                        {tOption}
                                                     </button>
                                                 );
                                             })}
@@ -176,7 +181,7 @@ export default function BroadcastPage() {
 
                                     {/* Title */}
                                     <TextField
-                                        label="Notification Title"
+                                        label={t('admin.broadcast.notifTitle')}
                                         fullWidth
                                         required
                                         placeholder="e.g. System Maintenance Notice"
@@ -186,7 +191,7 @@ export default function BroadcastPage() {
 
                                     {/* Message */}
                                     <TextField
-                                        label="Message"
+                                        label={t('admin.broadcast.message')}
                                         fullWidth
                                         required
                                         multiline
@@ -198,12 +203,12 @@ export default function BroadcastPage() {
 
                                     {/* Link */}
                                     <TextField
-                                        label="Action Link (optional)"
+                                        label={t('admin.broadcast.link')}
                                         fullWidth
                                         placeholder="/appointments"
                                         value={form.link}
                                         onChange={e => setForm(p => ({ ...p, link: e.target.value }))}
-                                        helperText="Where users go when they click the notification"
+                                        helperText={t('admin.broadcast.linkHelper')}
                                     />
 
                                     <Button
@@ -214,7 +219,7 @@ export default function BroadcastPage() {
                                         disabled={sending || !form.title.trim() || !form.message.trim()}
                                         sx={{ borderRadius: 3, alignSelf: 'flex-start', px: 4 }}
                                     >
-                                        {sending ? 'Sending...' : `Send to ${getTargetCount()} User${getTargetCount() !== 1 ? 's' : ''}`}
+                                        {sending ? t('admin.broadcast.sending') : t('admin.broadcast.sendTo', { count: getTargetCount() })}
                                     </Button>
                                 </div>
                             </CardContent>
@@ -225,7 +230,7 @@ export default function BroadcastPage() {
                     <Grid item xs={12} md={4}>
                         <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
                             <CardContent sx={{ p: 4 }}>
-                                <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>Preview</Typography>
+                                <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>{t('admin.broadcast.preview')}</Typography>
                                 <div className={`p-4 rounded-xl border ${
                                     form.type === 'Success' ? 'bg-green-50 border-green-200' :
                                     form.type === 'Warning' ? 'bg-amber-50 border-amber-200' :
@@ -241,7 +246,7 @@ export default function BroadcastPage() {
                                         } />
                                         <div>
                                             <Typography variant="subtitle2" fontWeight={700}>
-                                                {form.title || 'Notification Title'}
+                                                {form.title || t('admin.broadcast.notifTitle')}
                                             </Typography>
                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                                                 {form.message || 'Your message will appear here...'}
@@ -252,12 +257,12 @@ export default function BroadcastPage() {
 
                                 <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 700 }}>
-                                        RECIPIENTS
+                                        {t('admin.broadcast.recipients')}
                                     </Typography>
                                     <div className="flex items-center gap-2">
                                         <Users size={16} className="text-teal-600" />
                                         <Typography variant="body2" fontWeight={700}>
-                                            {getTargetCount()} {form.targetRole === 'All' ? 'users' : form.targetRole.toLowerCase() + 's'}
+                                            {getTargetCount()} {form.targetRole === 'All' ? t('common.allUsers').toLowerCase() : form.targetRole.toLowerCase() + 's'}
                                         </Typography>
                                     </div>
                                     <div className="mt-2 flex flex-wrap gap-1">

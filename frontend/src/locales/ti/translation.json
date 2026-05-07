@@ -352,5 +352,30 @@
   "sidebar.prescriptions": "ትዕዛዛት",
   "sidebar.userManagement": "ምምሕዳር ተጠቀምቲ",
   "sidebar.findDoctor": "ዶክተር ደልዩ",
-  "sidebar.hospitals": "ሆስፒታላት"
+  "sidebar.hospitals": "ሆስፒታላት",
+
+  "settings.subtitle": "ናይ መለለዪ ምርጫታትኩምን ናይ ክሊኒክ ቅምጥናን ኣወሃህዱ",
+  "settings.notifications": "ምልክታታት",
+  "settings.appearance": "ምርኢት",
+  "settings.security": "ድሕነት",
+  "settings.notifPrefs": "ናይ ምልክታ ምርጫታት",
+  "settings.notifDesc": "ካብ ክሊኒክ ምልክታታትን ዝተሓደሰ ሓበሬታን ብኸመይ ክትቅበሉ ከምትደልዩ ምረጹ",
+  "settings.emailNotif": "ናይ ኢሜይል ምልክታታት",
+  "settings.emailNotifDesc": "ናይ ቆጸራ ዘኪርካ ምሕሳብን ናይ ስርዓት ምልክታታትን ብኢሜይል ተቐበሉ",
+  "settings.smsNotif": "ናይ ኤስኤምኤስ ምልክታታት",
+  "settings.smsNotifDesc": "ንህጹጽ ዝተሓደሰ ሓበሬታ ቅልጡፍ ናይ ኤስኤምኤስ ምልክታ ርኸቡ",
+  "settings.visualLang": "ምስላዊን ቋንቋን",
+  "settings.darkMode": "ጸልማት ሁነታ",
+  "settings.darkModeOn": "ናይ ጸልማት ምርኢት ንቑሕ እዩ",
+  "settings.darkModeOff": "ናብ ናይ ጸልማት ምርኢት ቀይሩ",
+  "settings.language": "ናይ ስርዓት ቋንቋ",
+  "settings.changeLanguage": "ቋንቋ ቀይሩ",
+  "settings.accountSecurity": "ናይ መለለዪ ድሕነት",
+  "settings.twoFactor": "ክልተ-ደረጃ ምርግጋጽ",
+  "settings.twoFactorDesc": "ብተወሳኺ ናይ ምርግጋጽ ደረጃ መለለዪኹም ሓልዉ",
+  "settings.securityAudit": "ናይ ድሕነት ኦዲት",
+  "settings.lastLogin": "ናይ መጨረሻ ምእታው",
+
+  "hospitals.network": "ናይ ሆስፒታል ኔትወርክና",
+  "hospitals.networkDesc": "ኣብ ኢትዮጵያ ዝርከቡ ዝተኣማምኑ ክሊኒካዊ ቦታታት፣ ብናይ ዓለም ደረጃ ተቋማት ዝተዓጠቁ።"
 }

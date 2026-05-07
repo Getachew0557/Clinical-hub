@@ -9,10 +9,12 @@ import {
     Plus, Edit2, Trash2, MapPin, Phone, 
     Mail, Globe, Building2, Upload, X 
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import hospitalService from '../../api/hospital.service';
 import { getDoctorPhotoUrl } from '../../utils/cn';
 
 export default function HospitalListPage() {
+    const { t } = useTranslation();
     const [hospitals, setHospitals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -41,7 +43,7 @@ export default function HospitalListPage() {
             const data = await hospitalService.getAllHospitals();
             setHospitals(data);
         } catch (err) {
-            setError('Failed to fetch hospitals');
+            setError(t('common.error'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -99,30 +101,30 @@ export default function HospitalListPage() {
         try {
             if (editingHospital) {
                 await hospitalService.updateHospital(editingHospital.id, data);
-                setSuccessMsg('Hospital updated successfully');
+                setSuccessMsg(t('hospital.successUpdate'));
             } else {
                 await hospitalService.createHospital(data);
-                setSuccessMsg('Hospital added successfully');
+                setSuccessMsg(t('hospital.successAdd'));
             }
             fetchHospitals();
             handleCloseDialog();
             setTimeout(() => setSuccessMsg(''), 3000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Operation failed');
+            setError(err.response?.data?.message || t('common.error'));
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to deactivate this hospital?')) return;
+        if (!window.confirm(t('hospital.confirmDeactivate'))) return;
         try {
             await hospitalService.deleteHospital(id);
-            setSuccessMsg('Hospital deactivated');
+            setSuccessMsg(t('hospital.deactivated'));
             fetchHospitals();
             setTimeout(() => setSuccessMsg(''), 3000);
         } catch (err) {
-            setError('Delete failed');
+            setError(t('common.error'));
         }
     };
 
@@ -133,23 +135,23 @@ export default function HospitalListPage() {
     );
 
     return (
-        <Box sx={{ p: { xs: 2, lg: 4 } }}>
+        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
             <Box className="flex justify-between items-center mb-8">
                 <Box>
-                    <Typography variant="h4" fontWeight={800} color="text.primary">
-                        Hospital Management
+                    <Typography variant="h5" fontWeight={900} color="text.primary">
+                        {t('hospital.title')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Manage clinical sites and hospital network
+                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                        {t('hospital.subtitle')}
                     </Typography>
                 </Box>
                 <Button 
                     variant="contained" 
                     startIcon={<Plus size={18} />}
                     onClick={() => handleOpenDialog()}
-                    sx={{ borderRadius: 3, px: 3 }}
+                    sx={{ borderRadius: 3, px: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                 >
-                    Add Hospital
+                    {t('hospital.add')}
                 </Button>
             </Box>
 
@@ -174,12 +176,12 @@ export default function HospitalListPage() {
                                     >
                                         <Building2 className="text-teal-600" />
                                     </Avatar>
-                                    <Box className="flex-1">
-                                        <Typography variant="subtitle1" fontWeight={700} noWrap>
+                                    <Box className="flex-1 min-w-0">
+                                        <Typography variant="subtitle1" fontWeight={800} noWrap>
                                             {hospital.name}
                                         </Typography>
-                                        <Typography variant="caption" color="text.secondary" className="flex items-center gap-1">
-                                            <MapPin size={12} /> {hospital.address || 'No address'}
+                                        <Typography variant="caption" color="text.secondary" className="flex items-center gap-1" fontWeight={700}>
+                                            <MapPin size={12} /> {hospital.address || t('hospital.noAddress')}
                                         </Typography>
                                     </Box>
                                     <Box className="flex flex-col gap-1">
@@ -195,35 +197,43 @@ export default function HospitalListPage() {
                                 <Box className="space-y-2 mb-4">
                                     <Box className="flex items-center gap-2 text-slate-600">
                                         <Phone size={14} />
-                                        <Typography variant="body2">{hospital.phone || 'N/A'}</Typography>
+                                        <Typography variant="body2" fontWeight={600}>{hospital.phone || 'N/A'}</Typography>
                                     </Box>
                                     <Box className="flex items-center gap-2 text-slate-600">
                                         <Mail size={14} />
-                                        <Typography variant="body2">{hospital.email || 'N/A'}</Typography>
+                                        <Typography variant="body2" fontWeight={600} className="truncate">{hospital.email || 'N/A'}</Typography>
                                     </Box>
                                 </Box>
 
-                                <Typography variant="body2" color="text.secondary" sx={{ 
+                                <Typography variant="body2" color="text.secondary" fontWeight={500} sx={{ 
                                     display: '-webkit-box',
                                     WebkitLineClamp: 2,
                                     WebkitBoxOrient: 'vertical',
                                     overflow: 'hidden',
                                     height: 40
                                 }}>
-                                    {hospital.description || 'No description provided.'}
+                                    {hospital.description || t('hospital.noDesc')}
                                 </Typography>
                             </CardContent>
                         </Card>
                     </Grid>
                 ))}
+                {hospitals.length === 0 && (
+                    <Grid item xs={12}>
+                        <Box sx={{ py: 8, textAlign: 'center', border: '1px dashed #e2e8f0', borderRadius: 4 }}>
+                            <Building2 size={48} className="mx-auto mb-4 opacity-10" />
+                            <Typography variant="body1" color="text.secondary" fontWeight={700}>No hospitals registered</Typography>
+                        </Box>
+                    </Grid>
+                )}
             </Grid>
 
             {/* Add/Edit Dialog */}
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
                 <form onSubmit={handleSubmit}>
                     <DialogTitle className="flex justify-between items-center">
-                        <Typography variant="h6" fontWeight={800}>
-                            {editingHospital ? 'Edit Hospital' : 'Add New Hospital'}
+                        <Typography variant="h6" fontWeight={900}>
+                            {editingHospital ? t('hospital.edit') : t('hospital.addNew')}
                         </Typography>
                         <IconButton onClick={handleCloseDialog}><X size={20} /></IconButton>
                     </DialogTitle>
@@ -242,49 +252,49 @@ export default function HospitalListPage() {
                                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                                 </label>
                             </Box>
-                            <Typography variant="caption" color="text.secondary">Upload Hospital Logo</Typography>
+                            <Typography variant="caption" color="text.secondary" fontWeight={700}>{t('hospital.uploadLogo')}</Typography>
                         </Box>
 
                         <TextField
-                            fullWidth label="Hospital Name" required
+                            fullWidth label={t('hospital.name')} required
                             value={formData.name}
                             onChange={(e) => setFormData({...formData, name: e.target.value})}
                         />
                         <TextField
-                            fullWidth label="Address"
+                            fullWidth label={t('hospital.address')}
                             value={formData.address}
                             onChange={(e) => setFormData({...formData, address: e.target.value})}
                         />
                         <Grid container spacing={2}>
                             <Grid item xs={6}>
                                 <TextField
-                                    fullWidth label="Phone"
+                                    fullWidth label={t('hospital.phone')}
                                     value={formData.phone}
                                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                                 />
                             </Grid>
                             <Grid item xs={6}>
                                 <TextField
-                                    fullWidth label="Email" type="email"
+                                    fullWidth label={t('hospital.email')} type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                                 />
                             </Grid>
                         </Grid>
                         <TextField
-                            fullWidth label="Description" multiline rows={3}
+                            fullWidth label={t('hospital.description')} multiline rows={3}
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                         />
                     </DialogContent>
-                    <DialogActions sx={{ p: 3 }}>
-                        <Button onClick={handleCloseDialog} color="inherit" sx={{ borderRadius: 2 }}>Cancel</Button>
+                    <DialogActions sx={{ p: 3, gap: 2 }}>
+                        <Button onClick={handleCloseDialog} color="inherit" sx={{ borderRadius: 2.5, fontWeight: 700 }}>{t('common.cancel')}</Button>
                         <Button 
                             type="submit" variant="contained" 
                             disabled={saving}
-                            sx={{ borderRadius: 2, px: 4 }}
+                            sx={{ borderRadius: 2.5, px: 4, bgcolor: '#0d9488', fontWeight: 800 }}
                         >
-                            {saving ? <CircularProgress size={20} /> : (editingHospital ? 'Save Changes' : 'Add Hospital')}
+                            {saving ? <CircularProgress size={20} /> : (editingHospital ? t('common.saveChanges') : t('hospital.add'))}
                         </Button>
                     </DialogActions>
                 </form>

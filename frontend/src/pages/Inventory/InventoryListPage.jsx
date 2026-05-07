@@ -8,12 +8,14 @@ import {
     Chip, IconButton, Menu, MenuItem, CircularProgress, Alert,
     Box, LinearProgress
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import inventoryService from '../../api/inventory.service';
 import AddInventoryModal from '../../components/inventory/AddInventoryModal';
 import UpdateStockModal from '../../components/inventory/UpdateStockModal';
 import { useSelector } from 'react-redux';
 
 export default function InventoryListPage() {
+    const { t } = useTranslation();
     const { user } = useSelector((s) => s.auth);
     const role = user?.role || 'Patient';
     const isAdmin = role === 'Admin';
@@ -37,7 +39,7 @@ export default function InventoryListPage() {
         if (isStaff) {
             fetchInventory();
         } else {
-            setError('You do not have permission to view inventory.');
+            setError(t('videoConsult.accessDenied'));
             setLoading(false);
         }
     }, [isStaff]);
@@ -50,7 +52,7 @@ export default function InventoryListPage() {
             setError(null);
         } catch (err) {
             console.error('Fetch Inventory Error:', err);
-            setError('Failed to load inventory. Please ensure the inventory-service is running.');
+            setError(t('common.error'));
         } finally {
             setLoading(false);
         }
@@ -66,13 +68,13 @@ export default function InventoryListPage() {
     };
 
     const handleDelete = async () => {
-        if (!selectedItem || !window.confirm(`Are you sure you want to delete ${selectedItem.name}?`)) return;
+        if (!selectedItem || !window.confirm(`${t('common.confirmDelete')} (${selectedItem.name})?`)) return;
         try {
             await inventoryService.deleteItem(selectedItem.id);
             setItems(prev => prev.filter(i => i.id !== selectedItem.id));
             handleMenuClose();
         } catch (err) {
-            alert('Failed to delete item');
+            alert(t('common.error'));
         }
     };
 
@@ -86,9 +88,9 @@ export default function InventoryListPage() {
     });
 
     const getStockStatus = (item) => {
-        if (item.quantity <= 0) return { label: 'Out of Stock', color: 'error', icon: AlertTriangle };
-        if (item.quantity <= item.reorderLevel) return { label: 'Low Stock', color: 'warning', icon: AlertTriangle };
-        return { label: 'In Stock', color: 'success', icon: CheckCircle };
+        if (item.quantity <= 0) return { label: t('billing.cancelled'), color: 'error', icon: AlertTriangle };
+        if (item.quantity <= item.reorderLevel) return { label: t('inventory.lowStock'), color: 'warning', icon: AlertTriangle };
+        return { label: t('common.active'), color: 'success', icon: CheckCircle };
     };
 
     if (!isStaff) {
@@ -102,7 +104,7 @@ export default function InventoryListPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <Typography variant="h5" fontWeight={700} color="text.primary">
-                        Inventory Management
+                        {t('inventory.title')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                         Track and manage clinic supplies and equipment
@@ -112,10 +114,10 @@ export default function InventoryListPage() {
                     <Button
                         variant="contained"
                         startIcon={<Plus size={18} />}
-                        sx={{ borderRadius: 3 }}
+                        sx={{ borderRadius: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                         onClick={() => setAddModalOpen(true)}
                     >
-                        Add New Item
+                        {t('inventory.addItem')}
                     </Button>
                 )}
             </div>
@@ -127,7 +129,7 @@ export default function InventoryListPage() {
                         {categories.map(cat => (
                             <Chip
                                 key={cat}
-                                label={cat}
+                                label={cat === 'All' ? t('common.all') : cat}
                                 onClick={() => setSelectedCategory(cat)}
                                 color={selectedCategory === cat ? 'primary' : 'default'}
                                 variant={selectedCategory === cat ? 'filled' : 'outlined'}
@@ -135,10 +137,10 @@ export default function InventoryListPage() {
                             />
                         ))}
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-1.5 border border-slate-100 focus-within:border-blue-500 focus-within:bg-white transition-all w-full md:w-80">
+                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-1.5 border border-slate-100 focus-within:border-teal-500 focus-within:bg-white transition-all w-full md:w-80">
                         <Search size={18} className="text-slate-400" />
                         <InputBase
-                            placeholder="Search inventory..."
+                            placeholder={t('common.searchPlaceholder')}
                             className="w-full text-sm"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -175,7 +177,7 @@ export default function InventoryListPage() {
                                         '&:hover': {
                                             transform: 'translateY(-8px)',
                                             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                                            borderColor: 'primary.main',
+                                            borderColor: '#0d9488',
                                         }
                                     }}
                                 >
@@ -186,10 +188,10 @@ export default function InventoryListPage() {
                                                     <Package size={28} />
                                                 </div>
                                                 <div>
-                                                    <Typography variant="subtitle2" fontWeight={600} color="text.primary" sx={{ lineHeight: 1.3 }}>
+                                                    <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ lineHeight: 1.3 }}>
                                                         {item.name}
                                                     </Typography>
-                                                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
                                                         {item.category}
                                                     </Typography>
                                                 </div>
@@ -206,14 +208,14 @@ export default function InventoryListPage() {
                                         <div className="px-6 pb-6 space-y-5">
                                             <div className="flex items-end justify-between">
                                                 <div className="flex flex-col">
-                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 0.5 }}>
-                                                        Stock Level
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 0.5 }}>
+                                                        {t('inventory.quantity')}
                                                     </Typography>
                                                     <div className="flex items-baseline gap-1.5">
-                                                        <Typography variant="h5" fontWeight={700} color="text.primary">
+                                                        <Typography variant="h5" fontWeight={800} color="text.primary">
                                                             {item.quantity}
                                                         </Typography>
-                                                        <Typography variant="body2" color="text.secondary">
+                                                        <Typography variant="body2" color="text.secondary" fontWeight={500}>
                                                             {item.unit}
                                                         </Typography>
                                                     </div>
@@ -229,8 +231,8 @@ export default function InventoryListPage() {
 
                                             <Box sx={{ width: '100%' }}>
                                                 <div className="flex justify-between mb-2">
-                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Inventory Health</Typography>
-                                                    <Typography variant="caption" fontWeight={600} color={`${status.color}.main`}>{Math.round(percentWarning)}%</Typography>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>Inventory Health</Typography>
+                                                    <Typography variant="caption" fontWeight={800} color={`${status.color}.main`}>{Math.round(percentWarning)}%</Typography>
                                                 </div>
                                                 <LinearProgress
                                                     variant="determinate"
@@ -241,12 +243,12 @@ export default function InventoryListPage() {
                                                 <div className="flex justify-between mt-2 text-slate-500">
                                                     <div className="flex items-center gap-1.5">
                                                         <AlertTriangle size={12} className="text-amber-500" />
-                                                        <Typography variant="caption">Reorder: {item.reorderLevel}</Typography>
+                                                        <Typography variant="caption" fontWeight={600}>{t('inventory.reorder')}: {item.reorderLevel}</Typography>
                                                     </div>
                                                     {item.pricePerUnit && (
                                                         <div className="flex items-center gap-1.5">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-                                                            <Typography variant="caption">ETB {item.pricePerUnit}/{item.unit}</Typography>
+                                                            <Typography variant="caption" fontWeight={600}>ETB {item.pricePerUnit}/{item.unit}</Typography>
                                                         </div>
                                                     )}
                                                 </div>
@@ -260,6 +262,7 @@ export default function InventoryListPage() {
                                                     variant="contained"
                                                     size="medium"
                                                     onClick={() => { setSelectedItem(item); setStockModalOpen(true); }}
+                                                    sx={{ borderRadius: 2.5, fontWeight: 700, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                                                 >
                                                     Update Stock
                                                 </Button>
@@ -272,7 +275,7 @@ export default function InventoryListPage() {
                     ) : (
                         <div className="col-span-full flex h-48 flex-col items-center justify-center gap-3 text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
                             <Package size={32} />
-                            <p className="text-sm">No inventory items found.</p>
+                            <p className="text-sm font-bold">{t('inventory.noItems')}</p>
                         </div>
                     )}
                 </div>
@@ -290,14 +293,14 @@ export default function InventoryListPage() {
                 {['Admin', 'Receptionist'].includes(role) && (
                     <MenuItem onClick={() => { setStockModalOpen(true); handleMenuClose(); }} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <TrendingUp size={16} className="text-blue-500" />
-                        <span className="text-sm font-medium">Add/Remove Stock</span>
+                        <span className="text-sm font-bold">Add/Remove Stock</span>
                     </MenuItem>
                 )}
 
                 {isAdmin && (
                     <MenuItem onClick={handleDelete} sx={{ gap: 1.5, py: 1.2, px: 2 }}>
                         <Trash2 size={16} className="text-red-600" />
-                        <span className="text-sm font-medium text-red-600">Delete Item</span>
+                        <span className="text-sm font-bold text-red-600">{t('common.delete')}</span>
                     </MenuItem>
                 )}
             </Menu>
@@ -319,4 +322,3 @@ export default function InventoryListPage() {
     </Box>
     );
 }
-

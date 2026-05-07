@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Users, Plus, Search, MoreHorizontal,
     UserPlus, Phone, FileText,
@@ -20,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { getPatientPhotoUrl } from '../../utils/cn';
 
 export default function PatientListPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useSelector((s) => s.auth);
     const role = user?.role || 'Patient';
@@ -40,7 +42,7 @@ export default function PatientListPage() {
     const [selectedPatient, setSelectedPatient] = useState(null);
 
     useEffect(() => {
-        if (!user) return; // Wait for user to be loaded
+        if (!user) return; 
         if (role === 'Patient') {
             fetchMyProfile();
         } else {
@@ -54,24 +56,18 @@ export default function PatientListPage() {
             let patientData = [];
 
             if (role === 'Doctor') {
-                // For doctors: get their appointments, extract unique patients
                 const [apptData, allPatientsData] = await Promise.all([
                     appointmentService.getMyAppointments().catch(() => ({ appointments: [] })),
                     patientService.getAllPatients().catch(() => ({ patients: [] }))
                 ]);
                 const appointments = apptData.appointments || [];
                 const allPatients = allPatientsData.patients || [];
-
-                // Get unique patientIds from doctor's appointments
                 const patientIds = [...new Set(appointments.map(a => a.patientId))];
-
-                // Match against patient records
                 patientData = allPatients.filter(p =>
                     patientIds.includes(p.userId) || patientIds.includes(p.id) ||
                     patientIds.includes(String(p.userId)) || patientIds.includes(String(p.id))
                 );
 
-                // If patient service didn't return matches, use enriched names from appointments
                 if (patientData.length === 0 && appointments.length > 0) {
                     const seen = new Set();
                     patientData = appointments
@@ -92,7 +88,6 @@ export default function PatientListPage() {
                 patientData = data.patients || [];
             }
 
-            // DEDUPLICATE: Prevent same patient appearing twice (e.g. from server bugs or mixed sources)
             const seenKeys = new Set();
             patientData = patientData.filter(p => {
                 const key = String(p.userId || p.id).toLowerCase();
@@ -103,7 +98,6 @@ export default function PatientListPage() {
                 return true;
             });
 
-            // Also pull Patient-role users from auth-service who may not have a profile yet
             if (isStaff) {
                 try {
                     const authData = await import('../../api/auth.service.js').then(m => m.default.getAllUsers());
@@ -134,12 +128,11 @@ export default function PatientListPage() {
                 }
             }
 
-            console.log('Fetched Patients:', patientData);
             setPatients(patientData);
             setError(null);
         } catch (err) {
             console.error('Fetch Patients Error:', err);
-            setError('Failed to load patients. Please ensure the patient-service is running.');
+            setError(t('common.error'));
         } finally {
             setLoading(false);
         }
@@ -149,10 +142,6 @@ export default function PatientListPage() {
         try {
             setLoading(true);
             const data = await patientService.getMyProfile();
-            console.log('Fetched My Profile:', data);
-
-            // Backend returns profile directly or wrapped? 
-            // Based on backend/patient-service/src/controllers/patientController.js:75: res.status(200).json(profile);
             if (data && data.id) {
                 setPatients([data]);
             } else if (data && data.patient) {
@@ -164,10 +153,10 @@ export default function PatientListPage() {
         } catch (err) {
             console.error('Fetch Profile Error:', err);
             if (err.response && err.response.status === 404) {
-                setPatients([]); // No profile found, show empty state
+                setPatients([]); 
                 setError(null);
             } else {
-                setError('Failed to load your profile. Please ensure the patient-service is running.');
+                setError(t('common.error'));
             }
         } finally {
             setLoading(false);
@@ -184,14 +173,14 @@ export default function PatientListPage() {
     };
 
     const handleDelete = async () => {
-        if (!selectedPatient || !window.confirm('Are you sure you want to delete this patient profile?')) return;
+        if (!selectedPatient || !window.confirm(t('common.confirmDelete'))) return;
         try {
             await patientService.deletePatient(selectedPatient.id);
             setPatients(prev => prev.filter(p => p.id !== selectedPatient.id));
             handleMenuClose();
-            alert('Patient profile deleted successfully!');
+            alert(t('common.success'));
         } catch (err) {
-            alert('Failed to delete patient profile');
+            alert(t('common.error'));
         }
     };
 
@@ -206,21 +195,21 @@ export default function PatientListPage() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={700} color="text.primary">
-                        {role === 'Patient' ? 'My Medical Profile' : 'Patient Management'}
+                    <Typography variant="h5" fontWeight={900} color="text.primary">
+                        {role === 'Patient' ? t('portal.myProfile') : t('portal.patientMgmt')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {isStaff ? 'List of all registered clinic patients' : isDoctor ? 'Patients currently under your care' : 'View and update your personal health record'}
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
+                        {isStaff ? t('portal.patientMgmtDescStaff') : isDoctor ? t('portal.patientMgmtDescDoctor') : t('portal.patientMgmtDescPatient')}
                     </Typography>
                 </div>
                 {isStaff && (
                     <Button
                         variant="contained"
                         startIcon={<Plus size={18} />}
-                        sx={{ borderRadius: 3 }}
+                        sx={{ borderRadius: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                         onClick={() => setAddModalOpen(true)}
                     >
-                        Register New Patient
+                        {t('portal.registerPatient')}
                     </Button>
                 )}
             </div>
@@ -231,7 +220,7 @@ export default function PatientListPage() {
                     <CardContent className="flex items-center gap-3 p-3 px-5">
                         <Search size={20} className="text-slate-400" />
                         <InputBase
-                            placeholder="Search by name, phone or ID..."
+                            placeholder={t('common.searchPlaceholder')}
                             className="w-full text-sm font-medium"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -257,18 +246,15 @@ export default function PatientListPage() {
                                 key={pt.id}
                                 elevation={0}
                                 sx={{
-                                    background: 'rgba(255, 255, 255, 0.7)',
-                                    backdropFilter: 'blur(12px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                                    bgcolor: 'background.paper',
+                                    border: '1px solid #e2e8f0',
                                     borderRadius: 5,
                                     overflow: 'hidden',
-                                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    position: 'relative',
+                                    transition: 'all 0.3s ease',
                                     '&:hover': {
-                                        transform: 'translateY(-8px)',
-                                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                                        borderColor: 'primary.main',
-                                        '& .card-action-bar': { backgroundColor: 'primary.light' }
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 12px 20px rgba(0,0,0,0.08)',
+                                        borderColor: '#0d9488',
                                     }
                                 }}
                             >
@@ -281,88 +267,67 @@ export default function PatientListPage() {
                                                     width: 64, 
                                                     height: 64, 
                                                     borderRadius: 4, 
-                                                    bgcolor: '#f0f9ff', 
-                                                    color: '#0ea5e9', 
+                                                    bgcolor: '#f0fdfa', 
+                                                    color: '#0d9488', 
                                                     fontWeight: 900,
-                                                    fontSize: '1.25rem',
-                                                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+                                                    fontSize: '1.25rem'
                                                 }}
                                             >
                                                 {pt.fullName?.charAt(0) || <UserCircle size={32} />}
                                             </Avatar>
                                             <div>
-                                                <Typography variant="subtitle2" fontWeight={600} color="text.primary" sx={{ lineHeight: 1.3 }}>
+                                                <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ lineHeight: 1.3 }}>
                                                     {pt.fullName}
                                                 </Typography>
-                                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, fontWeight: 600 }}>
                                                     ID: #{(pt.userId || pt.id)?.slice(-6)?.toUpperCase()}
                                                 </Typography>
                                             </div>
                                         </div>
                                         {(role === 'Admin' || role === 'Receptionist' || role === 'Doctor' || (role === 'Patient' && pt.userId === user?.id)) && (
                                             <IconButton size="small" onClick={(e) => handleMenuOpen(e, pt)} 
-                                                sx={{ 
-                                                    bgcolor: 'white', 
-                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                                                    '&:hover': { bgcolor: '#f8fafc' }
-                                                }}>
+                                                sx={{ border: '1px solid #f1f5f9' }}>
                                                 <MoreHorizontal size={18} />
                                             </IconButton>
                                         )}
                                     </div>
 
-                                    <div className="px-6 pb-6 grid grid-cols-2 gap-4">
-                                        <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                                Phone
-                                            </Typography>
-                                            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Phone size={13} className="text-teal-500 shrink-0" /> {pt.phone || 'N/A'}
-                                            </Typography>
-                                        </div>
-                                        <div className="rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                                Blood Group
-                                            </Typography>
+                                    <div className="px-6 pb-6 grid grid-cols-1 gap-3">
+                                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-2 h-2 rounded-full shrink-0 ${pt.bloodGroup ? 'bg-red-500' : 'bg-slate-300'}`} />
-                                                <Typography variant="body2" color={pt.bloodGroup ? 'error.main' : 'text.disabled'}>
-                                                    {pt.bloodGroup || 'Not set'}
-                                                </Typography>
+                                                <Phone size={14} className="text-teal-600" />
+                                                <Typography variant="caption" fontWeight={700} color="text.secondary">{t('common.phone')}</Typography>
                                             </div>
+                                            <Typography variant="body2" fontWeight={600}>{pt.phone || '—'}</Typography>
                                         </div>
-                                        {pt.email && (
-                                            <div className="col-span-2 rounded-2xl bg-slate-50 border border-slate-100 p-3.5">
-                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                                    Email
-                                                </Typography>
-                                                <Typography variant="body2" className="truncate">
-                                                    {pt.email}
-                                                </Typography>
+                                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <AlertCircle size={14} className="text-red-500" />
+                                                <Typography variant="caption" fontWeight={700} color="text.secondary">{t('common.bloodGroup')}</Typography>
                                             </div>
-                                        )}
+                                            <Typography variant="body2" fontWeight={700} color="error.main">{pt.bloodGroup || '—'}</Typography>
+                                        </div>
                                     </div>
 
-                                    <div className="px-4 pb-4 flex gap-2">
+                                    <div className="px-6 pb-6 flex gap-3">
                                         <Button
                                             fullWidth
-                                            size="medium"
                                             variant="outlined"
-                                            startIcon={<FileText size={15} />}
+                                            startIcon={<FileText size={16} />}
                                             onClick={() => navigate(`/emr?patientId=${pt.userId || pt.id}`)}
+                                            sx={{ borderRadius: 2, fontWeight: 700 }}
                                         >
-                                            Records
+                                            {t('common.records')}
                                         </Button>
-                                        {/* Only Admin/Receptionist can book — Doctor views records only */}
                                         {isStaff && (
                                             <Button
                                                 fullWidth
-                                                size="medium"
                                                 variant="contained"
-                                                startIcon={<Calendar size={15} />}
+                                                startIcon={<Calendar size={16} />}
                                                 onClick={() => navigate(`/appointments?patientId=${pt.userId || pt.id}`)}
+                                                sx={{ borderRadius: 2, bgcolor: '#0d9488', fontWeight: 700 }}
                                             >
-                                                Appointments
+                                                {t('nav.appointments')}
                                             </Button>
                                         )}
                                     </div>
@@ -373,20 +338,19 @@ export default function PatientListPage() {
                         <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4 text-slate-400">
                             {role === 'Patient' ? (
                                 <>
-                                    <AlertCircle size={64} strokeWidth={1} className="text-blue-200" />
+                                    <AlertCircle size={64} strokeWidth={1} className="text-teal-200" />
                                     <div className="text-center">
-                                        <Typography variant="subtitle1" color="text.primary">Profile Not Found</Typography>
+                                        <Typography variant="subtitle1" fontWeight={800} color="text.primary">{t('portal.profileNotFound')}</Typography>
                                         <Typography variant="body2" sx={{ maxWidth: 400, mt: 1 }}>
-                                            It looks like your medical profile hasn't been set up yet.
-                                            Please contact the clinic reception to complete your registration.
+                                            {t('portal.profileNotFoundDesc')}
                                         </Typography>
                                     </div>
                                 </>
                             ) : (
                                 <>
                                     <Users size={64} strokeWidth={1} />
-                                    <Typography variant="subtitle1" color="text.primary">No Patients Found</Typography>
-                                    <Typography variant="body2">Try adjusting your search criteria.</Typography>
+                                    <Typography variant="subtitle1" fontWeight={800} color="text.primary">{t('common.noRecords')}</Typography>
+                                    <Typography variant="body2">{t('common.adjustSearch')}</Typography>
                                 </>
                             )}
                         </div>
@@ -399,16 +363,16 @@ export default function PatientListPage() {
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
-                PaperProps={{ sx: { borderRadius: 3, width: 180, mt: 1, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' } }}
+                PaperProps={{ sx: { borderRadius: 3, width: 200, mt: 1, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' } }}
             >
                 <MenuItem onClick={() => { setEditModalOpen(true); handleMenuClose(); }} sx={{ gap: 1.5, py: 1.2 }}>
-                    <Edit size={16} className="text-blue-500" />
-                    <span className="text-sm font-medium">Edit Profile</span>
+                    <Edit size={16} className="text-teal-600" />
+                    <span className="text-sm font-bold">{t('common.edit')}</span>
                 </MenuItem>
                 {role === 'Admin' && (
-                    <MenuItem onClick={handleDelete} sx={{ gap: 1.5, py: 1.2 }}>
-                        <Trash2 size={16} className="text-red-500" />
-                        <span className="text-sm font-medium text-red-500">Delete Profile</span>
+                    <MenuItem onClick={handleDelete} sx={{ gap: 1.5, py: 1.2, color: 'error.main' }}>
+                        <Trash2 size={16} />
+                        <span className="text-sm font-bold">{t('common.delete')}</span>
                     </MenuItem>
                 )}
             </Menu>

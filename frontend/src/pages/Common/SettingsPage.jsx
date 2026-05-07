@@ -7,10 +7,13 @@ import {
     Typography, Card, CardContent,
     Switch, FormControlLabel, Button, Divider,
     Select, MenuItem, FormControl,
-    Box, Tab, Tabs
+    Box, Tab, Tabs, useTheme
 } from '@mui/material';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import { useColorMode } from '../../context/ThemeContext';
 import ProfilePage from './ProfilePage';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -32,14 +35,15 @@ function TabPanel(props) {
 
 export default function SettingsPage() {
     const { user } = useSelector((s) => s.auth);
+    const { t } = useTranslation();
+    const { toggleColorMode } = useColorMode();
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
     const [tabValue, setTabValue] = useState(0);
 
-    // Mock Preferences
     const [settings, setSettings] = useState({
         emailNotifications: true,
         smsNotifications: false,
-        darkMode: false,
-        language: 'English',
         twoFactor: false
     });
 
@@ -55,9 +59,11 @@ export default function SettingsPage() {
         <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
             {/* ── Page Header ── */}
             <div className="mb-6">
-                <Typography variant="h5" fontWeight={700} color="text.primary">Settings</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                    Manage your account preferences and clinic configurations
+                <Typography variant="h5" fontWeight={800} color="text.primary">
+                    {t('sidebar.settings')}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
+                    {t('settings.subtitle', 'Manage your account preferences and clinic configurations')}
                 </Typography>
             </div>
 
@@ -69,13 +75,13 @@ export default function SettingsPage() {
                     scrollButtons="auto"
                     sx={{
                         '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0' },
-                        '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', minHeight: 44 }
+                        '& .MuiTab-root': { fontWeight: 700, textTransform: 'none', minHeight: 48, px: 3 }
                     }}
                 >
-                    <Tab icon={<User size={16} />} iconPosition="start" label="Profile" />
-                    <Tab icon={<Bell size={16} />} iconPosition="start" label="Notifications" />
-                    <Tab icon={<Globe size={16} />} iconPosition="start" label="Appearance" />
-                    <Tab icon={<Shield size={16} />} iconPosition="start" label="Security" />
+                    <Tab icon={<User size={18} />} iconPosition="start" label={t('common.profile', 'Profile')} />
+                    <Tab icon={<Bell size={18} />} iconPosition="start" label={t('settings.notifications', 'Notifications')} />
+                    <Tab icon={<Globe size={18} />} iconPosition="start" label={t('settings.appearance', 'Appearance')} />
+                    <Tab icon={<Shield size={18} />} iconPosition="start" label={t('settings.security', 'Security')} />
                 </Tabs>
             </Box>
 
@@ -85,19 +91,23 @@ export default function SettingsPage() {
 
             <TabPanel value={tabValue} index={1}>
                 <div className="max-w-2xl">
-                    <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                    <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, overflow: 'hidden' }}>
                         <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h6" fontWeight={700} gutterBottom>Notification Preferences</Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                Choose how you want to receive alerts and updates
+                            <Typography variant="h6" fontWeight={800} gutterBottom>
+                                {t('settings.notifPrefs', 'Notification Preferences')}
                             </Typography>
-                            <div className="flex flex-col gap-5">
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 4, fontWeight: 500 }}>
+                                {t('settings.notifDesc', 'Choose how you want to receive alerts and updates from the clinic')}
+                            </Typography>
+                            <div className="flex flex-col gap-6">
                                 <FormControlLabel
                                     control={<Switch checked={settings.emailNotifications} onChange={() => handleToggle('emailNotifications')} color="primary" />}
                                     label={
-                                        <div>
-                                            <Typography variant="body2" fontWeight={600}>Email Notifications</Typography>
-                                            <Typography variant="caption" color="text.secondary">Receive appointment reminders and system alerts via email</Typography>
+                                        <div className="ml-2">
+                                            <Typography variant="body2" fontWeight={700}>{t('settings.emailNotif', 'Email Notifications')}</Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                                {t('settings.emailNotifDesc', 'Receive appointment reminders and system alerts via email')}
+                                            </Typography>
                                         </div>
                                     }
                                 />
@@ -105,9 +115,11 @@ export default function SettingsPage() {
                                 <FormControlLabel
                                     control={<Switch checked={settings.smsNotifications} onChange={() => handleToggle('smsNotifications')} color="primary" />}
                                     label={
-                                        <div>
-                                            <Typography variant="body2" fontWeight={600}>SMS Notifications</Typography>
-                                            <Typography variant="caption" color="text.secondary">Get instant SMS alerts for urgent updates</Typography>
+                                        <div className="ml-2">
+                                            <Typography variant="body2" fontWeight={700}>{t('settings.smsNotif', 'SMS Notifications')}</Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                                {t('settings.smsNotifDesc', 'Get instant SMS alerts for urgent updates and schedule changes')}
+                                            </Typography>
                                         </div>
                                     }
                                 />
@@ -118,42 +130,58 @@ export default function SettingsPage() {
             </TabPanel>
 
             <TabPanel value={tabValue} index={2}>
-                <div className="max-w-2xl">
-                    <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                <div className="max-w-2xl space-y-4">
+                    {/* Dark Mode Card */}
+                    <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, overflow: 'hidden' }}>
                         <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h6" fontWeight={700} gutterBottom>Visual Settings</Typography>
-                            <div className="flex flex-col gap-5">
-                                <FormControlLabel
-                                    control={<Switch checked={settings.darkMode} onChange={() => handleToggle('darkMode')} color="primary" />}
-                                    label={
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
-                                                {settings.darkMode ? <Moon size={18} /> : <Sun size={18} />}
-                                            </div>
-                                            <div>
-                                                <Typography variant="body2" fontWeight={600}>Dark Mode</Typography>
-                                                <Typography variant="caption" color="text.secondary">Adjust the interface for lower light environments</Typography>
-                                            </div>
+                            <Typography variant="h6" fontWeight={800} gutterBottom>
+                                {t('settings.visualLang', 'Visual & Language')}
+                            </Typography>
+                            <div className="flex flex-col gap-6 mt-4">
+                                {/* Dark mode toggle — wired to real ThemeContext */}
+                                <div className="flex items-center justify-between p-4 rounded-2xl border"
+                                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-card)' }}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
+                                            style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', color: isDark ? '#94a3b8' : '#64748b' }}>
+                                            {isDark ? <Moon size={20} /> : <Sun size={20} />}
                                         </div>
-                                    }
-                                />
+                                        <div>
+                                            <Typography variant="body2" fontWeight={700}>
+                                                {t('settings.darkMode', 'Dark Mode')}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                                {isDark
+                                                    ? t('settings.darkModeOn', 'Dark interface is active')
+                                                    : t('settings.darkModeOff', 'Switch to dark interface theme')}
+                                            </Typography>
+                                        </div>
+                                    </div>
+                                    <Switch
+                                        checked={isDark}
+                                        onChange={toggleColorMode}
+                                        color="primary"
+                                        inputProps={{ 'aria-label': 'Toggle dark mode' }}
+                                    />
+                                </div>
+
                                 <Divider />
+
+                                {/* Language switcher */}
                                 <Box>
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                        System Language
+                                    <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 2, fontWeight: 800, letterSpacing: '0.1em' }}>
+                                        {t('settings.language', 'System Language')}
                                     </Typography>
-                                    <FormControl fullWidth size="small">
-                                        <Select
-                                            value={settings.language}
-                                            onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-                                            sx={{ borderRadius: 2 }}
-                                        >
-                                            <MenuItem value="English">🇬🇧 English</MenuItem>
-                                            <MenuItem value="Amharic">🇪🇹 Amharic</MenuItem>
-                                            <MenuItem value="Spanish">🇪🇸 Spanish</MenuItem>
-                                            <MenuItem value="French">🇫🇷 French</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                    <div className="p-4 rounded-2xl border flex items-center justify-between"
+                                        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-input-bg)' }}>
+                                        <div className="flex items-center gap-3">
+                                            <Globe size={18} className="text-teal-600" />
+                                            <Typography variant="body2" fontWeight={700}>
+                                                {t('settings.changeLanguage', 'Change Language')}
+                                            </Typography>
+                                        </div>
+                                        <LanguageSwitcher />
+                                    </div>
                                 </Box>
                             </div>
                         </CardContent>
@@ -163,28 +191,40 @@ export default function SettingsPage() {
 
             <TabPanel value={tabValue} index={3}>
                 <div className="max-w-2xl">
-                    <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
+                    <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, overflow: 'hidden' }}>
                         <CardContent sx={{ p: 4 }}>
-                            <Typography variant="h6" fontWeight={700} gutterBottom>Security</Typography>
-                            <div className="flex flex-col gap-5">
+                            <Typography variant="h6" fontWeight={800} gutterBottom>
+                                {t('settings.accountSecurity', 'Account Security')}
+                            </Typography>
+                            <div className="flex flex-col gap-6 mt-4">
                                 <FormControlLabel
                                     control={<Switch checked={settings.twoFactor} onChange={() => handleToggle('twoFactor')} color="primary" />}
                                     label={
-                                        <div>
-                                            <Typography variant="body2" fontWeight={600}>Two-Factor Authentication</Typography>
-                                            <Typography variant="caption" color="text.secondary">Add an extra layer of security to your account</Typography>
+                                        <div className="ml-2">
+                                            <Typography variant="body2" fontWeight={700}>
+                                                {t('settings.twoFactor', 'Two-Factor Authentication')}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                                                {t('settings.twoFactorDesc', 'Protect your account with an extra verification step')}
+                                            </Typography>
                                         </div>
                                     }
                                 />
                                 <Divider />
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Shield size={15} className="text-teal-500" />
-                                        <Typography variant="body2" fontWeight={600}>Recent Login Activity</Typography>
+                                <div className="p-5 rounded-2xl border flex items-start gap-4"
+                                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-input-bg)' }}>
+                                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-teal-600 shadow-sm shrink-0"
+                                        style={{ backgroundColor: 'var(--color-card)' }}>
+                                        <Shield size={20} />
                                     </div>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Last login: {new Date().toLocaleDateString()} from Addis Ababa, Ethiopia.
-                                    </Typography>
+                                    <div>
+                                        <Typography variant="body2" fontWeight={700}>
+                                            {t('settings.securityAudit', 'Security Audit')}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontWeight: 500, lineHeight: 1.5 }}>
+                                            {t('settings.lastLogin', 'Last login')}: {new Date().toLocaleDateString()}
+                                        </Typography>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>

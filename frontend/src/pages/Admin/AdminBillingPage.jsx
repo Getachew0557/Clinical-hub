@@ -11,6 +11,7 @@ import {
     AlertCircle, Eye, Check, XCircle, X, ExternalLink
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import billingService from '../../api/billing.service.js';
 import { getBillingProofUrl } from '../../utils/cn';
 
@@ -21,6 +22,7 @@ const STATUS_COLORS = {
 };
 
 export default function AdminBillingPage() {
+    const { t } = useTranslation();
     const { user } = useSelector(s => s.auth);
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function AdminBillingPage() {
             setInvoices(Array.isArray(data) ? data : []);
             setError(null);
         } catch (err) {
-            setError('Failed to load invoices.');
+            setError(t('common.error'));
         } finally {
             setLoading(false);
         }
@@ -55,14 +57,14 @@ export default function AdminBillingPage() {
             setProofDialogOpen(false);
             fetchInvoices();
         } catch (err) {
-            alert('Approval failed');
+            alert(t('common.error'));
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleReject = async (paymentId) => {
-        const reason = window.prompt('Reason for rejection:');
+        const reason = window.prompt(t('admin.billing.rejectionReason'));
         if (reason === null) return;
         try {
             setActionLoading(true);
@@ -70,7 +72,7 @@ export default function AdminBillingPage() {
             setProofDialogOpen(false);
             fetchInvoices();
         } catch (err) {
-            alert('Rejection failed');
+            alert(t('common.error'));
         } finally {
             setActionLoading(false);
         }
@@ -94,7 +96,7 @@ export default function AdminBillingPage() {
     });
 
     const exportCSV = () => {
-        const headers = ['Invoice ID', 'Patient ID', 'Doctor ID', 'Amount (ETB)', 'Status', 'Description', 'Due Date', 'Created'];
+        const headers = [t('admin.billing.invoiceId'), t('admin.billing.patientId'), 'Doctor ID', 'Amount (ETB)', t('billing.status'), t('billing.description'), t('billing.dueDate'), 'Created'];
         const rows = filtered.map(inv => [
             inv.id, inv.patientId, inv.doctorId,
             inv.amount, inv.status, inv.description || '',
@@ -118,23 +120,23 @@ export default function AdminBillingPage() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <Typography variant="h5" fontWeight={700} color="text.primary">Billing Oversight</Typography>
+                        <Typography variant="h5" fontWeight={700} color="text.primary">{t('admin.billing.title')}</Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                            All invoices across the clinic — paid, pending, cancelled
+                            {t('admin.billing.subtitle')}
                         </Typography>
                     </div>
                     <Button variant="outlined" startIcon={<Download size={16} />} onClick={exportCSV} sx={{ borderRadius: 3 }}>
-                        Export CSV
+                        {t('admin.billing.export')}
                     </Button>
                 </div>
 
                 {/* Revenue Tiles */}
                 <Grid container spacing={3}>
                     {[
-                        { label: 'Total Revenue', value: totals.All, icon: TrendingUp, color: '#0d9488', bg: '#ccfbf1' },
-                        { label: 'Collected (Paid)', value: totals.Paid, icon: CreditCard, color: '#059669', bg: '#f0fdf4' },
-                        { label: 'Outstanding', value: totals.Pending, icon: Clock, color: '#d97706', bg: '#fffbeb' },
-                        { label: 'Cancelled', value: totals.Cancelled, icon: AlertCircle, color: '#dc2626', bg: '#fef2f2' },
+                        { label: t('dashboard.totalRevenue'), value: totals.All, icon: TrendingUp, color: '#0d9488', bg: '#ccfbf1' },
+                        { label: t('admin.billing.collected'), value: totals.Paid, icon: CreditCard, color: '#059669', bg: '#f0fdf4' },
+                        { label: t('admin.billing.outstanding'), value: totals.Pending, icon: Clock, color: '#d97706', bg: '#fffbeb' },
+                        { label: t('admin.billing.cancelled'), value: totals.Cancelled, icon: AlertCircle, color: '#dc2626', bg: '#fef2f2' },
                     ].map(tile => (
                         <Grid item xs={12} sm={6} md={3} key={tile.label}>
                             <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
@@ -151,7 +153,7 @@ export default function AdminBillingPage() {
                                         ETB {tile.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
-                                        {invoices.filter(i => tile.label === 'Total Revenue' || i.status === tile.label.split(' ')[0]).length} invoices
+                                        {invoices.filter(i => tile.label === t('dashboard.totalRevenue') || i.status === tile.label.split(' ')[0]).length} {t('admin.billing.invoices')}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -167,12 +169,12 @@ export default function AdminBillingPage() {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 pt-3 pb-0 border-b border-slate-100">
                             <Tabs value={tab} onChange={(_, v) => { setTab(v); setPage(0); }}
                                 sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minWidth: 80 } }}>
-                                {TABS.map(t => (
-                                    <Tab key={t} value={t} label={
+                                {TABS.map(tabKey => (
+                                    <Tab key={tabKey} value={tabKey} label={
                                         <span className="flex items-center gap-1.5">
-                                            {t}
+                                            {tabKey === 'All' ? t('common.all') : t(`billing.${tabKey.toLowerCase()}`)}
                                             <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full font-bold">
-                                                {t === 'All' ? invoices.length : invoices.filter(i => i.status === t).length}
+                                                {tabKey === 'All' ? invoices.length : invoices.filter(i => i.status === tabKey).length}
                                             </span>
                                         </span>
                                     } />
@@ -181,7 +183,7 @@ export default function AdminBillingPage() {
                             <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-1.5 border border-slate-100 mb-2 md:mb-0 mx-4 md:mx-0 md:mr-4">
                                 <Search size={16} className="text-slate-400" />
                                 <input
-                                    placeholder="Search invoice, patient ID..."
+                                    placeholder={t('admin.billing.search')}
                                     className="bg-transparent text-sm outline-none w-48"
                                     value={search}
                                     onChange={e => { setSearch(e.target.value); setPage(0); }}
@@ -197,7 +199,7 @@ export default function AdminBillingPage() {
                                     <Table size="small">
                                         <TableHead>
                                             <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                                {['Invoice ID', 'Patient ID', 'Description', 'Amount (ETB)', 'Status', 'Payments', 'Actions'].map(h => (
+                                                {[t('admin.billing.invoiceId'), t('admin.billing.patientId'), t('billing.description'), 'Amount (ETB)', t('billing.status'), t('admin.billing.payments'), t('admin.audit.actions')].map(h => (
                                                     <TableCell key={h} sx={{ fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b', py: 1.5, px: 2 }}>
                                                         {h}
                                                     </TableCell>
@@ -219,7 +221,7 @@ export default function AdminBillingPage() {
                                                     </TableCell>
                                                     <TableCell sx={{ px: 2 }}>
                                                         <Typography variant="body2" sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                            {inv.description || 'Consultation'}
+                                                            {inv.description || t('common.generalConsultation')}
                                                         </Typography>
                                                     </TableCell>
                                                     <TableCell sx={{ px: 2 }}>
@@ -234,7 +236,7 @@ export default function AdminBillingPage() {
                                                     </TableCell>
                                                     <TableCell sx={{ px: 2 }}>
                                                         <Chip
-                                                            label={inv.status}
+                                                            label={t(`billing.${inv.status.toLowerCase()}`)}
                                                             size="small"
                                                             color={STATUS_COLORS[inv.status]?.chip || 'default'}
                                                             variant="outlined"
@@ -247,7 +249,7 @@ export default function AdminBillingPage() {
                                                                 <Chip 
                                                                     key={p.id}
                                                                     label={p.status}
-                                                                    size="extraSmall"
+                                                                    size={t('common.extraSmall')}
                                                                     onClick={p.proofUrl ? () => { setSelectedPayment(p); setProofDialogOpen(true); } : undefined}
                                                                     sx={{ 
                                                                         fontSize: '0.65rem', 
@@ -274,7 +276,7 @@ export default function AdminBillingPage() {
                                                                     }}
                                                                     sx={{ fontSize: '0.65rem', fontWeight: 800, borderRadius: 1.5, py: 0.25 }}
                                                                 >
-                                                                    Review
+                                                                    {t('admin.billing.review')}
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -285,7 +287,7 @@ export default function AdminBillingPage() {
                                                 <TableRow>
                                                     <TableCell colSpan={7} sx={{ textAlign: 'center', py: 6, color: '#94a3b8' }}>
                                                         <Receipt size={32} className="mx-auto mb-2 opacity-30" />
-                                                        <Typography variant="body2">No invoices found.</Typography>
+                                                        <Typography variant="body2">{t('admin.billing.noInvoices')}</Typography>
                                                     </TableCell>
                                                 </TableRow>
                                             )}
@@ -316,7 +318,7 @@ export default function AdminBillingPage() {
                 PaperProps={{ sx: { borderRadius: 4 } }}
             >
                 <DialogTitle className="flex justify-between items-center">
-                    <Typography variant="h6" fontWeight={800}>Payment Verification</Typography>
+                    <Typography variant="h6" fontWeight={800}>{t('admin.billing.verification')}</Typography>
                     <IconButton onClick={() => setProofDialogOpen(false)}><X size={20} /></IconButton>
                 </DialogTitle>
                 <DialogContent dividers>
@@ -324,7 +326,7 @@ export default function AdminBillingPage() {
                         <Box className="space-y-4">
                             <Box className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
                                 <div>
-                                    <Typography variant="caption" color="text.secondary" display="block">Amount</Typography>
+                                    <Typography variant="caption" color="text.secondary" display="block">{t('billing.amount')}</Typography>
                                     <Typography variant="h6" fontWeight={800} color="teal.700">ETB {parseFloat(selectedPayment.amount).toLocaleString()}</Typography>
                                 </div>
                                 <Chip label={selectedPayment.status} color={selectedPayment.status === 'Success' ? 'success' : 'warning'} size="small" sx={{ fontWeight: 800 }} />
@@ -332,7 +334,7 @@ export default function AdminBillingPage() {
 
                             <div>
                                 <Typography variant="subtitle2" fontWeight={700} gutterBottom className="flex items-center gap-2">
-                                    <Eye size={16} /> Payment Proof / Receipt
+                                    <Eye size={16} /> {t('billing.uploadProof')}
                                 </Typography>
                                 <Box sx={{ 
                                     width: '100%', 
@@ -356,15 +358,15 @@ export default function AdminBillingPage() {
 
                             <Box className="flex items-center gap-2 text-slate-500">
                                 <Clock size={14} />
-                                <Typography variant="caption">Submitted on {new Date(selectedPayment.createdAt).toLocaleString()}</Typography>
+                                <Typography variant="caption">{t('report.generatedOn')} {new Date(selectedPayment.createdAt).toLocaleString()}</Typography>
                             </Box>
                         </Box>
                     ) : (
-                        <Typography variant="body2" color="text.secondary">No payment selected</Typography>
+                        <Typography variant="body2" color="text.secondary">{t('billing.noInvoices')}</Typography>
                     )}
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={() => setProofDialogOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>Close</Button>
+                    <Button onClick={() => setProofDialogOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>{t('common.cancel')}</Button>
                     {selectedPayment?.status === 'Pending' && (
                         <>
                             <Button 
@@ -375,7 +377,7 @@ export default function AdminBillingPage() {
                                 disabled={actionLoading}
                                 sx={{ borderRadius: 2, px: 3 }}
                             >
-                                Reject
+                                {t('admin.billing.reject')}
                             </Button>
                             <Button 
                                 variant="contained" 
@@ -385,7 +387,7 @@ export default function AdminBillingPage() {
                                 disabled={actionLoading}
                                 sx={{ borderRadius: 2, px: 3, bgcolor: '#059669' }}
                             >
-                                {actionLoading ? <CircularProgress size={20} color="inherit" /> : 'Approve Payment'}
+                                {actionLoading ? <CircularProgress size={20} color="inherit" /> : t('admin.billing.approve')}
                             </Button>
                         </>
                     )}

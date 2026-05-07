@@ -7,35 +7,53 @@
   --font-ethiopic: 'Noto Serif Ethiopic', serif;
 }
 
+/* ── Enable CLASS-based dark mode for Tailwind v4 ── */
+/* This makes dark: variants activate when <html class="dark"> is set */
+@variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — Light mode defaults
+   ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  /* ── Brand Colors ── */
+  /* Brand */
   --color-primary:          #0d9488;
   --color-primary-dark:     #0f766e;
   --color-primary-light:    #ccfbf1;
   --color-accent:           #f59e0b;
   --color-accent-dark:      #d97706;
+  --color-emergency:        #dc2626;
+
+  /* Surfaces */
+  --color-bg:               #f8fafc;
   --color-surface:          #f8fafc;
   --color-card:             #ffffff;
+  --color-card-hover:       #f1f5f9;
   --color-border:           #e2e8f0;
+  --color-border-strong:    #cbd5e1;
+  --color-input-bg:         #f8fafc;
+
+  /* Text */
   --color-text-primary:     #0f172a;
   --color-text-secondary:   #64748b;
+  --color-text-muted:       #94a3b8;
+  --color-text-inverse:     #ffffff;
+
+  /* Sidebar (always dark) */
   --color-sidebar-from:     #0a2540;
   --color-sidebar-to:       #0d4f4a;
-  --color-emergency:        #dc2626;
-  --bg-light:               #f8fafc;
 
-  /* ── Typography ── */
+  /* Typography */
   --font-primary:           'Outfit', sans-serif;
   --font-ethiopic:          'Noto Serif Ethiopic', serif;
 
-  /* ── Type scale ── */
+  /* Type scale */
   --text-page-title:        1.25rem;
   --text-section-title:     1.0625rem;
   --text-body:              0.9375rem;
   --text-caption:           0.8125rem;
   --text-badge:             0.75rem;
 
-  /* ── Weight scale ── */
+  /* Weight scale */
   --font-weight-black:      900;
   --font-weight-bold:       800;
   --font-weight-semi:       700;
@@ -43,7 +61,29 @@
   --font-weight-body:       400;
 }
 
-/* ── Global base ── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   DARK MODE TOKENS
+   Applied when <html class="dark"> is set by ThemeContext
+   ───────────────────────────────────────────────────────────────────────────── */
+html.dark {
+  --color-bg:               #0f172a;
+  --color-surface:          #0f172a;
+  --color-card:             #1e293b;
+  --color-card-hover:       #273549;
+  --color-border:           #334155;
+  --color-border-strong:    #475569;
+  --color-input-bg:         #1e293b;
+  --color-text-primary:     #f1f5f9;
+  --color-text-secondary:   #94a3b8;
+  --color-text-muted:       #475569;
+  --color-text-inverse:     #0f172a;
+  --color-primary:          #14b8a6;
+  --color-primary-light:    #134e4a;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GLOBAL BASE
+   ───────────────────────────────────────────────────────────────────────────── */
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -54,19 +94,20 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
   font-family: var(--font-primary);
   font-size: var(--text-body);
   line-height: 1.6;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* ── Uniform font on all elements (overrides MUI Roboto) ── */
+/* Uniform font — overrides MUI Roboto */
 body, body * {
   font-family: var(--font-primary);
 }
 
-/* ── Ethiopic script exception ── */
+/* Ethiopic script exception */
 .font-ethiopic {
   font-family: var(--font-ethiopic) !important;
 }
@@ -75,56 +116,68 @@ html.lang-ethiopic * {
   font-family: var(--font-ethiopic) !important;
 }
 
-/* ── Headings ── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   TYPOGRAPHY — uniform scale
+   ───────────────────────────────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-primary);
   font-weight: 700;
   line-height: 1.25;
 }
 
-/* ── Body / data text: regular weight ── */
 p, li, td, dd {
   font-family: var(--font-primary);
   font-size: var(--text-body);
   font-weight: 400;
 }
 
-/* ── Labels / form elements: medium weight ── */
 label, th {
   font-family: var(--font-primary);
   font-size: var(--text-body);
   font-weight: 600;
 }
 
-/* ── Inputs: regular weight ── */
 input, textarea, select, button {
   font-family: var(--font-primary);
   font-size: var(--text-body);
   font-weight: 400;
 }
 
-/* ── Table headers: semibold, uppercase ── */
 th {
   font-size: 0.8125rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
-/* ── Utilities ── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   UTILITIES
+   ───────────────────────────────────────────────────────────────────────────── */
 @layer utilities {
-  /* Weight helpers — use these instead of arbitrary fontWeight values */
-  .fw-data    { font-weight: 400; } /* table cells, list items, body text */
-  .fw-label   { font-weight: 600; } /* form labels, column headers, captions */
-  .fw-heading { font-weight: 700; } /* card titles, section headers */
-  .fw-strong  { font-weight: 800; } /* page titles, KPI numbers */
+  .fw-data    { font-weight: 400; }
+  .fw-label   { font-weight: 600; }
+  .fw-heading { font-weight: 700; }
+  .fw-strong  { font-weight: 800; }
+
+  /* Semantic surface helpers — use these in pages instead of bg-white/bg-slate-50 */
+  .surface-page  { background-color: var(--color-bg); }
+  .surface-card  { background-color: var(--color-card); }
+  .surface-input { background-color: var(--color-input-bg); }
+  .text-theme-primary   { color: var(--color-text-primary); }
+  .text-theme-secondary { color: var(--color-text-secondary); }
+  .border-theme { border-color: var(--color-border); }
 
   .glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  html.dark .glass {
+    background: rgba(30, 41, 59, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .glass-dark {
@@ -147,8 +200,14 @@ th {
   }
 }
 
-/* ── Scrollbar ── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   SCROLLBAR
+   ───────────────────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 8px; }
 ::-webkit-scrollbar-track  { background: transparent; }
 ::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+html.dark ::-webkit-scrollbar-track { background: #1e293b; }
+html.dark ::-webkit-scrollbar-thumb { background: #334155; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }

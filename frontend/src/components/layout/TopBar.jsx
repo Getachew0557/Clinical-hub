@@ -3,12 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-    Menu, Bell, LogOut, Settings, ChevronDown, User,
+    Menu, Bell, LogOut, Settings, ChevronDown, User, Sun, Moon
 } from 'lucide-react';
 import {
     Avatar, Badge, IconButton, Tooltip,
-    Menu as MuiMenu, MenuItem, ListItemIcon, Divider, Typography,
+    Menu as MuiMenu, MenuItem, ListItemIcon, Divider, Typography, useTheme
 } from '@mui/material';
+import { useColorMode } from '../../context/ThemeContext';
 import { logout } from '../../store/slices/authSlice';
 import NotificationsMenu from './NotificationsMenu';
 import LanguageSwitcher from '../common/LanguageSwitcher';
@@ -23,6 +24,9 @@ export default function TopBar({ onMenuClick }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { toggleColorMode } = useColorMode();
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
     const [anchorEl, setAnchorEl] = useState(null);
     const [profilePhoto, setProfilePhoto] = useState(null);
 
@@ -74,7 +78,13 @@ export default function TopBar({ onMenuClick }) {
     const roleColor = roleColors[user?.role] || '#2563eb';
 
     return (
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6 shadow-sm">
+        <header
+            className="flex h-16 shrink-0 items-center justify-between border-b px-4 lg:px-6 shadow-sm transition-colors duration-200"
+            style={{
+                backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                borderBottomColor: isDarkMode ? '#334155' : '#e2e8f0',
+            }}
+        >
             {/* Left: Menu + Search */}
             <div className="flex items-center gap-4">
                 {/* Mobile-only hamburger */}
@@ -95,6 +105,24 @@ export default function TopBar({ onMenuClick }) {
 
             {/* Right: Language + Notifications + User */}
             <div className="flex items-center gap-2">
+                {/* Theme Toggle */}
+                <Tooltip title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+                    <IconButton
+                        onClick={toggleColorMode}
+                        size="small"
+                        sx={{
+                            color: isDarkMode ? '#ffffff' : '#64748b',
+                            bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'transparent',
+                            '&:hover': {
+                                bgcolor: isDarkMode ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.06)',
+                            },
+                            transition: 'all 0.2s',
+                        }}
+                    >
+                        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    </IconButton>
+                </Tooltip>
+
                 {/* Language Switcher */}
                 <LanguageSwitcher />
 
@@ -104,7 +132,10 @@ export default function TopBar({ onMenuClick }) {
                 {/* User Avatar */}
                 <button
                     onClick={(e) => setAnchorEl(e.currentTarget)}
-                    className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-slate-100 transition-colors"
+                    className="flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors"
+                    style={{ '--hover-bg': isDarkMode ? 'rgba(255,255,255,0.08)' : '#f1f5f9' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.08)' : '#f1f5f9'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     aria-label="User menu"
                 >
                     <Avatar
@@ -114,7 +145,7 @@ export default function TopBar({ onMenuClick }) {
                         {!profilePhoto && initials}
                     </Avatar>
                     <div className="hidden md:flex flex-col items-start leading-tight">
-                        <span className="text-sm font-semibold text-slate-800">{user?.fullName || 'User'}</span>
+                        <span className="text-sm font-semibold" style={{ color: isDarkMode ? '#f1f5f9' : '#1e293b' }}>{user?.fullName || 'User'}</span>
                     </div>
                     <ChevronDown className="h-4 w-4 text-slate-400 hidden md:block" />
                 </button>

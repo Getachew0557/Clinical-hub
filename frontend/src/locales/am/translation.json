@@ -352,5 +352,30 @@
   "sidebar.prescriptions": "ትዕዛዞች",
   "sidebar.userManagement": "የተጠቃሚ አስተዳደር",
   "sidebar.findDoctor": "ዶክተር ፈልግ",
-  "sidebar.hospitals": "ሆስፒታሎች"
+  "sidebar.hospitals": "ሆስፒታሎች",
+
+  "settings.subtitle": "የመለያ ምርጫዎችዎን እና የክሊኒክ ቅንብሮችን ያስተዳድሩ",
+  "settings.notifications": "ማሳወቂያዎች",
+  "settings.appearance": "መልክ",
+  "settings.security": "ደህንነት",
+  "settings.notifPrefs": "የማሳወቂያ ምርጫዎች",
+  "settings.notifDesc": "ከክሊኒኩ ማንቂያዎችን እና ዝማኔዎችን እንዴት መቀበል እንደሚፈልጉ ይምረጡ",
+  "settings.emailNotif": "የኢሜይል ማሳወቂያዎች",
+  "settings.emailNotifDesc": "የቀጠሮ ማሳሰቢያዎችን እና የስርዓት ማንቂያዎችን በኢሜይል ይቀበሉ",
+  "settings.smsNotif": "የኤስኤምኤስ ማሳወቂያዎች",
+  "settings.smsNotifDesc": "ለአስቸኳይ ዝማኔዎች ፈጣን ኤስኤምኤስ ማንቂያዎችን ያግኙ",
+  "settings.visualLang": "ምስላዊ እና ቋንቋ",
+  "settings.darkMode": "ጨለማ ሁነታ",
+  "settings.darkModeOn": "ጨለማ ገጽታ ንቁ ነው",
+  "settings.darkModeOff": "ወደ ጨለማ ገጽታ ቀይር",
+  "settings.language": "የስርዓት ቋንቋ",
+  "settings.changeLanguage": "ቋንቋ ቀይር",
+  "settings.accountSecurity": "የመለያ ደህንነት",
+  "settings.twoFactor": "ሁለት-ደረጃ ማረጋገጫ",
+  "settings.twoFactorDesc": "መለያዎን በተጨማሪ ማረጋገጫ ደረጃ ይጠብቁ",
+  "settings.securityAudit": "የደህንነት ኦዲት",
+  "settings.lastLogin": "የመጨረሻ ግቤት",
+
+  "hospitals.network": "የሆስፒታል አውታረ መረባችን",
+  "hospitals.networkDesc": "በኢትዮጵያ ውስጥ የሚታመኑ ክሊኒካዊ ቦታዎች፣ በዓለም ደረጃ ተቋማት የታጠቁ።"
 }

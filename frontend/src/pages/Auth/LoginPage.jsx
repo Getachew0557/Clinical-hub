@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { login, reset, googleLogin } from "../../store/slices/authSlice";
-import { Eye, EyeOff, Stethoscope, AlertCircle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Stethoscope, AlertCircle, Loader2, X } from "lucide-react";
 
 // Google Sign-In button SVG icon
 function GoogleIcon() {
@@ -40,6 +41,7 @@ function useGoogleScript(clientId) {
 }
 
 export default function LoginPage() {
+    const { t } = useTranslation();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -69,7 +71,7 @@ export default function LoginPage() {
     // Handle Google credential response
     const handleGoogleResponse = useCallback(async (response) => {
         if (!response?.credential) {
-            setGoogleError("Google sign-in failed. Please try again.");
+            setGoogleError(t('common.error'));
             return;
         }
         setGoogleLoading(true);
@@ -78,11 +80,11 @@ export default function LoginPage() {
             await dispatch(googleLogin(response.credential)).unwrap();
             // Navigation handled by the useEffect above
         } catch (err) {
-            setGoogleError(err || "Google sign-in failed. Please try again.");
+            setGoogleError(err || t('common.error'));
         } finally {
             setGoogleLoading(false);
         }
-    }, [dispatch]);
+    }, [dispatch, t]);
 
     // Initialize Google One Tap / button
     useEffect(() => {
@@ -116,127 +118,132 @@ export default function LoginPage() {
         dispatch(login({ email, password }));
     };
 
-    const errorMsg = googleError || (isError ? (message || "Invalid email or password") : "");
+    const errorMsg = googleError || (isError ? (message || t('auth.login.invalidCredentials')) : "");
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-100 flex flex-col items-center justify-center p-4">
-            <div className="w-full max-w-[420px]">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background decorative elements */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+            </div>
 
-                {/* Brand */}
-                <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 shadow-lg shadow-teal-600/25">
-                        <Stethoscope size={26} className="text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-slate-900 leading-tight">Biruh Tena</h1>
-                        <p className="text-xs text-teal-600 font-ethiopic">ብሩህ ጤና</p>
-                    </div>
-                </div>
-
+            <div className="w-full max-w-[440px] relative">
                 {/* Card */}
-                <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8">
-                    <div className="mb-6">
-                        <h2 className="text-lg font-bold text-slate-900">Sign in to your account</h2>
-                        <p className="text-sm text-slate-500 mt-0.5">Enter your credentials to continue</p>
+                <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/50 dark:border-slate-800 p-8 md:p-10 relative">
+                    
+                    {/* Close Button Inside Card */}
+                    <Link 
+                        to="/" 
+                        className="absolute top-6 right-6 w-10 h-10 bg-slate-100/50 dark:bg-slate-800/50 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all hover:rotate-90 z-20"
+                    >
+                        <X size={20} />
+                    </Link>
+
+                    {/* Centered Side-by-Side Header */}
+                    <div className="flex items-center justify-center gap-4 mb-8 pb-6 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-lg shadow-teal-500/30">
+                            <Stethoscope size={28} className="text-white" />
+                        </div>
+                        <div className="text-left">
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-1">
+                                {t('auth.login.title')}
+                            </h2>
+                            <p className="text-[10px] text-teal-600 dark:text-teal-400 font-bold uppercase tracking-widest">
+                                {t('auth.login.systemName')}
+                            </p>
+                        </div>
                     </div>
 
                     {errorMsg && (
-                        <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
-                            <AlertCircle size={16} className="shrink-0" />
+                        <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 text-red-600 dark:text-red-400 px-4 py-4 rounded-2xl text-xs font-bold mb-6">
+                            <AlertCircle size={18} className="shrink-0" />
                             {errorMsg}
                         </div>
                     )}
 
-                    {/* Google Sign-In */}
-                    {clientId && (
-                        <>
-                            <div className="mb-4">
-                                {googleLoading ? (
-                                    <div className="w-full flex items-center justify-center gap-2 py-3 border border-slate-200 rounded-xl text-sm text-slate-600 bg-slate-50">
-                                        <Loader2 size={16} className="animate-spin text-teal-600" />
-                                        Signing in with Google...
-                                    </div>
-                                ) : (
-                                    /* Google renders its own button here */
-                                    <div id="google-signin-btn" className="w-full flex justify-center" />
-                                )}
-                            </div>
-
-                            {/* Divider */}
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="flex-1 h-px bg-slate-200" />
-                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">or</span>
-                                <div className="flex-1 h-px bg-slate-200" />
-                            </div>
-                        </>
-                    )}
-
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">
-                                Email Address
+                            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-widest pl-1">
+                                {t('auth.login.email')}
                             </label>
                             <input
                                 type="email"
                                 required
-                                autoComplete="email"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 placeholder="name@clinic.com"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                                className="w-full px-5 py-4 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 transition-all font-bold"
                             />
                         </div>
 
-                        <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                    Password
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between mb-1.5 px-1">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                    {t('auth.login.password')}
                                 </label>
-                                <Link to="/forgot-password" className="text-xs font-semibold text-teal-600 hover:text-teal-700 hover:underline">
-                                    Forgot password?
+                                <Link to="/forgot-password" title="Reset your password" className="text-[10px] font-black text-teal-600 hover:text-teal-700 uppercase tracking-wider">
+                                    {t('auth.login.forgotPassword')}
                                 </Link>
                             </div>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     required
-                                    autoComplete="current-password"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className="w-full px-4 py-3 pr-11 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                                    className="w-full px-5 py-4 pr-12 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 transition-all font-bold"
                                 />
                                 <button type="button" onClick={() => setShowPassword(p => !p)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-teal-600 transition-colors">
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
                         </div>
 
+                        {/* Google Sign-In (Repositioned) */}
+                        {clientId && (
+                            <div className="py-2">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+                                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">social login</span>
+                                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+                                </div>
+                                {googleLoading ? (
+                                    <div className="w-full flex items-center justify-center gap-3 py-4 border border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                                        <Loader2 size={18} className="animate-spin text-teal-600" />
+                                        {t('common.loading')}
+                                    </div>
+                                ) : (
+                                    <div id="google-signin-btn" className="w-full flex justify-center overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800" />
+                                )}
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             disabled={isLoading || googleLoading}
-                            className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-teal-600/20 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+                            className="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-black rounded-2xl text-sm transition-all shadow-xl shadow-teal-600/20 disabled:opacity-60 disabled:cursor-not-allowed mt-2 uppercase tracking-widest flex items-center justify-center gap-2"
                         >
                             {isLoading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <Loader2 size={16} className="animate-spin" />
-                                    Signing in...
-                                </span>
-                            ) : "Sign In"}
+                                <Loader2 size={20} className="animate-spin" />
+                            ) : (
+                                t('auth.login.submit')
+                            )}
                         </button>
                     </form>
 
-                    <p className="text-center text-sm text-slate-500 mt-6">
-                        Don't have an account?{" "}
-                        <Link to="/register" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline">
-                            Create account
+                    <p className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 mt-8">
+                        {t('auth.login.noAccount')}{" "}
+                        <Link to="/register" className="text-teal-600 hover:text-teal-700 underline underline-offset-4 decoration-2">
+                            {t('auth.login.register')}
                         </Link>
                     </p>
                 </div>
 
-                <p className="text-center text-xs text-slate-400 mt-6">
-                    © {new Date().getFullYear()} Biruh Tena Clinical System
+                <p className="text-center text-[10px] font-black text-slate-300 dark:text-slate-600 mt-8 uppercase tracking-[0.4em]">
+                    © {new Date().getFullYear()} Biruh Tena Clinical Hub
                 </p>
             </div>
         </div>

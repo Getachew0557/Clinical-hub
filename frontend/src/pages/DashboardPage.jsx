@@ -206,9 +206,9 @@ export default function DashboardPage() {
             <Box className="flex items-center justify-between">
                 <Box>
                     <Typography variant="h5" fontWeight={700} color="text.primary">
-                        {role === 'Patient' ? t('dashboard.myPortal') : t('dashboard.title')}
+                        {role === 'Patient' ? t('sidebar.myPortal') : t('dashboard.title')}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', tracking: '0.1em' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', tracking: '0.1em', fontWeight: 700 }}>
                         {t('dashboard.welcome', { name: user?.fullName || 'User' })} • {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                     </Typography>
                 </Box>
@@ -227,9 +227,9 @@ export default function DashboardPage() {
                                 color="primary" 
                                 startIcon={<Download size={16} />}
                                 onClick={handleExportOpen}
-                                sx={{ borderRadius: 3, px: 3, boxShadow: 'none' }}
+                                sx={{ borderRadius: 3, px: 3, boxShadow: 'none', bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                             >
-                                Export Report
+                                {t('dashboard.exportReport')}
                             </Button>
                             <Menu
                                 anchorEl={exportAnchorEl}
@@ -239,15 +239,15 @@ export default function DashboardPage() {
                             >
                                 <MenuItem onClick={exportToPDF}>
                                     <ListItemIcon><FileText size={18} className="text-red-500" /></ListItemIcon>
-                                    <ListItemText primary="Export as PDF" />
+                                    <ListItemText primary={t('dashboard.exportPDF')} />
                                 </MenuItem>
                                 <MenuItem onClick={exportToExcel}>
                                     <ListItemIcon><FileSpreadsheet size={18} className="text-green-600" /></ListItemIcon>
-                                    <ListItemText primary="Export as Excel" />
+                                    <ListItemText primary={t('dashboard.exportExcel')} />
                                 </MenuItem>
                                 <MenuItem onClick={handlePrint}>
                                     <ListItemIcon><Printer size={18} className="text-slate-600" /></ListItemIcon>
-                                    <ListItemText primary="Print Dashboard" />
+                                    <ListItemText primary={t('dashboard.print')} />
                                 </MenuItem>
                             </Menu>
                         </>
@@ -270,11 +270,11 @@ export default function DashboardPage() {
                                 <stat.icon size={26} color={stat.color} />
                             </Box>
                             <Box>
-                                <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>{stat.title}</Typography>
-                                <Typography variant="h4" fontWeight={700} color="text.primary">{stat.value}</Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', fontWeight: 700 }}>{stat.title}</Typography>
+                                <Typography variant="h4" fontWeight={800} color="text.primary">{stat.value}</Typography>
                                 <Box className="flex items-center gap-1 mt-0.5">
                                     <TrendingUp size={12} className="text-emerald-500" />
-                                    <Typography variant="caption" className="text-emerald-600">{stat.change}</Typography>
+                                    <Typography variant="caption" className="text-emerald-600" fontWeight={700}>{stat.change}</Typography>
                                 </Box>
                             </Box>
                         </CardContent>
@@ -288,17 +288,17 @@ export default function DashboardPage() {
                     <CardContent className="p-8">
                         <Box className="flex items-center justify-between mb-8">
                             <Box>
-                                <Typography variant="h6" fontWeight={700}>Patient & Revenue Performance</Typography>
-                                <Typography variant="caption" color="text.secondary">Monthly growth metrics across all clinic departments</Typography>
+                                <Typography variant="h6" fontWeight={700}>{t('dashboard.performance')}</Typography>
+                                <Typography variant="caption" color="text.secondary" fontWeight={500}>{t('dashboard.performanceDesc')}</Typography>
                             </Box>
                             <Box className="flex gap-2">
                                 <Box className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg">
                                     <Box sx={{ w: 8, h: 8, borderRadius: '50%', bgcolor: '#3b82f6' }} />
-                                    <Typography variant="caption" fontWeight={700} color="primary">Revenue</Typography>
+                                    <Typography variant="caption" fontWeight={700} color="primary">{t('dashboard.revenueTrend')}</Typography>
                                 </Box>
                                 <Box className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-lg">
                                     <Box sx={{ w: 8, h: 8, borderRadius: '50%', bgcolor: '#10b981' }} />
-                                    <Typography variant="caption" fontWeight={700} color="success.main">Patients</Typography>
+                                    <Typography variant="caption" fontWeight={700} color="success.main">{t('dashboard.patientTrend')}</Typography>
                                 </Box>
                             </Box>
                         </Box>
@@ -333,8 +333,8 @@ export default function DashboardPage() {
                 {/* Distribution Pie */}
                 <Card elevation={0} className="glass" sx={{ borderRadius: 4, border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                     <CardContent className="p-8">
-                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>Treatment Distribution</Typography>
-                        <Typography variant="caption" color="text.secondary">Case volume by clinical specialty</Typography>
+                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>{t('dashboard.treatmentDist')}</Typography>
+                        <Typography variant="caption" color="text.secondary" fontWeight={500}>{t('dashboard.treatmentDistDesc')}</Typography>
                         <Box className="h-64 mt-6 flex items-center" sx={{ overflow: 'hidden' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -367,8 +367,8 @@ export default function DashboardPage() {
                 {/* Caseload Bar Chart */}
                 <Card elevation={0} className="glass" sx={{ borderRadius: 4, border: '1px solid rgba(226, 232, 240, 0.5)' }}>
                     <CardContent className="p-8">
-                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>Physician Performance</Typography>
-                        <Typography variant="caption" color="text.secondary">Monthly appointment volume by doctor</Typography>
+                        <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>{t('dashboard.physicianPerf')}</Typography>
+                        <Typography variant="caption" color="text.secondary" fontWeight={500}>{t('dashboard.physicianPerfDesc')}</Typography>
                         <Box className="h-64 mt-6" sx={{ overflow: 'hidden' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={physicianLoad} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -388,21 +388,27 @@ export default function DashboardPage() {
             <Card elevation={0} sx={{ borderRadius: 4, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
                 <Box className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <Box>
-                        <Typography variant="h6" fontWeight={700}>Recent Clinical Activity</Typography>
-                        <Typography variant="caption" color="text.secondary">Real-time update of status transitions and consultations</Typography>
+                        <Typography variant="h6" fontWeight={700}>{t('dashboard.clinicalActivity')}</Typography>
+                        <Typography variant="caption" color="text.secondary" fontWeight={500}>{t('dashboard.clinicalActivityDesc')}</Typography>
                     </Box>
-                    <Button variant="outlined" size="small" endIcon={<ArrowRight size={14} />} sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}>
-                        View All Records
+                    <Button 
+                        variant="outlined" 
+                        size="small" 
+                        endIcon={<ArrowRight size={14} />} 
+                        onClick={() => navigate('/admin/audit')}
+                        sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
+                    >
+                        {t('common.viewAll')}
                     </Button>
                 </Box>
                 <TableContainer>
                     <Table sx={{ minWidth: 650 }}>
                         <TableHead sx={{ bgcolor: '#f8fafc' }}>
                             <TableRow>
-                                <TableCell>Patient / ID</TableCell>
-                                <TableCell>Service / Reason</TableCell>
-                                <TableCell>Time / Confirmed</TableCell>
-                                <TableCell>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>{t('dashboard.patientId')}</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>{t('dashboard.serviceReason')}</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>{t('dashboard.timeConfirmed')}</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>{t('dashboard.status')}</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -413,34 +419,34 @@ export default function DashboardPage() {
                                     <TableRow key={row.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                                         <TableCell>
                                             <Box className="flex items-center gap-3">
-                                                <Avatar sx={{ w: 32, h: 32, fontSize: '0.875rem', bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}>
+                                                <Avatar sx={{ w: 32, h: 32, fontSize: '0.875rem', bgcolor: 'primary.light', color: 'primary.main', fontWeight: 800 }}>
                                                     {row.patientName?.charAt(0)}
                                                 </Avatar>
                                                 <Box>
-                                                    <Typography variant="body2" fontWeight={600}>{row.patientName}</Typography>
+                                                    <Typography variant="body2" fontWeight={700}>{row.patientName}</Typography>
                                                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>ID: #{row.patientId?.slice(-6) || 'N/A'}</Typography>
                                                 </Box>
                                             </Box>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography variant="body2">{row.reason}</Typography>
-                                            <Typography variant="caption" color="text.secondary" className="flex items-center gap-1">
+                                            <Typography variant="body2" fontWeight={600}>{row.reason}</Typography>
+                                            <Typography variant="caption" color="text.secondary" className="flex items-center gap-1" fontWeight={700}>
                                                 <Stethoscope size={10} /> {row.doctorName || 'Assigned Staff'}
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Typography variant="body2">{row.appointmentTime}</Typography>
-                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>{row.appointmentDate?.split('T')[0]}</Typography>
+                                            <Typography variant="body2" fontWeight={600}>{row.appointmentTime}</Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>{row.appointmentDate?.split('T')[0]}</Typography>
                                             {row.status === 'Confirmed' && (
                                                 <Typography variant="caption" display="block" sx={{ color: 'emerald.600', fontWeight: 800 }}>
-                                                    Confirmed by Admin
+                                                    {t('dashboard.confirmedByAdmin')}
                                                 </Typography>
                                             )}
                                         </TableCell>
                                         <TableCell>
                                             <Chip 
                                                 icon={<StatusIcon size={12} />}
-                                                label={row.status} 
+                                                label={t(`appt.status.${row.status.toLowerCase().replace(' ', '')}`)} 
                                                 size="small"
                                                 sx={{ 
                                                     fontWeight: 800, 
@@ -458,11 +464,11 @@ export default function DashboardPage() {
                                 <TableRow>
                                     <TableCell colSpan={4} align="center" sx={{ py: 8, border: 0 }}>
                                         <CalendarDays size={40} style={{ color: '#cbd5e1', margin: '0 auto 8px' }} />
-                                        <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                                            No clinical activity recorded yet
+                                        <Typography variant="body2" color="text.secondary" fontWeight={700}>
+                                            {t('dashboard.noActivity')}
                                         </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Activity will appear here as appointments are created
+                                        <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                                            {t('dashboard.noActivityDesc')}
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
@@ -472,7 +478,7 @@ export default function DashboardPage() {
                 </TableContainer>
             </Card>
             </Box>
-        </Box>
+            </Box>
         </Box>
     );
 }
