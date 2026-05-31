@@ -5,16 +5,19 @@ import {
     UserCircle
 } from 'lucide-react';
 import {
-    Typography, Button, Dialog, DialogTitle,
-    DialogContent, DialogActions, TextField, Grid,
-    FormControl, InputLabel, Select, MenuItem,
-    IconButton, CircularProgress, Box
+    Typography, Grid, FormControl, Select, MenuItem,
+    CircularProgress, Box
 } from '@mui/material';
 import patientService from '../../api/patient.service';
 import authService from '../../api/auth.service';
+import { Modal, ModalContent, ModalActions } from '../ui/Modal';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
+import { useToast } from '../../hooks/useToast';
 
 export default function AddPatientModal({ open, onClose, onSuccess }) {
     const [loading, setLoading] = useState(false);
+    const { success, error } = useToast();
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -51,7 +54,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }) {
                 userId: authUser.user.id
             });
 
-            alert('Patient account and profile registered successfully!');
+            success('Patient account and profile registered successfully!');
             onSuccess();
             onClose();
             setFormData({
@@ -61,102 +64,71 @@ export default function AddPatientModal({ open, onClose, onSuccess }) {
                 allergies: '', emergencyContact: ''
             });
         } catch (err) {
-            alert(err.response?.data?.message || 'Registration failed');
+            error(err.response?.data?.message || 'Registration failed');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Dialog
+        <Modal
             open={open}
             onClose={onClose}
-            maxWidth="md" // Increased from sm
-            fullWidth
-            PaperProps={{ sx: { borderRadius: 3, mt: 4 } }} // Reduced top margin
+            title="Register New Patient"
+            maxWidth="md"
         >
             <form onSubmit={handleSubmit}>
-                <DialogTitle sx={{ borderBottom: '1px solid #f1f5f9', p: 3 }}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                <UserPlus size={20} />
-                            </div>
-                            <Typography variant="h6" fontWeight={800}>Register New Patient</Typography>
-                        </div>
-                        <IconButton onClick={onClose} size="small">
-                            <X size={20} />
-                        </IconButton>
-                    </div>
-                </DialogTitle>
-
-                <DialogContent sx={{ p: 4 }}>
+                <ModalContent>
                     <div className="pt-2">
                         <Grid container spacing={3}>
                             <Grid item xs={12} md={6}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Full Name
-                                    </Typography>
-                                    <TextField
-                                        name="fullName"
-                                        fullWidth
-                                        required
-                                        value={formData.fullName}
-                                        onChange={handleInputChange}
-                                        placeholder="Full Name"
-                                    />
-                                </Box>
+                                <Input
+                                    name="fullName"
+                                    label="Full Name"
+                                    fullWidth
+                                    required
+                                    value={formData.fullName}
+                                    onChange={handleInputChange}
+                                    placeholder="Full Name"
+                                />
                             </Grid>
 
                             <Grid item xs={12} md={6}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Email Address
-                                    </Typography>
-                                    <TextField
-                                        name="email"
-                                        type="email"
-                                        fullWidth
-                                        required
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                        placeholder="patient@example.com"
-                                    />
-                                </Box>
+                                <Input
+                                    name="email"
+                                    label="Email Address"
+                                    type="email"
+                                    fullWidth
+                                    required
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    placeholder="patient@example.com"
+                                />
                             </Grid>
 
                             <Grid item xs={12} md={6}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Password
-                                    </Typography>
-                                    <TextField
-                                        name="password"
-                                        type="password"
-                                        fullWidth
-                                        required
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                        placeholder="Set password"
-                                    />
-                                </Box>
+                                <Input
+                                    name="password"
+                                    label="Password"
+                                    type="password"
+                                    fullWidth
+                                    required
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    placeholder="Set password"
+                                />
                             </Grid>
 
                             <Grid item xs={12} md={6}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Date of Birth
-                                    </Typography>
-                                    <TextField
-                                        name="dateOfBirth"
-                                        type="date"
-                                        fullWidth
-                                        required
-                                        value={formData.dateOfBirth}
-                                        onChange={handleInputChange}
-                                    />
-                                </Box>
+                                <Input
+                                    name="dateOfBirth"
+                                    label="Date of Birth"
+                                    type="date"
+                                    fullWidth
+                                    required
+                                    value={formData.dateOfBirth}
+                                    onChange={handleInputChange}
+                                />
                             </Grid>
 
                             <Grid item xs={12} md={6}>
@@ -181,19 +153,15 @@ export default function AddPatientModal({ open, onClose, onSuccess }) {
                             </Grid>
 
                             <Grid item xs={12} md={6}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Phone Number
-                                    </Typography>
-                                    <TextField
-                                        name="phone"
-                                        fullWidth
-                                        required
-                                        value={formData.phone}
-                                        onChange={handleInputChange}
-                                        placeholder="+251..."
-                                    />
-                                </Box>
+                                <Input
+                                    name="phone"
+                                    label="Phone Number"
+                                    fullWidth
+                                    required
+                                    value={formData.phone}
+                                    onChange={handleInputChange}
+                                    placeholder="+251..."
+                                />
                             </Grid>
 
                             <Grid item xs={12} md={6}>
@@ -218,70 +186,52 @@ export default function AddPatientModal({ open, onClose, onSuccess }) {
                             </Grid>
 
                             <Grid item xs={12}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Home Address
-                                    </Typography>
-                                    <TextField
-                                        name="address"
-                                        fullWidth
-                                        multiline
-                                        rows={2}
-                                        placeholder="Enter full home address"
-                                        value={formData.address}
-                                        onChange={handleInputChange}
-                                    />
-                                </Box>
+                                <Input
+                                    name="address"
+                                    label="Home Address"
+                                    fullWidth
+                                    multiline
+                                    rows={2}
+                                    placeholder="Enter full home address"
+                                    value={formData.address}
+                                    onChange={handleInputChange}
+                                />
                             </Grid>
 
                             <Grid item xs={12}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Allergies / Medical Conditions
-                                    </Typography>
-                                    <TextField
-                                        name="allergies"
-                                        fullWidth
-                                        multiline
-                                        rows={2}
-                                        value={formData.allergies}
-                                        onChange={handleInputChange}
-                                        placeholder="e.g. Penicillin allergy, Diabetes..."
-                                    />
-                                </Box>
+                                <Input
+                                    name="allergies"
+                                    label="Allergies / Medical Conditions"
+                                    fullWidth
+                                    multiline
+                                    rows={2}
+                                    value={formData.allergies}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g. Penicillin allergy, Diabetes..."
+                                />
                             </Grid>
 
                             <Grid item xs={12}>
-                                <Box>
-                                    <Typography variant="overline" color="text.secondary" sx={{ ml: 0.5, display: 'block' }}>
-                                        Emergency Contact (Name & Phone)
-                                    </Typography>
-                                    <TextField
-                                        name="emergencyContact"
-                                        fullWidth
-                                        value={formData.emergencyContact}
-                                        onChange={handleInputChange}
-                                        placeholder="John Doe - 0911..."
-                                    />
-                                </Box>
+                                <Input
+                                    name="emergencyContact"
+                                    label="Emergency Contact (Name & Phone)"
+                                    fullWidth
+                                    value={formData.emergencyContact}
+                                    onChange={handleInputChange}
+                                    placeholder="John Doe - 0911..."
+                                />
                             </Grid>
                         </Grid>
                     </div>
-                </DialogContent>
+                </ModalContent>
 
-                <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9', gap: 2 }}>
-                    <Button color="inherit" onClick={onClose} disabled={loading}>Cancel</Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        startIcon={<Save size={18} />}
-                        disabled={loading}
-                        sx={{ borderRadius: 3, px: 4 }}
-                    >
-                        {loading ? 'Registering...' : 'Register Patient'}
-                    </Button>
-                </DialogActions>
+                <ModalActions
+                    onCancel={onClose}
+                    onConfirm={handleSubmit}
+                    confirmText="Register Patient"
+                    loading={loading}
+                />
             </form>
-        </Dialog>
+        </Modal>
     );
 }

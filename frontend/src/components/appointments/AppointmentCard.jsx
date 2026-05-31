@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import StatusBadge from './StatusBadge';
 import { shouldShowJoinButton } from '../../utils/appointmentDashboard';
 import { Video, User, Stethoscope, Clock, FileText } from 'lucide-react';
+import { Card, CardContent } from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import { StatusBadge } from '../../components/ui/Badge';
 
 function getActions(role, status) {
   const isDoctor = role === 'Doctor';
@@ -73,7 +75,8 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-teal-300 hover:shadow-md transition-all duration-200">
+    <Card className="hover:border-teal-300 hover:shadow-md transition-all duration-200">
+      <CardContent className="p-0">
 
       {/* ── Top strip: name + badge ── */}
       <div 
@@ -158,22 +161,34 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
       {(actions.length > 0 || showJoin) && (
         <div className="px-3 pb-3 flex gap-2">
           {actions.map((action) => (
-            <button
+            <Button
               key={action.next}
               disabled={busy}
               onClick={() => handleAction(action.next)}
-              className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg transition-colors disabled:opacity-50 ${BTN[action.variant]}`}
+              variant="contained"
+              color={
+                action.variant === 'primary' ? 'primary' :
+                action.variant === 'success' ? 'success' :
+                action.variant === 'danger' ? 'error' :
+                action.variant === 'warning' ? 'warning' :
+                'primary'
+              }
+              size="small"
+              className="flex-1"
             >
               {action.label}
-            </button>
+            </Button>
           ))}
           {showJoin && (
-            <button
+            <Button
               onClick={() => navigate(`/video/${id}`)}
-              className={`flex-1 text-xs font-semibold px-3 py-2 rounded-lg transition-colors ${BTN.video}`}
+              variant="contained"
+              color="info"
+              size="small"
+              className="flex-1"
             >
               Join Call
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -181,6 +196,7 @@ export default function AppointmentCard({ appointment, role, isVideo, onStatusCh
       {cardError && (
         <p className="px-4 pb-3 text-[11px] text-red-500">{cardError}</p>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

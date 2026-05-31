@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import {
-    Typography, Card, CardContent, Grid,
-    Box, Chip, CircularProgress, Alert, Divider, Button,
-    Dialog, DialogTitle, DialogContent, DialogActions,
-    TextField, IconButton
+    Typography, Grid, Chip, CircularProgress, Alert, Divider,
+    IconButton, Box
 } from '@mui/material';
 import { 
     Receipt, CreditCard, ChevronRight, AlertCircle, 
     Clock, CheckCircle2, Upload, X, FileText, Camera
 } from 'lucide-react';
 import billingService from '../api/billing.service.js';
+import { Card, CardContent } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { Modal, ModalContent, ModalActions } from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import { useToast } from '../hooks/useToast';
 
 const API_URL = import.meta.env.VITE_API_BILLING_URL;
 
@@ -22,6 +25,7 @@ const getAuthHeader = () => {
 
 const BillingPage = () => {
     const { t } = useTranslation();
+    const { success: toastSuccess, error: toastError } = useToast();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -86,10 +90,9 @@ const BillingPage = () => {
             
             fetchInvoices();
             setUploadDialogOpen(false);
-            // In a real app, use a proper snackbar/toast for notifications
-            alert(t('billing.notifySuccess')); 
+            toastSuccess(t('billing.notifySuccess')); 
         } catch (err) {
-            alert(t('billing.notifyFailed'));
+            toastError(t('billing.notifyFailed'));
             console.error(err);
         } finally {
             setUploading(false);
@@ -101,31 +104,29 @@ const BillingPage = () => {
 
     if (loading) {
         return (
-            <Box className="flex h-64 items-center justify-center">
+            <div className="flex h-64 items-center justify-center">
                 <CircularProgress size={32} />
-            </Box>
+            </div>
         );
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
-            <Box className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 p-4 lg:p-8 pb-8 min-h-screen">
 
                 {/* Header */}
-                <Box>
-                    <Typography variant="h5" fontWeight={900} color="text.primary">
+                <div>
+                    <Typography variant="h5" className="fw-800">
                         {t('billing.myBills')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
+                    <Typography variant="body2" color="text.secondary" className="mt-1 fw-500">
                         {t('billing.myBillsDesc')}
                     </Typography>
-                </Box>
+                </div>
 
                 {error && (
                     <Alert
                         severity="error"
                         icon={<AlertCircle size={20} />}
-                        sx={{ borderRadius: 3 }}
                         action={
                             <Button color="inherit" size="small" onClick={fetchInvoices}>
                                 {t('common.retry')}
@@ -144,19 +145,19 @@ const BillingPage = () => {
                             { label: t('billing.outstanding'), value: totalPending, color: '#d97706', bg: '#fffbeb', icon: Clock },
                         ].map(tile => (
                             <Grid item xs={12} sm={6} key={tile.label}>
-                                <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
-                                    <CardContent sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 3 }}>
-                                        <Box sx={{ width: 44, height: 44, borderRadius: 3, bgcolor: tile.bg, p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Card>
+                                    <CardContent className="flex items-center gap-3 p-4">
+                                        <div className="w-11 h-11 rounded-lg flex items-center justify-center" style={{ backgroundColor: tile.bg }}>
                                             <tile.icon size={22} style={{ color: tile.color }} />
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        </div>
+                                        <div>
+                                            <Typography variant="caption" className="fw-700 text-theme-secondary" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                                 {tile.label}
                                             </Typography>
-                                            <Typography variant="h5" fontWeight={800} color="text.primary">
+                                            <Typography variant="h5" className="fw-800">
                                                 ETB {tile.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </Typography>
-                                        </Box>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </Grid>
@@ -168,11 +169,11 @@ const BillingPage = () => {
                 <Grid container spacing={3}>
                     {invoices.length === 0 ? (
                         <Grid item xs={12}>
-                            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 5, bgcolor: '#f8fafc' }}>
+                            <Card className="bg-slate-50">
                                 <CardContent className="flex flex-col items-center justify-center p-12 text-slate-400">
                                     <Receipt size={48} className="mb-4 opacity-20" />
-                                    <Typography variant="body1" fontWeight={600}>{t('billing.noRecords')}</Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                    <Typography variant="body1" className="fw-600">{t('billing.noRecords')}</Typography>
+                                    <Typography variant="body2" color="text.secondary" className="mt-1">
                                         {t('billing.noInvoices')}
                                     </Typography>
                                 </CardContent>
@@ -181,66 +182,55 @@ const BillingPage = () => {
                     ) : (
                         invoices.map(invoice => (
                             <Grid item xs={12} key={invoice.id}>
-                                <Card
-                                    elevation={0}
-                                    sx={{
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: 4,
-                                        transition: 'all 0.2s',
-                                        '&:hover': { borderColor: '#0d9488', boxShadow: '0 4px 12px rgba(13,148,136,0.06)' }
-                                    }}
-                                >
+                                <Card className="hover:border-teal-300 hover:shadow-md transition-all duration-200">
                                     <CardContent className="p-6">
-                                        <Box className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                            <Box className="flex items-center gap-4">
-                                                <Box sx={{
-                                                    width: 48, height: 48, borderRadius: 3,
-                                                    bgcolor: invoice.status === 'Paid' ? '#f0fdf4' : '#fffbeb',
-                                                    p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{
+                                                    backgroundColor: invoice.status === 'Paid' ? '#f0fdf4' : '#fffbeb',
                                                 }}>
                                                     <Receipt size={24} style={{ color: invoice.status === 'Paid' ? '#059669' : '#d97706' }} />
-                                                </Box>
-                                                <Box>
-                                                    <Typography variant="subtitle1" fontWeight={800} color="text.primary">
+                                                </div>
+                                                <div>
+                                                    <Typography variant="subtitle1" className="fw-800">
                                                         {invoice.description || t('common.generalConsultation')}
                                                     </Typography>
-                                                    <Box className="flex items-center gap-3 mt-1">
-                                                        <Box className="flex items-center gap-1 text-slate-400">
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <div className="flex items-center gap-1 text-slate-400">
                                                             <Clock size={13} />
-                                                            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                                            <Typography variant="caption" className="fw-600">
                                                                 {new Date(invoice.createdAt).toLocaleDateString()}
                                                             </Typography>
-                                                        </Box>
+                                                        </div>
                                                         <Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />
                                                         <Chip
                                                             label={invoice.status === 'Paid' ? t('billing.paid') : t('billing.pending')}
                                                             size="small"
                                                             color={invoice.status === 'Paid' ? 'success' : 'warning'}
                                                             variant="outlined"
-                                                            sx={{ fontWeight: 700, borderRadius: 2 }}
+                                                            className="fw-700"
                                                         />
-                                                    </Box>
-                                                </Box>
-                                            </Box>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                            <Box className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                                                <Typography variant="h5" color="text.primary" sx={{ fontWeight: 800 }}>
+                                            <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                                                <Typography variant="h5" className="fw-800">
                                                     ETB {parseFloat(invoice.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </Typography>
 
                                                 {invoice.status !== 'Paid' && (
                                                     invoice.payments?.some(p => p.status === 'Pending') ? (
-                                                        <Box sx={{ bgcolor: '#fffbeb', px: 2, py: 1, borderRadius: 2, border: '1px dashed #d97706', textAlign: 'center' }}>
-                                                            <Typography variant="caption" color="#d97706" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                        <div className="bg-amber-50 px-3 py-2 rounded-lg border border-dashed border-amber-600 text-center">
+                                                            <Typography variant="caption" className="text-amber-600 fw-700 flex items-center justify-center gap-1">
                                                                 <Clock size={14} /> {t('billing.underReview')}
                                                             </Typography>
-                                                        </Box>
+                                                        </div>
                                                     ) : (
                                                         <Button
                                                             variant="contained"
                                                             startIcon={<Camera size={18} />}
                                                             onClick={() => handleOpenUpload(invoice)}
-                                                            sx={{ borderRadius: 3, px: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                                                         >
                                                             {t('billing.uploadReceipt')}
                                                         </Button>
@@ -253,96 +243,86 @@ const BillingPage = () => {
                                                         label={t('billing.paid')}
                                                         color="success"
                                                         variant="filled"
-                                                        sx={{ fontWeight: 700, borderRadius: 2 }}
+                                                        className="fw-700"
                                                     />
                                                 )}
-                                            </Box>
-                                        </Box>
+                                            </div>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </Grid>
                         ))
                     )}
                 </Grid>
-            </Box>
 
-            {/* Upload Proof Dialog */}
-            <Dialog 
-                open={uploadDialogOpen} 
-                onClose={() => setUploadDialogOpen(false)}
-                PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
-                maxWidth="xs"
-                fullWidth
-            >
-                <DialogTitle className="flex justify-between items-center">
-                    <Typography variant="h6" fontWeight={800}>{t('billing.submitProof')}</Typography>
-                    <IconButton onClick={() => setUploadDialogOpen(false)}><X size={20} /></IconButton>
-                </DialogTitle>
-                <DialogContent>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        {t('billing.uploadProofDesc')}
-                    </Typography>
+                {/* Upload Proof Dialog */}
+                <Modal 
+                    open={uploadDialogOpen} 
+                    onClose={() => setUploadDialogOpen(false)}
+                    title={t('billing.submitProof')}
+                    maxWidth="xs"
+                >
+                    <ModalContent>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                            {t('billing.uploadProofDesc')}
+                        </Typography>
 
-                    <Box 
-                        onClick={() => document.getElementById('proof-input').click()}
-                        sx={{ 
-                            border: '2px dashed #e2e8f0', 
-                            borderRadius: 3, 
-                            p: 3, 
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                            bgcolor: '#f8fafc',
-                            '&:hover': { borderColor: '#0d9488', bgcolor: '#f0fdfa' },
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {proofPreview ? (
-                            <img src={proofPreview} alt="Receipt" className="max-h-40 mx-auto rounded-lg shadow-sm" />
-                        ) : (
-                            <Box className="flex flex-col items-center gap-2">
-                                <Upload size={32} className="text-slate-400" />
-                                <Typography variant="caption" fontWeight={600} color="text.secondary">
-                                    {t('billing.clickToUpload')}
-                                </Typography>
+                        <Box 
+                            onClick={() => document.getElementById('proof-input').click()}
+                            sx={{ 
+                                border: '2px dashed #e2e8f0', 
+                                borderRadius: 3, 
+                                p: 3, 
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                bgcolor: '#f8fafc',
+                                '&:hover': { borderColor: '#0d9488', bgcolor: '#f0fdfa' },
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {proofPreview ? (
+                                <img src={proofPreview} alt="Receipt" className="max-h-40 mx-auto rounded-lg shadow-sm" />
+                            ) : (
+                                <Box className="flex flex-col items-center gap-2">
+                                    <Upload size={32} className="text-slate-400" />
+                                    <Typography variant="caption" fontWeight={600} color="text.secondary">
+                                        {t('billing.clickToUpload')}
+                                    </Typography>
+                                </Box>
+                            )}
+                            <input 
+                                id="proof-input" 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={handleFileChange} 
+                            />
+                        </Box>
+
+                        {selectedInvoice && (
+                            <Box sx={{ mt: 3, p: 2, bgcolor: '#f1f5f9', borderRadius: 2 }}>
+                                <div className="flex justify-between items-center text-sm mb-1">
+                                    <span className="text-slate-500">{t('billing.invoiceId')}</span>
+                                    <span className="font-bold">#{selectedInvoice.id?.slice(-8).toUpperCase()}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-500">{t('billing.totalAmount')}</span>
+                                    <span className="font-bold text-teal-600">ETB {parseFloat(selectedInvoice.amount).toLocaleString()}</span>
+                                </div>
                             </Box>
                         )}
-                        <input 
-                            id="proof-input" 
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={handleFileChange} 
-                        />
-                    </Box>
+                    </ModalContent>
 
-                    {selectedInvoice && (
-                        <Box sx={{ mt: 3, p: 2, bgcolor: '#f1f5f9', borderRadius: 2 }}>
-                            <div className="flex justify-between items-center text-sm mb-1">
-                                <span className="text-slate-500">{t('billing.invoiceId')}</span>
-                                <span className="font-bold">#{selectedInvoice.id?.slice(-8).toUpperCase()}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-500">{t('billing.totalAmount')}</span>
-                                <span className="font-bold text-teal-600">ETB {parseFloat(selectedInvoice.amount).toLocaleString()}</span>
-                            </div>
-                        </Box>
-                    )}
-                </DialogContent>
-                <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={() => setUploadDialogOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>{t('common.cancel')}</Button>
-                    <Button 
-                        onClick={handleUploadProof} 
-                        variant="contained" 
-                        disabled={!proofFile || uploading}
-                        sx={{ borderRadius: 2, px: 4, bgcolor: '#0d9488', fontWeight: 700 }}
-                    >
-                        {uploading ? <CircularProgress size={20} color="inherit" /> : t('billing.submitProof')}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
-    );
-};
+                    <ModalActions
+                        onCancel={() => setUploadDialogOpen(false)}
+                        onConfirm={handleUploadProof}
+                        confirmText={t('billing.submitProof')}
+                        loading={uploading}
+                    />
+                </Modal>
+            </div>
+        );
+    };
 
 export default BillingPage;
 

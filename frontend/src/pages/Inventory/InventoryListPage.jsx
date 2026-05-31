@@ -4,18 +4,21 @@ import {
     AlertTriangle, CheckCircle, Trash2, Edit, TrendingUp, TrendingDown
 } from 'lucide-react';
 import {
-    Typography, Button, Card, CardContent, InputBase,
-    Chip, IconButton, Menu, MenuItem, CircularProgress, Alert,
-    Box, LinearProgress
+    Typography, Chip, IconButton, Menu, MenuItem, CircularProgress, Alert,
+    Box, LinearProgress, InputBase
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import inventoryService from '../../api/inventory.service';
 import AddInventoryModal from '../../components/inventory/AddInventoryModal';
 import UpdateStockModal from '../../components/inventory/UpdateStockModal';
 import { useSelector } from 'react-redux';
+import { Card, CardContent } from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import { useToast } from '../../hooks/useToast';
 
 export default function InventoryListPage() {
     const { t } = useTranslation();
+    const { error: toastError } = useToast();
     const { user } = useSelector((s) => s.auth);
     const role = user?.role || 'Patient';
     const isAdmin = role === 'Admin';
@@ -74,7 +77,7 @@ export default function InventoryListPage() {
             setItems(prev => prev.filter(i => i.id !== selectedItem.id));
             handleMenuClose();
         } catch (err) {
-            alert(t('common.error'));
+            toastError(t('common.error'));
         }
     };
 
@@ -98,15 +101,14 @@ export default function InventoryListPage() {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
-            <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 p-4 lg:p-8 pb-8 min-h-screen">
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <Typography variant="h5" fontWeight={700} color="text.primary">
+                    <Typography variant="h5" className="fw-800">
                         {t('inventory.title')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                    <Typography variant="body2" color="text.secondary" className="mt-1 fw-500">
                         Track and manage clinic supplies and equipment
                     </Typography>
                 </div>
@@ -114,7 +116,6 @@ export default function InventoryListPage() {
                     <Button
                         variant="contained"
                         startIcon={<Plus size={18} />}
-                        sx={{ borderRadius: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
                         onClick={() => setAddModalOpen(true)}
                     >
                         {t('inventory.addItem')}
@@ -123,7 +124,7 @@ export default function InventoryListPage() {
             </div>
 
             {/* ── Filters & Search ── */}
-            <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 4 }}>
+            <Card>
                 <CardContent className="p-4 flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex flex-wrap gap-2">
                         {categories.map(cat => (
@@ -319,6 +320,5 @@ export default function InventoryListPage() {
                 onSuccess={fetchInventory}
             />
         </div>
-    </Box>
     );
 }

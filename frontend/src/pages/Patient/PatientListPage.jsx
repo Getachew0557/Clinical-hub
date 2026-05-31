@@ -19,11 +19,17 @@ import EditPatientModal from '../../components/patients/EditPatientModal';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getPatientPhotoUrl } from '../../utils/cn';
+import Pagination from '../../components/ui/Pagination';
+import { useDebounce } from '../../lib/debounce';
+import { useErrorHandler } from '../../lib/errorHandler';
+import { exportToCSV } from '../../lib/exportUtils';
+import EmptyPatients from '../../components/ui/EmptyState';
 
 export default function PatientListPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useSelector((s) => s.auth);
+    const { handleError, handleSuccess } = useErrorHandler();
     const role = user?.role || 'Patient';
     const isStaff = ['Admin', 'Receptionist'].includes(role);
     const isDoctor = role === 'Doctor';
@@ -32,6 +38,11 @@ export default function PatientListPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const debouncedSearch = useDebounce(searchQuery, 300);
+
+    // Pagination state
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     // Modal state
     const [addModalOpen, setAddModalOpen] = useState(false);
@@ -178,21 +189,46 @@ export default function PatientListPage() {
             await patientService.deletePatient(selectedPatient.id);
             setPatients(prev => prev.filter(p => p.id !== selectedPatient.id));
             handleMenuClose();
-            alert(t('common.success'));
+            handleSuccess(t('common.success'));
         } catch (err) {
-            alert(t('common.error'));
+            handleError(err);
         }
     };
 
+    const handleExport = () => {
+        const exportData = filteredPatients.map(p => ({
+            'Full Name': p.fullName,
+            'Email': p.email || '',
+            'Phone': p.phone || '',
+            'Status': p.isActive ? 'Active' : 'Inactive',
+        }));
+        exportToCSV(exportData, 'patients');
+    };
+
     const filteredPatients = patients.filter(p =>
-        p && (p.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.phone?.includes(searchQuery))
+        p && (p.fullName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            p.phone?.includes(debouncedSearch))
     );
+
+    // Paginated patients
+    const paginatedPatients = filteredPatients.slice(
+        page * rowsPerPage,
+        (page + 1) * rowsPerPage
+    );
+
+    const handleChangePage = (newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (newRowsPerPage) => {
+        setRowsPerPage(newRowsPerPage);
+        setPage(0);
+    };
 
     return (
         <Box sx={{ flexGrow: 1, minWidth: 0, p: { xs: 2, lg: 4 }, pb: 8 }}>
             <div className="flex flex-col gap-6">
-            {/* ── Header ── */}
+                {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <Typography variant="h5" fontWeight={900} color="text.primary">
@@ -202,16 +238,28 @@ export default function PatientListPage() {
                         {isStaff ? t('portal.patientMgmtDescStaff') : isDoctor ? t('portal.patientMgmtDescDoctor') : t('portal.patientMgmtDescPatient')}
                     </Typography>
                 </div>
-                {isStaff && (
-                    <Button
-                        variant="contained"
-                        startIcon={<Plus size={18} />}
-                        sx={{ borderRadius: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
-                        onClick={() => setAddModalOpen(true)}
-                    >
-                        {t('portal.registerPatient')}
-                    </Button>
-                )}
+                <div className="flex gap-2">
+                    {isStaff && (
+                        <Button
+                            variant="contained"
+                            startIcon={<Plus size={18} />}
+                            sx={{ borderRadius: 3, bgcolor: '#0d9488', '&:hover': { bgcolor: '#0f766e' } }}
+                            onClick={() => setAddModalOpen(true)}
+                        >
+                            {t('portal.registerPatient')}
+                        </Button>
+                    )}
+                    {filteredPatients.length > 0 && (
+                        <Button
+                            variant="outlined"
+                            startIcon={<FileText size={18} />}
+                            onClick={handleExport}
+                            sx={{ borderRadius: 3 }}
+                        >
+                            Export
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* ── Search & Filters ── */}
@@ -238,10 +286,12 @@ export default function PatientListPage() {
                 <Alert severity="error" icon={<AlertCircle size={20} />} sx={{ borderRadius: 3 }}>
                     {error}
                 </Alert>
+            ) : filteredPatients.length === 0 ? (
+                <EmptyPatients onAdd={isStaff ? () => setAddModalOpen(true) : null} />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredPatients.length > 0 ? (
-                        filteredPatients.map((pt) => (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {paginatedPatients.map((pt) => (
                             <Card
                                 key={pt.id}
                                 elevation={0}
@@ -327,35 +377,24 @@ export default function PatientListPage() {
                                                 onClick={() => navigate(`/appointments?patientId=${pt.userId || pt.id}`)}
                                                 sx={{ borderRadius: 2, bgcolor: '#0d9488', fontWeight: 700 }}
                                             >
-                                                {t('nav.appointments')}
+                                                {t('sidebar.appointments')}
                                             </Button>
                                         )}
                                     </div>
                                 </CardContent>
                             </Card>
-                        ))
-                    ) : (
-                        <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4 text-slate-400">
-                            {role === 'Patient' ? (
-                                <>
-                                    <AlertCircle size={64} strokeWidth={1} className="text-teal-200" />
-                                    <div className="text-center">
-                                        <Typography variant="subtitle1" fontWeight={800} color="text.primary">{t('portal.profileNotFound')}</Typography>
-                                        <Typography variant="body2" sx={{ maxWidth: 400, mt: 1 }}>
-                                            {t('portal.profileNotFoundDesc')}
-                                        </Typography>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <Users size={64} strokeWidth={1} />
-                                    <Typography variant="subtitle1" fontWeight={800} color="text.primary">{t('common.noRecords')}</Typography>
-                                    <Typography variant="body2">{t('common.adjustSearch')}</Typography>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
+                        ))}
+                    </div>
+
+                    {/* Pagination */}
+                    <Pagination
+                        page={page}
+                        rowsPerPage={rowsPerPage}
+                        count={filteredPatients.length}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                </>
             )}
 
             {/* ── Menus & Modals ── */}
@@ -389,7 +428,7 @@ export default function PatientListPage() {
                 patient={selectedPatient}
                 onSuccess={role === 'Patient' ? fetchMyProfile : fetchPatients}
             />
-        </div>
-    </Box>
+            </div>
+        </Box>
     );
 }

@@ -155,10 +155,27 @@ th {
    UTILITIES
    ───────────────────────────────────────────────────────────────────────────── */
 @layer utilities {
+  /* Font weight utilities - consistent across app */
+  .fw-400 { font-weight: 400; }
+  .fw-500 { font-weight: 500; }
+  .fw-600 { font-weight: 600; }
+  .fw-700 { font-weight: 700; }
+  .fw-800 { font-weight: 800; }
+  .fw-900 { font-weight: 900; }
+  
   .fw-data    { font-weight: 400; }
   .fw-label   { font-weight: 600; }
   .fw-heading { font-weight: 700; }
   .fw-strong  { font-weight: 800; }
+  .fw-black   { font-weight: 900; }
+
+  /* Spacing utilities - consistent scale */
+  .space-xs { gap: 0.5rem; }
+  .space-sm { gap: 0.75rem; }
+  .space-md { gap: 1rem; }
+  .space-lg { gap: 1.5rem; }
+  .space-xl { gap: 2rem; }
+  .space-2xl { gap: 3rem; }
 
   /* Semantic surface helpers — use these in pages instead of bg-white/bg-slate-50 */
   .surface-page  { background-color: var(--color-bg); }
@@ -168,6 +185,7 @@ th {
   .text-theme-secondary { color: var(--color-text-secondary); }
   .border-theme { border-color: var(--color-border); }
 
+  /* Glass effects */
   .glass {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
@@ -187,6 +205,7 @@ th {
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
+  /* Text effects */
   .text-gradient {
     background-clip: text;
     -webkit-background-clip: text;
@@ -198,6 +217,20 @@ th {
     font-family: var(--font-primary);
     font-weight: 900;
   }
+
+  /* Border radius utilities */
+  .rounded-sm { border-radius: 0.5rem; }
+  .rounded-md { border-radius: 0.75rem; }
+  .rounded-lg { border-radius: 1rem; }
+  .rounded-xl { border-radius: 1.25rem; }
+  .rounded-2xl { border-radius: 1.5rem; }
+  .rounded-3xl { border-radius: 1.75rem; }
+
+  /* Shadow utilities */
+  .shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+  .shadow-md { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+  .shadow-lg { box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); }
+  .shadow-xl { box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1); }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -211,3 +244,226 @@ th {
 html.dark ::-webkit-scrollbar-track { background: #1e293b; }
 html.dark ::-webkit-scrollbar-thumb { background: #334155; }
 html.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PRINT STYLES
+   ───────────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide navigation and sidebar */
+  nav,
+  aside,
+  .sidebar,
+  [role="navigation"],
+  .MuiDrawer-root,
+  .MuiAppBar-root {
+    display: none !important;
+  }
+
+  /* Hide chat icons and floating buttons */
+  .chat-icon,
+  .floating-button,
+  .MuiFab-root,
+  [aria-label*="chat"],
+  [aria-label*="message"] {
+    display: none !important;
+  }
+
+  /* Hide buttons and interactive elements but keep content visible */
+  button:not(.print-button),
+  .MuiButton-root:not(.print-button),
+  .MuiIconButton-root:not(.print-button) {
+    display: none !important;
+  }
+
+  /* Keep inputs visible for printed forms (like prescriptions) */
+  input,
+  select,
+  textarea {
+    border: 1px solid #ccc !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide pagination */
+  .pagination,
+  .MuiPagination-root {
+    display: none !important;
+  }
+
+  /* Hide toasts and notifications */
+  .toaster,
+  .MuiAlert-root,
+  .notification {
+    display: none !important;
+  }
+
+  /* Hide scrollbars */
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Reset body and container */
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure main content takes full width and height */
+  main,
+  .main-content,
+  [role="main"],
+  .MuiBox-root,
+  .MuiContainer-root {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure all containers expand to show content */
+  div,
+  section,
+  article,
+  .MuiBox-root,
+  .MuiGrid-root,
+  .MuiStack-root {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Remove any height restrictions */
+  [style*="height"],
+  [style*="max-height"] {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Ensure all text content is visible */
+  p, span, h1, h2, h3, h4, h5, h6, label, div {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Print-friendly card styling */
+  .MuiCard-root {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .MuiCardContent-root,
+  .MuiCardHeader-root {
+    padding: 16px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Ensure all typography is visible */
+  .MuiTypography-root {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Print-friendly table styling */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #ccc !important;
+    padding: 8px !important;
+  }
+
+  /* Ensure text is black and visible */
+  * {
+    color: black !important;
+    text-shadow: none !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure all medical record content is visible */
+  .medical-record,
+  .prescription,
+  .diagnosis,
+  .treatment,
+  .patient-info,
+  [class*="record"],
+  [class*="prescription"],
+  [class*="diagnosis"],
+  [class*="treatment"] {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Hide background images */
+  * {
+    background-image: none !important;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-before: always;
+  }
+
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure all lists and tables are fully visible */
+  ul, ol, li {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Expand all collapsible content */
+  details {
+    display: block !important;
+  }
+
+  details > * {
+    display: block !important;
+  }
+
+  /* Show all hidden elements that contain content */
+  .MuiCollapse-root,
+  .MuiCollapse-wrapper {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .MuiCollapse-wrapperInner {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Print only specific content */
+  .print-only {
+    display: block !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

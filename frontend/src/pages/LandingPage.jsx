@@ -14,7 +14,7 @@ import { useColorMode } from '../context/ThemeContext';
 import doctorService from '../api/doctor.service';
 import hospitalService from '../api/hospital.service';
 import heroImg from '../assets/clinic-hero.png';
-import AIAssistant from '../components/common/AIAssistant';
+import DocBot from '../components/common/DocBot';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import { getDoctorPhotoUrl, cn } from '../utils/cn';
 
@@ -1353,7 +1353,7 @@ export default function LandingPage() {
       </footer>
 
       {/* ── AI Assistant ── */}
-      <AIAssistant />
+      <DocBot />
     </div>
   );
 }

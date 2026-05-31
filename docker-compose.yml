@@ -50,6 +50,7 @@ services:
       - VITE_API_GATEWAY_URL=http://localhost:5050/api
       - VITE_DOCTOR_SERVICE_URL=http://localhost:5010
       - VITE_API_SIGNALING_URL=http://localhost:5003
+      - VITE_API_SYSTEM_CHATBOT_URL=http://localhost:8005
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -206,6 +207,18 @@ services:
     volumes:
       - ./backend/ai-service:/app
       - /app/node_modules
+
+  system-chatbot:
+    build:
+      context: ./backend/system-chatbot
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    environment:
+      - PORT=8005
+      - GEMINI_API_KEY=AIzaSyA5AdMcjDa0ceiWmxoF-8TS9PjTrwvTHRs
+    volumes:
+      - ./backend/system-chatbot:/app
 
 volumes:
   mysqldata:

@@ -1,0 +1,397 @@
+[
+  {
+    "id": "arch_01",
+    "topic": "System Architecture Overview",
+    "content": "Clinical Hub is a modern microservices-based dental management system. It utilizes an API Gateway (Express) at Port 5050 as the unified entry point. Services communicate internally, and a shared MySQL database (divided into service-specific schemas) handles persistence. Communication is REST-based with Socket.IO used for real-time signaling."
+  },
+  {
+    "id": "auth_01",
+    "topic": "Auth Service: Security & Roles",
+    "content": "The Auth Service (Port 5001) handles user identity. It supports registration, login, and profile management. It uses JWT (JSON Web Tokens) for authentication and bcrypt for password hashing. Roles implemented are Admin, Doctor, Receptionist, and Patient. The service automatically creates the 'dental_auth_db' on startup."
+  },
+  {
+    "id": "auth_02",
+    "topic": "RBAC (Role-Based Access Control)",
+    "content": "Access is governed by roles: Admin (full system access), Doctor (clinical access: diagnosis, treatment, own appointments), Receptionist (administrative access: patient registry, booking), and Patient (self-service: profile, my appointments, billing, video consults)."
+  },
+  {
+    "id": "pat_01",
+    "topic": "Patient Service: Registry & Profiles",
+    "content": "The Patient Service (Port 5002) manages demographic and medical profiles. Key fields in the 'PatientProfiles' table include fullName, email, dateOfBirth, bloodGroup, phone, and gender. It supports photo uploads and self-service updates for patients. It manages the 'dental_patient_db' schema."
+  },
+  {
+    "id": "pat_02",
+    "topic": "Electronic Medical Records (EMR)",
+    "content": "EMR functionality is integrated into the Patient Service. It allows Doctors to create and view clinical history, including diagnoses, treatment notes, and historical visit data. Patients can securely view their own medical history through the dashboard."
+  },
+  {
+    "id": "appt_01",
+    "topic": "Appointment Service: Lifecycle",
+    "content": "The Appointment Service (Port 5003) manages the clinic's schedule. Appointments transition through statuses: Pending (initial booking), Confirmed (admin approved), Cancelled, or Completed. It uses the 'dental_appointment_db' and supports role-scoped visibility (e.g., Doctors see their own schedule, Admins see everything)."
+  },
+  {
+    "id": "appt_02",
+    "topic": "Video Consultations",
+    "content": "Real-time video consultation is a key feature. It uses Socket.IO signaling proxied through the Gateway to manage virtual room sessions. This allows remote dental consultations and follow-ups within a secure environment."
+  },
+  {
+    "id": "doc_01",
+    "topic": "Doctor Service: Professional Management",
+    "content": "The Doctor Service (Port 5010) manages professional medical profiles. It links User IDs to professional data like specialization (e.g., Orthodontics, Surgery), licenseNumber, years of experience, and bio. It also tracks doctor shift schedules (working days and hours)."
+  },
+  {
+    "id": "doc_02",
+    "topic": "Clinic Sites & Hospital Network",
+    "content": "Doctors can be associated with specific clinic sites or hospitals (e.g., Tikur Anbesa Specialized Hospital). The service manages a network of specialized centers, providing location-aware booking options for patients."
+  },
+  {
+    "id": "ai_01",
+    "topic": "AI Service: Clinical Intelligence",
+    "content": "The AI Service (Port 5009) is powered by Google Gemini (gemini-3-flash-preview). It provides three core capabilities: 1. Assistant Diagnosis (analyzing symptoms), 2. Treatment Plan Suggestions (procedural guidance), and 3. Clinical Chat (Q&A for providers)."
+  },
+  {
+    "id": "ai_02",
+    "topic": "Symptom Checker & Analysis",
+    "content": "Doctors can input patient symptoms (e.g., 'Sharp pain in lower left molar') and historical data into the AI Service to receive automated medical insights. This tool assists in identifying potential conditions like root fractures or pulpitis."
+  },
+  {
+    "id": "ui_01",
+    "topic": "Frontend: Tech Stack & UI",
+    "content": "The frontend is built with React 19, Vite, and Material UI (MUI). It features a premium design with glassmorphism, smooth animations (Framer Motion), and a responsive layout. It supports dark/light themes and internationalization (i18next)."
+  },
+  {
+    "id": "ui_02",
+    "topic": "DocBot: Navigation Assistant",
+    "content": "DocBot is a premium AI navigation assistant located on the landing page. It uses RAG (Retrieval-Augmented Generation) and FAISS vector search to answer user queries about platform features, compliance, and navigation without providing medical advice."
+  },
+  {
+    "id": "gw_01",
+    "topic": "API Gateway: Routing & Security",
+    "content": "The API Gateway (Port 5050) orchestrates all traffic. It implements rate limiting (200 req/min per IP), CORS protection, and secure header management (Helmet). It proxies requests to internal microservices based on URL prefixes (e.g., /api/auth, /api/patients)."
+  },
+  {
+    "id": "comp_01",
+    "topic": "Compliance: HIPAA & GDPR",
+    "content": "Clinical Hub is built to satisfy HIPAA and GDPR requirements. Patient data (PHI) is isolated, audit logs track all sensitive operations, and Role-Based Access Control (RBAC) ensures data is only accessible to authorized personnel."
+  },
+  {
+    "id": "getting_started_01",
+    "topic": "How to Register a New Account",
+    "content": "To register, click 'Create Account' on the login page. Fill in your full name, email, phone number, and password. Select your role (Patient, Doctor, Receptionist, or Admin). For Doctor and Receptionist roles, you may need admin approval. Password must be at least 8 characters with uppercase, lowercase, number, and special character."
+  },
+  {
+    "id": "getting_started_02",
+    "topic": "How to Login to the System",
+    "content": "Navigate to the login page and enter your registered email and password. You can also use Google Sign-In for quick access. After successful login, you'll be redirected to your role-specific dashboard. If you forget your password, use the 'Forgot password?' link to reset it via email."
+  },
+  {
+    "id": "getting_started_03",
+    "topic": "How to Reset Your Password",
+    "content": "Click 'Forgot password?' on the login page. Enter your registered email address. You'll receive a password reset link via email. Click the link and enter your new password. The new password must meet security requirements (8+ characters, uppercase, lowercase, number, special character)."
+  },
+  {
+    "id": "patient_guide_01",
+    "topic": "Patient: How to View Your Profile",
+    "content": "After logging in as a Patient, go to 'My Portal' in the sidebar. Click on 'My Medical Profile' to view your personal information including name, contact details, blood group, and medical history. You can edit your profile by clicking the edit button."
+  },
+  {
+    "id": "patient_guide_02",
+    "topic": "Patient: How to Book an Appointment",
+    "content": "Navigate to 'My Appointments' and click 'Book Appointment'. Select your preferred doctor, date, and time. Choose between 'Clinic Visit' or 'Video Consultation'. Add a reason for your visit and submit. Your appointment will be in 'Pending' status until approved by the clinic."
+  },
+  {
+    "id": "patient_guide_03",
+    "topic": "Patient: How to View Your Appointments",
+    "content": "Go to 'My Appointments' in the sidebar. You'll see all your scheduled appointments with status indicators (Pending, Confirmed, In Progress, Completed, Cancelled). Click on any appointment to view details or reschedule/cancel if allowed."
+  },
+  {
+    "id": "patient_guide_04",
+    "topic": "Patient: How to Join a Video Consultation",
+    "content": "For video consultations, go to 'My Appointments' and find the confirmed video appointment. Click 'Start Video Session' or 'Rejoin Session' when it's time. Grant camera and microphone permissions when prompted. You can chat, mute/unmute, and end the call from the video interface."
+  },
+  {
+    "id": "patient_guide_05",
+    "topic": "Patient: How to View Medical Records",
+    "content": "Access your medical records by clicking 'My Records' in the sidebar. You'll see your complete clinical history including diagnoses, treatments, prescriptions, and visit notes. Records are organized by date and can be printed for your records."
+  },
+  {
+    "id": "patient_guide_06",
+    "topic": "Patient: How to View and Pay Bills",
+    "content": "Navigate to 'My Bills' to see all invoices. Each invoice shows the service, amount, due date, and status (Paid, Pending, Under Review). For pending bills, click 'Pay Now' or 'Upload Receipt' to submit payment proof. Admin will review and approve your payment."
+  },
+  {
+    "id": "doctor_guide_01",
+    "topic": "Doctor: How to View Your Schedule",
+    "content": "After logging in as a Doctor, your dashboard shows 'My Appointments Today' and 'Upcoming Appointments'. You can filter by status (Pending, Confirmed, In Progress, Completed). Click on any appointment to view patient details and clinical notes."
+  },
+  {
+    "id": "doctor_guide_02",
+    "topic": "Doctor: How to Approve Appointments",
+    "content": "Go to 'My Consultations' and find pending appointments. Click 'Approve Booking' to confirm the appointment, or 'Revert to Pending' if you need more time. You can also cancel appointments if necessary. Patients will be notified of status changes."
+  },
+  {
+    "id": "doctor_guide_03",
+    "topic": "Doctor: How to Start a Video Consultation",
+    "content": "For confirmed video appointments, click 'Start Consultation' when ready. The video interface will open with camera and microphone controls. You can chat with the patient, share your screen if needed, and end the call when finished. The session is recorded for compliance."
+  },
+  {
+    "id": "doctor_guide_04",
+    "topic": "Doctor: How to Add Medical Records",
+    "content": "During or after an appointment, click 'View / Add Notes (EMR)' to access the patient's medical records. Add diagnosis, prescription, treatment notes, and clinical observations. Records are automatically saved and become part of the patient's permanent medical history."
+  },
+  {
+    "id": "doctor_guide_05",
+    "topic": "Doctor: How to Use AI Assistant",
+    "content": "The AI Assistant helps with symptom analysis and treatment suggestions. Enter patient symptoms and historical data to get AI-powered insights. This is a decision support tool - always use your clinical judgment. The AI can suggest potential conditions and treatment plans."
+  },
+  {
+    "id": "doctor_guide_06",
+    "topic": "Doctor: How to View Patient List",
+    "content": "Click 'My Patients' in the sidebar to see all patients under your care. You can search by name, view patient profiles, and access their complete medical history. This helps you track ongoing treatments and follow-up needs."
+  },
+  {
+    "id": "receptionist_guide_01",
+    "topic": "Receptionist: How to Register a New Patient",
+    "content": "Go to 'Patients' and click 'Register New Patient'. Fill in the patient's personal information (name, email, phone, date of birth, blood group, gender). Upload a profile photo if available. Submit to create the patient profile. The patient will receive login credentials."
+  },
+  {
+    "id": "receptionist_guide_02",
+    "topic": "Receptionist: How to Manage Patient Records",
+    "content": "In the Patients section, you can view all registered patients. Search by name or filter by status. Click on any patient to edit their information, view medical records, or deactivate their account if needed. You can also print patient records."
+  },
+  {
+    "id": "receptionist_guide_03",
+    "topic": "Receptionist: How to Book Appointments",
+    "content": "Navigate to 'Appointments' and click 'Book Appointment'. Select the patient, doctor, date, time, and appointment type (Clinic or Video). Add a reason for the visit. Submit to create the appointment. The appointment will be in Pending status until approved."
+  },
+  {
+    "id": "receptionist_guide_04",
+    "topic": "Receptionist: How to Manage Clinic Schedule",
+    "content": "View the clinic schedule in 'Appointments'. You can see all appointments by date, doctor, or status. Approve pending appointments, reschedule if needed, and cancel when necessary. The schedule view helps manage clinic capacity and avoid overbooking."
+  },
+  {
+    "id": "receptionist_guide_05",
+    "topic": "Receptionist: How to Handle Billing",
+    "content": "Access 'Billing' to view all invoices. You can see payment status, approve submitted payment proofs, and reject invalid receipts. Send payment reminders to patients with pending bills. Generate billing reports for accounting purposes."
+  },
+  {
+    "id": "admin_guide_01",
+    "topic": "Admin: How to Manage Users",
+    "content": "Go to 'User Management' to view all system users. You can add new users (Doctors, Receptionists, Admins), reset passwords, activate/deactivate accounts, and delete users if necessary. Each user has a role that determines their access level."
+  },
+  {
+    "id": "admin_guide_02",
+    "topic": "Admin: How to View Audit Logs",
+    "content": "Access 'Audit Log' to see all system activities. The log shows who did what, when, and to which resource. This is essential for compliance and security monitoring. You can filter by user, action, or date range."
+  },
+  {
+    "id": "admin_guide_03",
+    "topic": "Admin: How to Send Broadcast Messages",
+    "content": "Use 'Broadcast' to send notifications to all users or specific roles. Compose your message with a title and content. Choose the target audience (All Users, Patients, Doctors, Receptionists). The notification will appear in users' notification center."
+  },
+  {
+    "id": "admin_guide_04",
+    "topic": "Admin: How to Manage Billing Oversight",
+    "content": "In 'Billing Oversight', view all invoices across the clinic. See collected revenue, outstanding amounts, and cancelled payments. Review payment proofs submitted by patients and approve or reject them. Export billing data for financial reporting."
+  },
+  {
+    "id": "admin_guide_05",
+    "topic": "Admin: How to Manage Receptionists",
+    "content": "Go to 'Receptionist Team' to manage front-desk staff. Add new receptionists, view their profiles, and manage their access. Receptionists handle patient registration, appointment booking, and basic administrative tasks."
+  },
+  {
+    "id": "admin_guide_06",
+    "topic": "Admin: How to Manage Hospitals",
+    "content": "Access 'Hospital Management' to add and manage clinic sites. Enter hospital name, address, contact information, and description. Upload a hospital logo. Deactivate hospitals that are no longer operational. Patients can book appointments at specific hospitals."
+  },
+  {
+    "id": "inventory_guide_01",
+    "topic": "How to Manage Inventory",
+    "content": "Go to 'Inventory' to view all medical supplies and equipment. Each item shows name, quantity, unit, and reorder level. Add new items with 'Add Item'. Update stock levels when items are used or restocked. Items below reorder level are flagged for reordering."
+  },
+  {
+    "id": "inventory_guide_02",
+    "topic": "How to Update Stock Levels",
+    "content": "In Inventory, click on an item and select 'Update Stock'. Enter the new quantity and reason for the change (restocked, used, damaged). The system tracks stock history for audit purposes. Low stock items trigger alerts for reordering."
+  },
+  {
+    "id": "reports_guide_01",
+    "topic": "How to Generate Reports",
+    "content": "Access 'Reports' to view analytical dashboards. Available reports include Revenue Report, Appointment Report, Patient Report, and Doctor Performance. Select date range and filters, then click 'Generate Report'. Export reports as PDF or Excel for sharing."
+  },
+  {
+    "id": "reports_guide_02",
+    "topic": "How to Export Data",
+    "content": "In Reports or data views, click 'Export' to download data. Choose format (CSV, Excel, JSON, PDF). The export includes all visible data with proper formatting. Use exports for backup, analysis, or sharing with stakeholders."
+  },
+  {
+    "id": "navigation_01",
+    "topic": "How to Navigate the Dashboard",
+    "content": "The dashboard has a sidebar on the left with navigation menu items. Click on any menu item to access that feature. The top bar shows notifications, user profile, and theme toggle. Use the search bar to quickly find patients, appointments, or other records."
+  },
+  {
+    "id": "navigation_02",
+    "topic": "How to Use Global Search",
+    "content": "Click the search icon in the top bar to open Global Search. Type your query to search across patients, appointments, doctors, and medical records. Results are categorized for easy navigation. Click any result to go directly to that record."
+  },
+  {
+    "id": "navigation_03",
+    "topic": "How to Switch Between Dark and Light Mode",
+    "content": "Click the theme toggle (sun/moon icon) in the top bar to switch between dark and light mode. Your preference is saved and persists across sessions. Dark mode reduces eye strain in low-light environments."
+  },
+  {
+    "id": "navigation_04",
+    "topic": "How to Change Language",
+    "content": "Go to 'Settings' and find 'Language' under 'Visual & Language'. Select your preferred language (English, Amharic, Tigrinya, Oromo, Somali). The interface will update immediately. Language preference is saved for future sessions."
+  },
+  {
+    "id": "troubleshooting_01",
+    "topic": "Troubleshooting: Login Issues",
+    "content": "If you can't login, first verify your email and password are correct. Use 'Forgot password' to reset if needed. Clear browser cache and cookies. Ensure your account is active (contact admin if deactivated). Check that you're using a supported browser (Chrome, Firefox, Edge, Safari)."
+  },
+  {
+    "id": "troubleshooting_02",
+    "topic": "Troubleshooting: Video Consultation Not Working",
+    "content": "If video consultation fails, check your internet connection. Ensure camera and microphone permissions are granted in browser settings. Try refreshing the page. Use Chrome or Firefox for best compatibility. If issues persist, switch to audio-only or reschedule as clinic visit."
+  },
+  {
+    "id": "troubleshooting_03",
+    "topic": "Troubleshooting: Page Not Loading",
+    "content": "If pages don't load, check your internet connection. Clear browser cache and cookies. Try a different browser. Check if the API Gateway is running (contact IT if needed). Disable browser extensions that might block requests. Ensure you're logged in with a valid session."
+  },
+  {
+    "id": "troubleshooting_04",
+    "topic": "Troubleshooting: Data Not Saving",
+    "content": "If data doesn't save when submitting forms, check for validation errors (red text indicates required fields). Ensure all required fields are filled. Check internet connection. Try refreshing and retrying. If issue persists, contact support with error details."
+  },
+  {
+    "id": "troubleshooting_05",
+    "topic": "Troubleshooting: Notifications Not Appearing",
+    "content": "If notifications don't appear, check browser notification permissions. Ensure you're logged in. Refresh the page. Check 'Notifications' in the top bar to view all notifications. Enable email notifications in Settings if you want backup alerts."
+  },
+  {
+    "id": "troubleshooting_06",
+    "topic": "Troubleshooting: Payment Upload Failed",
+    "content": "If payment proof upload fails, check file size (must be under 5MB). Ensure file format is supported (JPG, PNG, PDF). Check internet connection. Try a different file or browser. If issue persists, contact receptionist to submit payment manually."
+  },
+  {
+    "id": "security_01",
+    "topic": "Security: Password Requirements",
+    "content": "Passwords must be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and special characters. Use a unique password for this system. Change your password regularly. Never share your password with anyone. The system uses bcrypt hashing for secure storage."
+  },
+  {
+    "id": "security_02",
+    "topic": "Security: Session Timeout",
+    "content": "For security, sessions timeout after 30 minutes of inactivity. You'll receive a warning 5 minutes before expiry. Click 'Extend Session' to continue working. If your session expires, you'll need to login again. This protects your account if you step away from your computer."
+  },
+  {
+    "id": "security_03",
+    "topic": "Security: Two-Factor Authentication",
+    "content": "Two-Factor Authentication (2FA) adds an extra layer of security. Enable it in Settings under 'Account Security'. When enabled, you'll need a verification code in addition to your password when logging in. This prevents unauthorized access even if your password is compromised."
+  },
+  {
+    "id": "security_04",
+    "topic": "Security: Data Privacy",
+    "content": "Your data is protected by HIPAA and GDPR compliance standards. Patient information is encrypted and only accessible to authorized personnel. Audit logs track all access to sensitive data. You can request a copy of your data or request deletion under GDPR rights."
+  },
+  {
+    "id": "features_01",
+    "topic": "Feature: Electronic Medical Records (EMR)",
+    "content": "EMR allows doctors to create comprehensive patient records including diagnoses, treatments, prescriptions, and clinical notes. Patients can view their own records securely. Records are searchable and can be printed. EMR integration ensures continuity of care across visits."
+  },
+  {
+    "id": "features_02",
+    "topic": "Feature: Video Consultations",
+    "content": "Video consultations enable remote dental care. Patients can consult with doctors from home using secure video calls. Features include screen sharing, chat, recording, and high-quality audio/video. Video consultations are ideal for follow-ups and initial assessments."
+  },
+  {
+    "id": "features_03",
+    "topic": "Feature: AI-Powered Clinical Support",
+    "content": "The AI Service provides clinical decision support. Doctors can input symptoms and receive AI-generated insights about potential conditions and treatment options. The AI also helps with treatment planning and clinical Q&A. Always use AI suggestions as decision support, not replacement for clinical judgment."
+  },
+  {
+    "id": "features_04",
+    "topic": "Feature: Automated Billing",
+    "content": "Billing is automated with invoice generation based on services rendered. Patients can view bills, submit payment proofs, and track payment status. Admins can approve payments and generate financial reports. The system supports multiple payment methods and tracks all transactions."
+  },
+  {
+    "id": "features_05",
+    "topic": "Feature: Inventory Management",
+    "content": "Inventory management tracks all medical supplies and equipment. Set reorder levels to automatically flag low stock. Update stock levels in real-time. Generate inventory reports for procurement planning. This ensures the clinic always has necessary supplies available."
+  },
+  {
+    "id": "features_06",
+    "topic": "Feature: Multi-Language Support",
+    "content": "The system supports English, Amharic, Tigrinya, Oromo, and Somali. Change language in Settings. The interface, notifications, and some content are translated. This makes the system accessible to diverse users across Ethiopia. Language preference is saved per user."
+  },
+  {
+    "id": "features_07",
+    "topic": "Feature: Role-Based Dashboards",
+    "content": "Each role has a customized dashboard showing relevant information. Patients see their appointments and bills. Doctors see their schedule and patients. Receptionists see clinic schedule and patient queue. Admins see system overview and management tools. This provides efficient workflow for each user type."
+  },
+  {
+    "id": "features_08",
+    "topic": "Feature: Real-Time Notifications",
+    "content": "The system sends real-time notifications for important events: appointment confirmations, payment reminders, new messages, and system announcements. Notifications appear in the notification center and can be sent via email if enabled. This keeps users informed of important updates."
+  },
+  {
+    "id": "features_09",
+    "topic": "Feature: Audit Logging",
+    "content": "All system actions are logged for security and compliance. The audit log records who did what, when, and to which resource. Admins can view and filter audit logs. This is essential for HIPAA compliance, security monitoring, and troubleshooting."
+  },
+  {
+    "id": "features_10",
+    "topic": "Feature: Hospital Network",
+    "content": "The system manages a network of hospital and clinic sites. Each location has its own profile with address, contact info, and services. Patients can choose their preferred location when booking. Doctors can be associated with specific sites. This supports multi-location clinic management."
+  },
+  {
+    "id": "faq_01",
+    "topic": "FAQ: How do I contact support?",
+    "content": "For technical support, contact the IT team through the clinic's support email or phone. For medical questions, consult with your doctor directly. For billing inquiries, contact the receptionist or billing department. Emergency medical issues should be directed to the emergency line."
+  },
+  {
+    "id": "faq_02",
+    "topic": "FAQ: Can I access the system on mobile?",
+    "content": "Yes, the system is responsive and works on mobile devices. Use a modern browser (Chrome, Safari) on your phone or tablet. Some features like video consultations work best on larger screens, but most functionality is available on mobile."
+  },
+  {
+    "id": "faq_03",
+    "topic": "FAQ: How do I cancel an appointment?",
+    "content": "Go to 'My Appointments', find the appointment, and click 'Cancel'. You may need to provide a reason. Cancellation policies vary - some appointments can be cancelled up to 24 hours before, others may have different rules. Contact receptionist if you need help."
+  },
+  {
+    "id": "faq_04",
+    "topic": "FAQ: What if I miss my appointment?",
+    "content": "If you miss an appointment, contact the clinic as soon as possible to reschedule. Repeated missed appointments may affect your ability to book future appointments. Some clinics charge a fee for missed appointments. Check with receptionist for specific policies."
+  },
+  {
+    "id": "faq_05",
+    "topic": "FAQ: How do I get my medical records?",
+    "content": "Patients can view their medical records in 'My Records'. To get a printed copy, use the print function in your browser or contact the clinic to request an official copy. There may be a fee for official records. Records are available for your personal use and can be shared with other healthcare providers."
+  },
+  {
+    "id": "faq_06",
+    "topic": "FAQ: Is my data secure?",
+    "content": "Yes, your data is protected by industry-standard security measures including encryption, access controls, and audit logging. The system is designed to meet HIPAA and GDPR requirements. Only authorized personnel can access your information. Regular security audits ensure ongoing protection."
+  },
+  {
+    "id": "faq_07",
+    "topic": "FAQ: Can I change my doctor?",
+    "content": "Yes, you can request to change your doctor. Contact the receptionist to make the request. The clinic will check availability and reassign you if possible. Your medical records will transfer to the new doctor. Some clinics may have policies about doctor changes."
+  },
+  {
+    "id": "faq_08",
+    "topic": "FAQ: What payment methods are accepted?",
+    "content": "Accepted payment methods vary by clinic. Common methods include cash, bank transfer, mobile money, and insurance. Check with receptionist or billing department for specific payment options. Payment proofs can be uploaded through the system for verification."
+  },
+  {
+    "id": "faq_09",
+    "topic": "FAQ: How do I enable notifications?",
+    "content": "Enable browser notifications when prompted, or check browser settings to allow notifications. In Settings, enable email notifications for appointment reminders and payment alerts. You can customize which types of notifications you receive."
+  },
+  {
+    "id": "faq_10",
+    "topic": "FAQ: What if the system is down?",
+    "content": "If the system is unavailable, contact the clinic by phone for urgent matters. The IT team works to restore service quickly. For medical emergencies, use the emergency line. Non-urgent tasks can wait until the system is restored. Check clinic social media for status updates."
+  }
+]
